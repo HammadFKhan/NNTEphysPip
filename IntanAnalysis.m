@@ -4,7 +4,7 @@ read_Intan_RHD2000_file
 % amplifier_data = amplifier_data(:,1:100000);
 % t_amplifier = t_amplifier(1:100000);
 %%
-channel_num = 5:36;
+channel_num = 15:31;
 figure()
 plot(t_amplifier,amplifier_data(channel_num,:));
 %%
@@ -20,7 +20,7 @@ plot(t_amplifier,lowpassfilter);
 % figure()
 % plot(t_amplifier,bandpassfilter);
 %% Butterworth
-for i = 25:30
+for i = 1:10
     rawData = amplifier_data(channel_num(i),:);
     Fs = 20000;
     Fc = [300 3000];
