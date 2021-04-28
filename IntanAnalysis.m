@@ -5,10 +5,7 @@ read_Intan_RHD2000_file
 % t_amplifier = t_amplifier(1:100000);
 %%
 channel_num = 1:31;
-figure()
-plot(t_amplifier,amplifier_data(channel_num,:));
-%%
-%design butterworth filters for single unit
+% design butterworth filters for single unit
 Fs = 20000;
 Fc = [250 3000];
 Wn = Fc./(Fs/2);
@@ -59,84 +56,9 @@ for i = 1:channel_num(end)
 end
 close(H)
 
-%% plot single unit waveforms
-
-fn = fieldnames(allSpikes);
-for ii = 1:11
-%     subplot(1,20,ii);hold on
-    theseSpikes = allSpikes.(string(fn(ii)));
-    t = (1:length(theseSpikes(1,:)))./Fs.*1000;
-    plot(t,theseSpikes,'b')
-    hold on
-    plot(t,mean(theseSpikes),'k','LineWidth',2)
-end
-
-%% plot LFP
-time = (1:length(LFPData))./Fs.*1000;
-fn = fieldnames(dataLow);
-spacing = 1000;
-ycenter =[spacing:spacing:spacing*length(channel_num)]; 
-colorgrad = zeros(length(channel_num),3);
-colorgrad(:,1) = linspace(0.6350,0     ,length(channel_num));
-colorgrad(:,2) = linspace(0.0780,0.4470,length(channel_num));
-colorgrad(:,3) = linspace(0.1840,0.7410,length(channel_num));
-
-figure;hold on
-
-for j = 14:length(channel_num)
-    %plot LFP
-    LFPData = dataLow.(string(fn(j)));
-    plot(LFPData'+ycenter(j),'color',colorgrad(j,:))
-    plot(mean(LFPData)+ycenter(j),'color','k','LineWidth',2)
-    
-%     %slightly under it, plot MUA
-%     channelData = dataHigh.(['Channel' num2str(cc)]);
-%     plot(trialTime,channelData'+ycenter(cc)-200,'color',colorgrad(cc,:))
-%     plot(trialTime,mean(channelData)+ycenter(cc)-200,'color','k','LineWidth',2)    
-end
-% 
-% rectangle('Position',[windowBefore./Fs.*1000,spacing,length(poleMoveIndices)/Fs*1000,spacing*length(channels)],...
-%           'FaceColor',[0.25 0.25 0.25 0.2],...
-%           'EdgeColor','none')
-% alpha(0.2)
-
-box off 
-set(gca,'YTick','','YTickLabel','')
-title('LFP Freq Band')
-xlabel('Time (ms)')
-ylabel('Channels')
-xlim([3E5 5E5]);
-%% plot MUA
-time = (1:length(channelData))./Fs.*1000;
-fn = fieldnames(dataHigh);
-spacing = 100;
-ycenter =[spacing:spacing:spacing*length(channel_num)]; 
-colorgrad = zeros(length(channel_num),3);
-colorgrad(:,1) = linspace(0.6350,0     ,length(channel_num));
-colorgrad(:,2) = linspace(0.0780,0.4470,length(channel_num));
-colorgrad(:,3) = linspace(0.1840,0.7410,length(channel_num));
-
-
-figure;hold on
-
-for jj = 14:length(channel_num)
-    channelData = dataHigh.(string(fn(jj)));
-
-    plot(channelData'+ycenter(jj),'color',colorgrad(jj,:))
-    plot(mean(channelData)+ycenter(jj),'color','k','LineWidth',2)
-%         if(tt==numTrials)
-%             plot(poleTime,ycenter(cc).*ones(1,length(poleTime)),'color',[0.25, 0.25, 0.25],'LineWidth',5)
-%         end
-end
-
-% rectangle('Position',[windowBefore./Fs.*1000,spacing,length(poleMoveIndices)/Fs*1000,spacing*length(channels)],...
-%           'FaceColor',[0.25 0.25 0.25 0.2],...
-%           'EdgeColor','none')
-% alpha(0.2)
-
-box off 
-set(gca,'YTick','','YTickLabel','')
-title('MUA Activity')
-xlabel('Time (ms)')
-ylabel('Channels')
-xlim([3E5 5E5]);
+%% Plots
+disp('Plotting...')
+figure('Name', 'Unfiltered Data'),stack_plot(amplifier_data)
+figure('Name','Singe Unit Waveforms'),SingleUnits(allSpikes,Fs,125);
+figure('Name','Multi-Unit Activity'),MUA(dataHigh);
+figure('Name','LFP'),LFP(dataLow);

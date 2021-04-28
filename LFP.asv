@@ -1,0 +1,34 @@
+%% plot LFP
+function LFP(dataLow)
+fn = fieldnames(dataLow);
+spacing = 1000;
+ycenter =[spacing:spacing:spacing*length(channel_num)]; 
+colorgrad = zeros(length(channel_num),3);
+colorgrad(:,1) = linspace(0.6350,0     ,length(fn));
+colorgrad(:,2) = linspace(0.0780,0.4470,length(fn));
+colorgrad(:,3) = linspace(0.1840,0.7410,length(fn));
+
+figure;hold on
+
+for j = 1:length(fn)
+    %plot LFP
+    LFPData = dataLow.(string(fn(j)));
+    plot(LFPData'+ycenter(j),'color',colorgrad(j,:))
+    plot(mean(LFPData)+ycenter(j),'color','k','LineWidth',2)
+    
+%     %slightly under it, plot MUA
+%     channelData = dataHigh.(['Channel' num2str(cc)]);
+%     plot(trialTime,channelData'+ycenter(cc)-200,'color',colorgrad(cc,:))
+%     plot(trialTime,mean(channelData)+ycenter(cc)-200,'color','k','LineWidth',2)    
+end
+% 
+% rectangle('Position',[windowBefore./Fs.*1000,spacing,length(poleMoveIndices)/Fs*1000,spacing*length(channels)],...
+%           'FaceColor',[0.25 0.25 0.25 0.2],...
+%           'EdgeColor','none')
+% alpha(0.2)
+
+box off 
+set(gca,'YTick','','YTickLabel','')
+title('LFP Freq Band')
+xlabel('Time (ms)')
+ylabel('Channels')

@@ -1,0 +1,13 @@
+%% plot single unit waveforms
+function SingleUnits(allSpikes)
+fn = fieldnames(allSpikes);
+
+    for ii = 1:length(fn)
+        subplot(1,20,i);hold on
+        theseSpikes = allSpikes.(string(fn(ii)));
+        t = (1:length(theseSpikes(1,:)))./Fs.*1000;
+        plot(t,theseSpikes,[0.5 0.5 0.5 0.5])
+        hold on
+        plot(t,mean(theseSpikes),'k','LineWidth',3)
+    end
+end
