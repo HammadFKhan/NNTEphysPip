@@ -17,4 +17,4 @@ for i = 1:length(fn)
     set(gca,'YTick',[])
     
 end
-end
+disp('Done!')
