@@ -15,7 +15,7 @@ Wn = Fc./(Fs/2);
 [b1,a1] = butter(6,Wn,'bandpass');
 
 %design butterworth filters for LFP
-Fc = [50];
+Fc = [300];
 Wn = Fc./(Fs/2);
 [b2,a2] = butter(6,Wn,'low');
 %%
@@ -72,7 +72,7 @@ for ii = 1:11
 end
 
 %% plot LFP
-time = (1:length(LFPData))./Fs.*1000;
+time = 1:length(LFPdata
 fn = fieldnames(dataLow);
 spacing = 1000;
 ycenter =[spacing:spacing:spacing*length(channel_num)]; 
@@ -83,7 +83,7 @@ colorgrad(:,3) = linspace(0.1840,0.7410,length(channel_num));
 
 figure;hold on
 
-for j = 14:length(channel_num)
+for j = 1:length(channel_num)
     %plot LFP
     LFPData = dataLow.(string(fn(j)));
     plot(LFPData'+ycenter(j),'color',colorgrad(j,:))
@@ -105,9 +105,7 @@ set(gca,'YTick','','YTickLabel','')
 title('LFP Freq Band')
 xlabel('Time (ms)')
 ylabel('Channels')
-xlim([3E5 5E5]);
 %% plot MUA
-time = (1:length(channelData))./Fs.*1000;
 fn = fieldnames(dataHigh);
 spacing = 100;
 ycenter =[spacing:spacing:spacing*length(channel_num)]; 
@@ -119,7 +117,7 @@ colorgrad(:,3) = linspace(0.1840,0.7410,length(channel_num));
 
 figure;hold on
 
-for jj = 14:length(channel_num)
+for jj = 1:length(channel_num)
     channelData = dataHigh.(string(fn(jj)));
 
     plot(channelData'+ycenter(jj),'color',colorgrad(jj,:))
@@ -139,4 +137,3 @@ set(gca,'YTick','','YTickLabel','')
 title('MUA Activity')
 xlabel('Time (ms)')
 ylabel('Channels')
-xlim([3E5 5E5]);
