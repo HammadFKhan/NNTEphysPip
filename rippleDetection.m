@@ -2,9 +2,9 @@ function [ripples] =  rippleDetection(ripple_signal,timestamps,Fs)
 keep = [];
 lowThresholdFactor = 2; % Ripple envoloppe must exceed lowThresholdFactor*stdev
 highThresholdFactor = 5; % Ripple peak must exceed highThresholdFactor*stdev
-minInterRippleInterval = .00175*Fs; % 35ms
-minRippleDuration = .001*Fs; % 20ms
-maxRippleDuration = .005*Fs; % 100ms
+minInterRippleInterval = 30; % 30ms
+minRippleDuration = 20; % 20ms
+maxRippleDuration = 100; % 100ms
 noise = [];
 windowLength = round(11);
 signal = ripple_signal;
@@ -80,21 +80,37 @@ else
         [minValue,minIndex] = min(signal(thirdPass(i,1):thirdPass(i,2)));
         peakPosition(i) = minIndex + thirdPass(i,1) - 1;
     end
-    
-    % Discard ripples that are way too short
-    time = timestamps;
-    ripples = [time(thirdPass(:,1)) time(peakPosition) time(thirdPass(:,2)) peakNormalizedPower];
-    duration = ripples(:,3)-ripples(:,1);
-    ripples(duration<minRippleDuration/1000,:) = [];
-    disp(['After min duration test: ' num2str(size(ripples,1)) ' events.']);
-    
     % Discard ripples that are way too long
+    ripples = [timestamps(thirdPass(:,1))  timestamps(peakPosition)  timestamps(thirdPass(:,2)) peakNormalizedPower];
     duration = ripples(:,3)-ripples(:,1);
-    ripples(duration>maxRippleDuration/1000,:) = [];
+    ripples(duration>maxRippleDuration/1000,:) = NaN;
     disp(['After max duration test: ' num2str(size(ripples,1)) ' events.']);
     
+    % Discard ripples that are way too short
+    duration = ripples(:,3)-ripples(:,1);
+    ripples(duration<minRippleDuration/1000,:) = NaN;
+    ripples = ripples((all((~isnan(ripples)),2)),:);
+    disp(['After min duration test: ' num2str(size(ripples,1)) ' events.']);
+    
+    
+    
+    %%
+    % Optionally, plot results
+    figure('Name','Detected Signal')
+    plot(timestamps,signal);hold on;
+    for j=1:size(ripples,1)
+            plot([ripples(j,1) ripples(j,1)],ylim,'g-');
+            plot([ripples(j,2) ripples(j,2)],ylim,'k-');
+            plot([ripples(j,3) ripples(j,3)],ylim,'r-');
+    end
+    plot(xlim,[lowThresholdFactor lowThresholdFactor],'k','linestyle','--');
+    plot(xlim,[highThresholdFactor highThresholdFactor],'k-');
+    axis tight
+    box off
+
+    
     %% Analyze Ripples
-    durations = [-.75 .75]/1000;
+    durations = [-0.025 0.025];
     nCorrBins = 50;
     %  corrBinSize = 400;
     corrDuration = 20;
@@ -150,36 +166,49 @@ else
     [~,dursort]=sort(data.duration,1,'descend');
     [~,ampsort]=sort(data.peakAmplitude,1,'descend');
     
-    figure()
-        x=maps.ripples(dursort,:);
-        for ii=1:100
-            subplot(10,10,ii)
-            plot(x(ii,:))
-            set(gca,'XTick',[]);
-            set(gca,'YTick',[]);
-            axis off
-        end
-        figure()
-        subplot 221
-        imagesc(maps.amplitude(ampsort,:))
-        title('SPW-R Amplitude: sorted by amplitude')
-        subplot 222
-        imagesc(maps.amplitude(dursort,:))
-        title('SPW-R Amplitude: sorted by duration')
-        subplot 223
-        imagesc(maps.ripples(ampsort,:))
-        title('SPW-R Filtered Signal: sorted by amplitude')
-        subplot 224
-        imagesc(maps.ripples(dursort,:))
-        title('SPW-R Filtered Signal: sorted by duration')
-        
-        figure()
-        scatterhist(log10(data.duration*1000),data.peakAmplitude,'kernel','on','Location','SouthWest',...
-            'Direction','out','Color','kbr','LineStyle',{'-','-.',':'},...
-            'LineWidth',[2,2,2],'Nbins',[20 100], 'marker','.','markersize',10)
-        box off
-        LogScale('x',10)
-        xlabel('logDuration (ms)'); ylabel('Amplitude (au)')
-        
+    x=maps.ripples(dursort,:);
+    figure('Name', 'Ripple Map')
+    if length(x(:,1)) <= 100
+        rippleplot = length(x(:,1));
+    else
+        rippleplot = 100;
+    end
+    
+    for ii=1:rippleplot
+        subplot(10,10,ii)
+        plot(x(ii,:))
+        set(gca,'XTick',[]);
+        set(gca,'YTick',[]);
+        axis off
+    end
+    set(gcf,'PaperUnits','inches','PaperPosition',[0 0 4 3]);...
+        print(gcf,'-painters','-depsc', 'Figures/Ripple.eps', '-r250');
+
+    figure('Name','SPW-R Data')
+    subplot 221
+    imagesc(maps.amplitude(ampsort,:))
+    title('SPW-R Amplitude: sorted by amplitude')
+    subplot 222
+    imagesc(maps.amplitude(dursort,:))
+    title('SPW-R Amplitude: sorted by duration')
+    subplot 223
+    imagesc(maps.ripples(ampsort,:))
+    title('SPW-R Filtered Signal: sorted by amplitude')
+    subplot 224
+    imagesc(maps.ripples(dursort,:))
+    title('SPW-R Filtered Signal: sorted by duration')
+    set(gcf,'PaperUnits','inches','PaperPosition',[0 0 4 3]);...
+        print(gcf,'-painters','-depsc', 'Figures/SPW-R_Amplitude.eps', '-r250');
+    
+    figure('Name', 'Residuals')
+    scatterhist((data.duration*1000),data.peakAmplitude,'kernel','on','Location','SouthWest',...
+        'Direction','out','Color','kbr','LineStyle',{'-','-.',':'},...
+        'LineWidth',[2,2,2],'Nbins',[20 100], 'marker','.','markersize',10)
+    box off
+%     LogScale('x',10)
+    xlabel('Duration (ms)'); ylabel('Amplitude (au)')
+    set(gcf,'PaperUnits','inches','PaperPosition',[0 0 4 3]);...
+        print(gcf,'-painters','-depsc', 'Figures/Residuals.eps', '-r250');
+    
     
 end

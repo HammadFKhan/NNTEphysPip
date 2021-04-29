@@ -11,5 +11,5 @@ end
 axis tight,box off
 set(gca,'XTick',[])
 set(gca,'YTick',[])
-disp('done')
+disp('Done!')
 end

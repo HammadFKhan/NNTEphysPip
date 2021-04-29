@@ -5,6 +5,7 @@ read_Intan_RHD2000_file
 % % amplifier_data = amplifier_data(:,1:100000);
 % t_amplifier = t_amplifier(1:100000);
 %%
+% set(0,'DefaultFigureWindowStyle','docked')
 channel_num = 1:31;
 % Design butterworth filters for single unit
 Fs = 20000;
@@ -13,11 +14,11 @@ Wn = Fc./(Fs/2);
 [b1,a1] = butter(6,Wn,'bandpass');
 
 % Design butterworth filters for LFP
-Fc = [25];
+Fc = [100];
 Wn = Fc./(Fs/2);
 [b2,a2] = butter(6,Wn,'low');
 % Design butterworth filter for Ripples
-Fc = [180 220];
+Fc = [180 250];
 Wn = Fc./(Fs/2);
 [b3,a3]=butter(4,Wn,'bandpass');
 %% General Filtering
@@ -29,12 +30,12 @@ Wn = Fc./(Fs/2);
 
 %%
 findSpikes = true;
-spikeWindow = .00025*Fs;%35ms
+spikeWindow = .00025*Fs;%5ms
 threshStd = 5;
 spikeCount = zeros(length(channel_num),1);
 %%
 H = waitbar(0,'Compiling...');
-for i = 1:channel_num(end)
+for i = 15:channel_num(end)
     waitbar(i/channel_num(end),H)
     rawData = amplifier_data(channel_num(i),:);
     lowpassData  = filtfilt(b2,a2,rawData);
@@ -74,22 +75,32 @@ for i = 1:channel_num(end)
     meRipple(i) = median(pow(:,i));
     mmRippleRatio(i) = mRipple(i)./meRipple(i);
     % Ripple detection
-    ripples =  rippleDetection(ripple_signal(:,i),Fs);
-    allRipples{i} = ripples;
+%     [ripples] =  rippleDetection(ripple_signal(:,i),timestamps,Fs)
+%     allRipples{i} = ripples;
 
 end
 close(H)
-    
 mmRippleRatio(mRipple<1) = 0;
 mmRippleRatio(meRipple<1) = 0;
 
 [minVal,loc] = max(mmRippleRatio);
 chan = channel_num(loc);
 disp([ 'Best channel detected: ' num2str(chan)]);
+[ripples] =  rippleDetection(ripple_signal(:,16),timestamps,Fs)
+  
+
 
 %% Plots
 disp('Plotting...')
 figure('Name', 'Unfiltered Data'),stack_plot(amplifier_data)
-figure('Name','Singe Unit Waveforms'),SingleUnits(allSpikes,Fs,125);
+set(gcf,'PaperUnits','inches','PaperPosition',[0 0 4 3]);...
+    print(gcf,'-painters','-depsc', 'Figures/Raw_data.eps', '-r250');
+figure('Name','Singe Unit Waveforms'),SingleUnits(allSpikes,Fs,200);
+set(gcf,'PaperUnits','inches','PaperPosition',[0 0 4 3]);...
+    print(gcf,'-painters','-depsc', 'Figures/Single_unit_waveforms.eps', '-r250');
 figure('Name','Multi-Unit Activity'),MUA(dataHigh);
+set(gcf,'PaperUnits','inches','PaperPosition',[0 0 4 3]);...
+    print(gcf,'-painters','-depsc', 'Figures/MultiUnit.eps', '-r250');
 figure('Name','LFP'),LFP(dataLow);
+set(gcf,'PaperUnits','inches','PaperPosition',[0 0 4 3]);...
+    print(gcf,'-painters','-depsc', 'Figures/LFP.eps', '-r250');
