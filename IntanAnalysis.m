@@ -67,6 +67,7 @@ for i = 1:channel_num(end)
     end
     
     % Ripples
+    timestamps(:,1) = t_amplifier;
     ripple_signal(:,i) = FiltFiltM(b3,a3,rawData);
     pow(:,i) = fastrms(ripple_signal(:,i),15);
     mRipple(i) = mean(pow(:,i));
@@ -75,6 +76,7 @@ for i = 1:channel_num(end)
     % Ripple detection
     ripples =  rippleDetection(ripple_signal(:,i),Fs);
     allRipples{i} = ripples;
+
 end
 close(H)
     
@@ -84,6 +86,7 @@ mmRippleRatio(meRipple<1) = 0;
 [minVal,loc] = max(mmRippleRatio);
 chan = channel_num(loc);
 disp([ 'Best channel detected: ' num2str(chan)]);
+
 %% Plots
 disp('Plotting...')
 figure('Name', 'Unfiltered Data'),stack_plot(amplifier_data)

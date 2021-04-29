@@ -82,7 +82,7 @@ else
     end
     
     % Discard ripples that are way too short
-    time = timestamps;
+    time = ripple_signal(:,1);
     ripples = [time(thirdPass(:,1)) time(peakPosition) time(thirdPass(:,2)) peakNormalizedPower];
     duration = ripples(:,3)-ripples(:,1);
     ripples(duration<minRippleDuration/1000,:) = [];
@@ -94,7 +94,7 @@ else
     disp(['After max duration test: ' num2str(size(ripples,1)) ' events.']);
     
     %% Analyze Ripples
-    durations = [-.75 .75]/1000;
+    durations = [-50 50]/1000;
     nCorrBins = 50;
     %  corrBinSize = 400;
     corrDuration = 20;
@@ -115,19 +115,19 @@ else
     frequency = frequency/(2*pi);
     
     % Compute ripple map
-    [r,i] = Sync([timestamps ripple_signal],ripples(:,2),'durations',durations,'verbose','on');
+    [r,i] = [timestamps ripple_signal],ripples(:,2));
     maps.ripples = SyncMap(r,i,'durations',durations,'nbins',nBins,'smooth',0);
     
     % Compute frequency Map
-    [f,i] = Sync([timestamps frequency],ripples(:,2),'durations',durations);
+    [f,i] = Sync([timestamp frequency],ripples(:,2),'durations',durations);
     maps.frequency = SyncMap(f,i,'durations',durations,'nbins',nBins,'smooth',0);
     
     % Compute phase map
-    [p,i] = Sync([timestamps phase],ripples(:,2),'durations',durations);
+    [p,i] = Sync([timestamp phase],ripples(:,2),'durations',durations);
     maps.phase = SyncMap(p,i,'durations',durations,'nbins',nBins,'smooth',0);
     
     % Compute amplitude map
-    [a,i] = Sync([timestamps amplitude],ripples(:,2),'durations',durations);
+    [a,i] = Sync([timestamp amplitude],ripples(:,2),'durations',durations);
     maps.amplitude = SyncMap(a,i,'durations',durations,'nbins',nBins,'smooth',0);
     
     idx(idx>length(maps.frequency(1,:))) = length(maps.frequency(1,:));
@@ -137,49 +137,14 @@ else
     data.peakAmplitude = maps.amplitude(:,centerBin);
     
     % Ripple durations
-    data.duration = abs(diff(ripples(:,[1 3])'))';
+    data.duration = abs(diff(ripples.timestamps'))';
     
     % Autocorrelogram and correlations
     %  if nargin > 2,
     %  	[stats.acg.data,stats.acg.t] = CCG(ripples(:,2),1,'binSize',corrBinSize,'halfBins',nCorrBins/2);
-%     [stats.acg.data,stats.acg.t] = CCG(ripples(:,2),1,'binSize',corrBinSize);
-%     [stats.amplitudeFrequency.rho,stats.amplitudeFrequency.p] = corrcoef(data.peakAmplitude,data.peakFrequency);
-%     [stats.durationFrequency.rho,stats.durationFrequency.p] = corrcoef(data.duration,data.peakFrequency);
-%     [stats.durationAmplitude.rho,stats.durationAmplitude.p] = corrcoef(data.duration,data.peakAmplitude);
-    
-    [~,dursort]=sort(data.duration,1,'descend');
-    [~,ampsort]=sort(data.peakAmplitude,1,'descend');
-    
-    figure()
-        x=maps.ripples(dursort,:);
-        for ii=1:100
-            subplot(10,10,ii)
-            plot(x(ii,:))
-            set(gca,'XTick',[]);
-            set(gca,'YTick',[]);
-            axis off
-        end
-        figure()
-        subplot 221
-        imagesc(maps.amplitude(ampsort,:))
-        title('SPW-R Amplitude: sorted by amplitude')
-        subplot 222
-        imagesc(maps.amplitude(dursort,:))
-        title('SPW-R Amplitude: sorted by duration')
-        subplot 223
-        imagesc(maps.ripples(ampsort,:))
-        title('SPW-R Filtered Signal: sorted by amplitude')
-        subplot 224
-        imagesc(maps.ripples(dursort,:))
-        title('SPW-R Filtered Signal: sorted by duration')
-        
-        figure()
-        scatterhist(log10(data.duration*1000),data.peakAmplitude,'kernel','on','Location','SouthWest',...
-            'Direction','out','Color','kbr','LineStyle',{'-','-.',':'},...
-            'LineWidth',[2,2,2],'Nbins',[20 100], 'marker','.','markersize',10)
-        box off
-        LogScale('x',10)
-        xlabel('logDuration (ms)'); ylabel('Amplitude (au)')
-        
+    [stats.acg.data,stats.acg.t] = CCG(ripples(:,2),1,'binSize',corrBinSize);
+    [stats.amplitudeFrequency.rho,stats.amplitudeFrequency.p] = corrcoef(data.peakAmplitude,data.peakFrequency);
+    [stats.durationFrequency.rho,stats.durationFrequency.p] = corrcoef(data.duration,data.peakFrequency);
+    [stats.durationAmplitude.rho,stats.durationAmplitude.p] = corrcoef(data.duration,data.peakAmplitude);
     
 end
