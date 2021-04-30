@@ -86,10 +86,8 @@ mmRippleRatio(meRipple<1) = 0;
 [minVal,loc] = max(mmRippleRatio);
 chan = channel_num(loc);
 disp([ 'Best channel detected: ' num2str(chan)]);
-[ripples] =  rippleDetection(ripple_signal(:,16),timestamps,Fs)
-  
-
-
+ripples = {};
+[ripples{i},i] =  rippleDetection(ripple_signal(:,21),timestamps,Fs);
 %% Plots
 disp('Plotting...')
 figure('Name', 'Unfiltered Data'),stack_plot(amplifier_data)

@@ -1,4 +1,4 @@
-function [ripples] =  rippleDetection(ripple_signal,timestamps,Fs)
+function [ripples,i] =  rippleDetection(ripple_signal,timestamps,Fs)
 keep = [];
 lowThresholdFactor = 2; % Ripple envoloppe must exceed lowThresholdFactor*stdev
 highThresholdFactor = 5; % Ripple peak must exceed highThresholdFactor*stdev
@@ -14,6 +14,7 @@ window = ones(windowLength,1)/windowLength;
 normalizedSquaredSignal = squaredSignal - mean(squaredSignal)/std(squaredSignal);
 % Detect ripple periods by thresholding normalized squared signal
 thresholded = normalizedSquaredSignal > lowThresholdFactor;
+
 start = find(diff(thresholded)>0);
 stop = find(diff(thresholded)<0);
 % Exclude last ripple if it is incomplete
@@ -92,7 +93,11 @@ else
     ripples = ripples((all((~isnan(ripples)),2)),:);
     disp(['After min duration test: ' num2str(size(ripples,1)) ' events.']);
     
-    
+    if isempty(ripples)
+        disp(['No ripples detected on channel ' num2str(size(ripple_signal,2))]);
+        i = size(ripple_signal,2)+1;
+        return 
+    end
     
     %%
     % Optionally, plot results
@@ -107,6 +112,8 @@ else
     plot(xlim,[highThresholdFactor highThresholdFactor],'k-');
     axis tight
     box off
+    set(gcf,'PaperUnits','inches','PaperPosition',[0 0 4 3]);...
+        print(gcf,'-painters','-depsc', 'Figures/RippleDetect.eps', '-r250');
 
     
     %% Analyze Ripples
@@ -158,10 +165,10 @@ else
     % Autocorrelogram and correlations
     %  if nargin > 2,
     %  	[stats.acg.data,stats.acg.t] = CCG(ripples(:,2),1,'binSize',corrBinSize,'halfBins',nCorrBins/2);
-%     [stats.acg.data,stats.acg.t] = CCG(ripples(:,2),1,'binSize',corrBinSize);
-%     [stats.amplitudeFrequency.rho,stats.amplitudeFrequency.p] = corrcoef(data.peakAmplitude,data.peakFrequency);
-%     [stats.durationFrequency.rho,stats.durationFrequency.p] = corrcoef(data.duration,data.peakFrequency);
-%     [stats.durationAmplitude.rho,stats.durationAmplitude.p] = corrcoef(data.duration,data.peakAmplitude);
+    [stats.acg.data,stats.acg.t] = CCG(ripples(:,2),ones(length(ripples(:,2)),1),'binSize',corrBinSize);
+    [stats.amplitudeFrequency.rho,stats.amplitudeFrequency.p] = corrcoef(data.peakAmplitude,data.peakFrequency);
+    [stats.durationFrequency.rho,stats.durationFrequency.p] = corrcoef(data.duration,data.peakFrequency);
+    [stats.durationAmplitude.rho,stats.durationAmplitude.p] = corrcoef(data.duration,data.peakAmplitude);
     
     [~,dursort]=sort(data.duration,1,'descend');
     [~,ampsort]=sort(data.peakAmplitude,1,'descend');
@@ -209,6 +216,33 @@ else
     xlabel('Duration (ms)'); ylabel('Amplitude (au)')
     set(gcf,'PaperUnits','inches','PaperPosition',[0 0 4 3]);...
         print(gcf,'-painters','-depsc', 'Figures/Residuals.eps', '-r250');
+    
+    electrode = 1;
+    f = figure;set(f,'name',['Ripple Stats - ' int2str(electrode)]);
+    
+    subplot(2,2,1);a = gca;hold on;
+    plot(((1:nBins)'-ceil(nBins/2))/nBins*diff(durations),maps(electrode).ripples','b');
+    
+    subplot(2,2,2);
+    b = bar(stats(electrode).acg.t,stats(electrode).acg.data);set(b,'FaceColor','r');xlabel('Autocorrelogram');
+%      imagesc(stats(electrode).acg.t,stats(electrode).acg.data);colormap(jet);
+    %  	b = bar(((0:nCorrBins)-nCorrBins/2)/1000,stats{electrode}.acg.data);xlim([-nCorrBins nCorrBins]/2000);set(b,'FaceColor',[0 0 0]);xlabel('Autocorrelogram');
+    
+    subplot(2,3,4);a = gca;
+    PlotDistribution(data(electrode).peakAmplitude,data(electrode).peakFrequency,'nbins',1000); %,'smooth',5
+    axes(a);xlabel(['r=' num2str(stats(electrode).amplitudeFrequency.rho(1,2)) ' p=' num2str(stats(electrode).amplitudeFrequency.p(1,2))]);ylabel('Frequency vs Amplitude');
+    
+    subplot(2,3,5);a = gca;
+    PlotDistribution(data(electrode).duration,data(electrode).peakFrequency,'nbins',1000); %,'smooth',5
+    axes(a);xlabel(['r=' num2str(stats(electrode).durationFrequency.rho(1,2)) ' p=' num2str(stats(electrode).durationFrequency.p(1,2))]);ylabel('Frequency vs Duration');
+    line([prctile(data(electrode).duration,99.5) prctile(data(electrode).duration,99.5)],[100 200],'color','k')
+    
+    subplot(2,3,6);a = gca;
+    PlotDistribution(data(electrode).duration,data(electrode).peakAmplitude,'nbins',1000); %,'smooth',5
+    axes(a);xlabel(['r=' num2str(stats(electrode).durationAmplitude.rho(1,2)) ' p=' num2str(stats(electrode).durationAmplitude.p(1,2))]);ylabel('Amplitude vs Duration');
+    
+    set(gcf,'PaperUnits','inches','PaperPosition',[0 0 5 3]);...
+        print(gcf,'-painters','-depsc', 'Figures/SWR-stats.eps', '-r250');
     
     
 end
