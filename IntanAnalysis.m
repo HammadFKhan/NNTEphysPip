@@ -148,6 +148,6 @@ figure('Name','LFP'),LFP(dataLow);xlim([5E5 7E5]);
 set(gcf,'PaperUnits','inches','PaperPosition',[0 0 4 3]);...
     print(gcf,'-painters','-depsc', 'Figures/LFP.eps', '-r250');
 %%
-linescan = spineScan('C:\Users\khan332\Downloads\LineScan-04262021-spine1-successful-175\LineScan-04262021-spine1-successful-175\frap_recovery.csv');
+linescan = spineScan();
 
-smoother = smooth(linescan,0.1,'rloess');
+% smoother = smooth(linescan,0.1,'sgolay',3);
