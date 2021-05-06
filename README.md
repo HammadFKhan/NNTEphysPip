@@ -1,4 +1,7 @@
 # NNTEphysPip
+
+![gitsha-01](https://user-images.githubusercontent.com/56140216/117356034-50877180-ae81-11eb-8e78-e014f26c2eab.png)
+
 Electrophysiology Pipeline
 
 ### Image and data processing pipeline for calcium imaging
