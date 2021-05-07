@@ -1,102 +1,175 @@
 %% Intan Data
-clear; clc; close all;
+clear; clc; 
+close all;
 read_Intan_RHD2000_file
-% amplifier_data = amplifier_data(:,1:100000);
+% % amplifier_data = amplifier_data(:,1:100000);
 % t_amplifier = t_amplifier(1:100000);
+amplifier_data_sorted = channelSortEdge(amplifier_data);
+amplifier_data = amplifier_data_sorted;
 %%
-channel_num = 15:31;
-figure()
-plot(t_amplifier,amplifier_data(channel_num,:));
+% set(0,'DefaultFigureWindowStyle','docked')
+channel_num = 1:size(amplifier_data,1);
+% Notch filtering at 60 Hz
+Fs = 20000;
+d = designfilt('bandstopiir','FilterOrder',2, ...
+               'HalfPowerFrequency1',59,'HalfPowerFrequency2',61, ...
+               'DesignMethod','butter','SampleRate',Fs);
+e = designfilt('bandstopiir','FilterOrder',2, ...
+               'HalfPowerFrequency1',49,'HalfPowerFrequency2',51, ...
+               'DesignMethod','butter','SampleRate',Fs);
+% Design butterworth filters for single unit
+Fc = [250 1000];
+Wn = Fc./(Fs/2);
+[b1,a1] = butter(6,Wn,'bandpass');
+
+% Design butterworth filters for LFP
+Fc = [250];
+Wn = Fc./(Fs/2);
+[b4,a4] = butter(2,Wn,'low');
+% Design butterworth filter for Ripples
+Fc = [140 200];
+Wn = Fc./(Fs/2);
+[b3,a3]=butter(4,Wn,'bandpass');
+%% General Filtering
+% Fc = [3000];
+% Wn = Fc./(Fs/2);
+% [b,a] = cheby2(4,20,Wn,'low');
+% amplifier_data = filtfilt(b,a,amplifier_data);
+
+
 %%
-lowpassfilter = [lowpass(amplifier_data(channel_num,:),10,frequency_parameters.amplifier_sample_rate/5,'ImpulseResponse','iir','Steepness',0.75)];
-figure()
-plot(t_amplifier,lowpassfilter);
+findSpikes = true;
+spikeWindow = .00025*Fs;%5ms
+threshStd = 5;
+spikeCount = zeros(length(channel_num),1);
+ripples = {};
 %%
-% highpassfilter = [highpass(amplifier_data(channel_num,:),500,frequency_parameters.amplifier_sample_rate,'ImpulseResponse','iir','Steepness',0.50)];
-% figure()
-% plot(t_amplifier,highpassfilter);
-% %%
-% bandpassfilter = [bandpass(amplifier_data(channel_num,:),[300,3000],frequency_parameters.amplifier_sample_rate,'ImpulseResponse','iir','Steepness',0.60)];
-% figure()
-% plot(t_amplifier,bandpassfilter);
-%% Butterworth
-for i = 25:30
-    rawData = amplifier_data(channel_num(i),:);
-    Fs = 20000;
-    Fc = [300 3000];
-    Wn = Fc./(Fs/2);
-    [b1,a1] = butter(4,Wn,'bandpass');
-    bandpassData(i,:) = filtfilt(b1,a1,double(rawData));
-    figure(i)
-    plot(t_amplifier,bandpassData(i,:));
-    % Spike Detection
-    dt = t_amplifier(2)-t_amplifier(1);
-    ds(i,:) = diff(bandpassData(i,:));
-    ds_sub(i) = mean(ds(i,floor(0.5/dt)+1:floor(1/dt)));
-    ds_std(i) = std(ds(i,floor(0.5/dt)+1:floor(1/dt)));
-    threshold(i) = 3*ds_std(i);
-    spike_detection_ds{i} = [];
-    for n = 2:length(ds)
-        if abs(ds(i,n))>threshold(i) && abs(ds(i,n-1))<=threshold(i)
-            spike_detection_ds{i} = [spike_detection_ds{i}, n*dt]; % spike time in s
-%         else 
-%             spike_detection_ds{i} = [spike_detection_ds{i}, NaN];
+H = waitbar(0,'Compiling...');
+for i = 1:channel_num(end)
+    warning('off','all')
+    waitbar(i/channel_num(end),H)
+    rawData = filtfilt(d,amplifier_data(channel_num(i),:));
+    lowpassData  = filtfilt(b4,a4,rawData);
+    bandpassData = filtfilt(b1,a1,rawData);
+    
+    dataS.rawData(i,:) = rawData;
+    dataS.lowpassData(i,:) = lowpassData;
+    dataS.bandpassData(i,:) = bandpassData;
+    
+    dataLow.(['Channel' num2str(i)]) = lowpassData;
+    dataHigh.(['Channel' num2str(i)]) = bandpassData;
+    
+    %find spikes
+    thresh = threshStd*std(bandpassData);
+    [pks,locs] = findpeaks(-bandpassData,Fs,'MinPeakHeight',thresh,'MinPeakDistance',.001);
+    %save the spike times for this channel
+    window = .00175*Fs;%35ms
+    if(~isempty(pks))
+        allLocs.(['Channel' num2str(channel_num(i))]) = locs;
+        for pp = 1:length(locs)
+            thisLoc = locs(pp)*Fs;
+            if(thisLoc-window>1 && thisLoc+window<length(bandpassData))%%peak can't occur at the very end or very beginning of the data set
+                spikeCount(channel_num(i)) = spikeCount(channel_num(i))+1;
+                %extract a 4ms window around the spike peak
+                allSpikes.(['Channel' num2str(channel_num(i))])(spikeCount(channel_num(i)),:) = bandpassData(thisLoc-window:thisLoc+window);
+            end
         end
+    else
+        allLocs.(['Channel' num2str(channel_num(i))]) = [];
+    end
+    
+    % Ripples
+    timestamps(:,1) = t_amplifier;
+    ripple_signal(:,i) = FiltFiltM(b3,a3,rawData);
+    pow(:,i) = fastrms(ripple_signal(:,i),15);
+    mRipple(i) = mean(pow(:,i));
+    meRipple(i) = median(pow(:,i));
+    mmRippleRatio(i) = mRipple(i)./meRipple(i);
+    % Ripple detection
+    %     [ripples] =  rippleDetection(ripple_signal(:,i),timestamps,Fs)
+    %     allRipples{i} = ripples;
+    
+    [rippleData,data,stats,maps] =  rippleDetection(ripple_signal(:,i),timestamps,Fs);
+    rippleBatch(i).rippleData = rippleData;
+    rippleBatch(i).data = data;
+    rippleBatch(i).stats = stats;
+    rippleBatch(i).maps = maps;
+end
+close(H)
+mmRippleRatio(mRipple<1) = 0;
+mmRippleRatio(meRipple<1) = 0;
+
+[minVal,loc] = max(mmRippleRatio);
+chan = channel_num(loc);
+disp([ 'Best channel detected: ' num2str(chan)]);
+% ripples = {};
+ripplePlot(rippleData,data,stats,maps);
+%%
+fn = fieldnames(dataLow);
+% findData = zeros(30,.3*Fs+1);
+count = 1;
+for i = 1:size(rippleBatch,2)
+    if size(fieldnames(rippleBatch(count).rippleData),1) < 3
+        rippleBatch(count) = []; 
+    else
+        count = count+1;
     end
 end
 
-%% Plot Spike Plot
-% tic
-% figure('Name','Spike Plot','NumberTitle','off')
-% for x = 1:length(spike_detection_ds)
-%     dspike_vector(x,1) = length(spike_detection_ds{x});
-% end
-% dspike_vector_max = max(dspike_vector);
-%     for j = 1:length(spike_detection_ds)
-%         if length(spike_detection_ds{j}) ~= dspike_vector_max
-%             dif = abs(length(spike_detection_ds{j}) - dspike_vector_max);
-%             spike_detection_ds{j}(end+dif) = 0;
-%         end
-%         for n = 1:dspike_vector_max
-%             if spike_detection_ds{j}(n) == 0
-%                 spike_detection_ds{j}(n) = NaN;
-%             end
-%         end
-%         plot(spike_detection_ds{j},j,'.','MarkerSize',10,'Color','black'); hold on;
-%         dspike_plot(:,j) = cell2mat(spike_detection_ds(j)'); 
-%         
-%     end
-%     axis([0 t_amplifier(end) 0 length(spike_detection_ds)+1]);
-%     
-% % figure('Name','Raster Plot','NumberTitle','off')
-% %  for v = 1:length(spike_detection_ds)
-% %      plot_raster(spike_detection_ds{v},v); hold on;
-% %  end
-% %  xlim([0 T(end)]);
-% %  ylim([0 length(spike_detection_ds)+2]);
-% %  ax = gca;
-%  ax.Box = 'off';
-%  rastertime = toc
-% 
-% 
-%% find all spikes and align to the peak
-%find negative peaks in filtered data with an amplitude of at least 4 std and 1ms  in
-%separation
-filteredData = lowpassfilter;
-thresh = 3*std(filteredData);
-[pks,locs] = findpeaks(-filteredData,Fs,'MinPeakHeight',thresh,'MinPeakDistance',.001);
-%for each detected spike, extract a window 2ms before and after the peak
-spikeCount = 0;
-window = .00175*Fs;%5ms
-if(~isempty(pks))
-    for pp = 1:length(locs)
-        thisLoc = locs(pp)*Fs;
-        if(thisLoc-window>1 && thisLoc+window<length(filteredData))%%peak can't occur at the very end or very beginning of the data set
-            spikeCount = spikeCount+1;
-            %extract a 4ms window around the spike peak
-            allSpikes(spikeCount,:) = filteredData(thisLoc-window:thisLoc+window);
-        end
+for ii = 1:size(rippleBatch,2)
+    LFPData = dataLow.(string(fn(ii)));
+    rawData = dataS.rawData(ii,:);
+    findCh = (rippleBatch(ii).rippleData.ripples(2,2))*Fs;
+    try
+        findDataLFP(ii,:) = LFPData(1,-.1*Fs+findCh:.1*Fs+findCh);
+        findDataRaw(ii,:) = rawData(1,-.1*Fs+findCh:.1*Fs+findCh);
+    catch ME
+        disp('Not all channels were analyzed')
+        break
     end
 end
-figure()
-plot(all_Spikes);
+figure('Name','SWR Onset Frequency')
+for j = 1:size(findDataRaw,1)
+    [cfs,f] = cwt(findDataRaw(j,:),Fs,'FrequencyLimits',[20 300]);
+    % plot(abs(cfs(1,:)));
+    subplot(6,6,j),imagesc(-100:100,f,abs(cfs))
+%     xlabel('Time (s)')
+%     ylabel('Frequency (Hz)')
+    axis xy
+    colormap(jet)
+    % ylim([0 250])
+%     title('CWT of Ripple Data')
+end
+set(gcf,'PaperUnits','inches','PaperPosition',[0 0 4 3]);...
+    print(gcf,'-painters','-depsc', 'Figures/SWRonset.eps', '-r250');
+
+Vq = interp2(findDataLFP,5);
+figure('Name','CSD');
+imagesc(Vq);colormap(jet); colorbar;
+set(gcf,'PaperUnits','inches','PaperPosition',[0 0 4 3]);...
+    print(gcf,'-painters','-depsc', 'Figures/CSD.eps', '-r250');
+%% Plots
+disp('Plotting...')
+figure('Name', 'Unfiltered Data'),stack_plot(amplifier_data);
+set(gcf,'PaperUnits','inches','PaperPosition',[0 0 4 3]);...
+    print(gcf,'-painters','-depsc', 'Figures/Raw_data.eps', '-r250');
+figure('Name','Singe Unit Waveforms'),SingleUnits(allSpikes);
+set(gcf,'PaperUnits','inches','PaperPosition',[0 0 4 3]);...
+    print(gcf,'-painters','-depsc', 'Figures/Single_unit_waveforms.eps', '-r250');
+figure('Name','Multi-Unit Activity'),MUA(dataHigh);
+set(gcf,'PaperUnits','inches','PaperPosition',[0 0 4 3]);...
+    print(gcf,'-painters','-depsc', 'Figures/MultiUnit.eps', '-r250');
+figure('Name','LFP'),LFP(dataLow); 
+set(gcf,'PaperUnits','inches','PaperPosition',[0 0 4 3]);...
+    print(gcf,'-painters','-depsc', 'Figures/LFP.eps', '-r250');
+%%
+try
+encoder_data = convert_encoder(board_adc_data(2,:),timestamps);
+catch ME
+    disp('No ADC data')
+    return
+end
+figure('Name','Pulse Data');plot(encoder_data.rotate_pulse);
+figure('Name','Angular Distance');bar(encoder_data.ang_distance);
+figure('Name','Angular Velocity');bar(encoder_data.ang_velocity,'FaceColor',[.16 .835 .384],'EdgeColor','none');
+figure('Name','Avg. Angular Velocity');avgV = movmean(encoder_data.ang_velocity,2);bar(avgV,'FaceColor',[.16 .835 .384],'EdgeColor','none');
