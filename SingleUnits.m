@@ -10,8 +10,8 @@ for i = channelStart:channelEnd
     theseSpikes = allSpikes.(string(fn(i)));
     ycenter =[spacing:spacing:spacing*length(theseSpikes)]; 
     t = (1:length(theseSpikes(1,:)))./Fs.*1000;
-    plot(t,theseSpikes+space,'Color',[0.5 0.5 0.5 0.4]), hold on
-    plot(t,mean(theseSpikes)+space,'k','LineWidth',2)    
+    subplot(6,6,i),plot(t,theseSpikes,'Color',[0.5 0.5 0.5 0.4]), ylim([-40 20]),hold on
+    subplot(6,6,i),plot(t,mean(theseSpikes),'k','LineWidth',2),ylim([-40 20])    
     space = space+spacing;
     axis tight
     box off
