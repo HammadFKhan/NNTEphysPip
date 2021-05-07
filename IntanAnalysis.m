@@ -8,18 +8,19 @@ amplifier_data_sorted = channelSortEdge(amplifier_data);
 amplifier_data = amplifier_data_sorted;
 %%
 % set(0,'DefaultFigureWindowStyle','docked')
-channel_num = 1:31;
-% Design butterworth filters for single unit
+channel_num = 1:size(amplifier_data,1);
+% Notch filtering at 60 Hz
 Fs = 20000;
-Fc = [250 3000];
+d = designfilt('bandstopiir','FilterOrder',2, ...
+               'HalfPowerFrequency1',59,'HalfPowerFrequency2',61, ...
+               'DesignMethod','butter','SampleRate',Fs);
+% Design butterworth filters for single unit
+Fc = [250 1000];
 Wn = Fc./(Fs/2);
 [b1,a1] = butter(6,Wn,'bandpass');
 
 % Design butterworth filters for LFP
-Fc = [1];
-Wn = Fc./(Fs/2);
-[b2,a2] = butter(1,Wn,'high');
-Fc = [50];
+Fc = [250];
 Wn = Fc./(Fs/2);
 [b4,a4] = butter(2,Wn,'low');
 % Design butterworth filter for Ripples
@@ -44,14 +45,13 @@ H = waitbar(0,'Compiling...');
 for i = 1:channel_num(end)
     warning('off','all')
     waitbar(i/channel_num(end),H)
-    rawData = amplifier_data(channel_num(i),:);
-    highpass_LFP = filtfilt(b2,a2,rawData);
-    lowpassData  = filtfilt(b4,a4,highpass_LFP);
+    rawData = filtfilt(d,amplifier_data(channel_num(i),:));
+    lowpassData  = filtfilt(b4,a4,rawData);
     bandpassData = filtfilt(b1,a1,rawData);
     
-    data.rawData(i,:) = rawData;
-    data.lowpassData(i,:) = lowpassData;
-    data.bandpassData(i,:) = bandpassData;
+    dataS.rawData(i,:) = rawData;
+    dataS.lowpassData(i,:) = lowpassData;
+    dataS.bandpassData(i,:) = bandpassData;
     
     dataLow.(['Channel' num2str(i)]) = lowpassData;
     dataHigh.(['Channel' num2str(i)]) = bandpassData;
@@ -102,24 +102,12 @@ disp([ 'Best channel detected: ' num2str(chan)]);
 % ripples = {};
 ripplePlot(rippleData,data,stats,maps);
 %%
-figure()
-[cfs,f] = cwt(amplifier_data(4,:)',Fs,'FrequencyLimit',[1 300]);
-% plot(abs(cfs(1,:)));
-imagesc(-100:100,f,abs(cfs))
-xlabel('Time (s)')
-ylabel('Frequency (Hz)')
-axis xy
-colormap(jet)
-% ylim([0 250])
-title('CWT of Ripple Data')
-%%
 fn = fieldnames(dataLow);
-findData = zeros(30,.3*Fs+1);
+% findData = zeros(30,.3*Fs+1);
 count = 1;
 for i = 1:size(rippleBatch,2)
-    if size(fieldnames(rippleBatch(count).rippleData),1) < 1
+    if size(fieldnames(rippleBatch(count).rippleData),1) < 3
         rippleBatch(count) = []; 
-        count = count-1;
     else
         count = count+1;
     end
@@ -127,27 +115,59 @@ end
 
 for ii = 1:size(rippleBatch,2)
     LFPData = dataLow.(string(fn(ii)));
-    findCh = (rippleBatch(ii).rippleData.ripples(3,2))*Fs;
-    findData(ii,:) = LFPData(1,-.150*Fs+findCh:.15*Fs+findCh);
+    rawData = dataS.rawData(ii,:);
+    findCh = (rippleBatch(ii).rippleData.ripples(2,2))*Fs;
+    try
+        findDataLFP(ii,:) = LFPData(1,-.1*Fs+findCh:.1*Fs+findCh);
+        findDataRaw(ii,:) = rawData(1,-.1*Fs+findCh:.1*Fs+findCh);
+    catch ME
+        disp('Not all channels were analyzed')
+        break
+    end
 end
-Vq = interp2(findData,5);
-figure;
-imagesc(Vq);colormap(jet);
+figure('Name','SWR Onset Frequency')
+for j = 1:size(findDataRaw,1)
+    [cfs,f] = cwt(findDataRaw(j,:),Fs,'FrequencyLimits',[20 300]);
+    % plot(abs(cfs(1,:)));
+    subplot(6,6,j),imagesc(-100:100,f,abs(cfs))
+%     xlabel('Time (s)')
+%     ylabel('Frequency (Hz)')
+    axis xy
+    colormap(jet)
+    % ylim([0 250])
+%     title('CWT of Ripple Data')
+end
+set(gcf,'PaperUnits','inches','PaperPosition',[0 0 4 3]);...
+    print(gcf,'-painters','-depsc', 'Figures/SWRonset.eps', '-r250');
+
+figure('Name','CSD');
+channelmap = ones(size(findDataLFP,1),1);
+Vq = interp2(findDataLFP,5);
+imagesc(-100:100,channelmap,Vq);colormap(jet); colorbar;box off;set(gca,'YTick',[]);
+set(gcf,'PaperUnits','inches','PaperPosition',[0 0 4 3]);...
+    print(gcf,'-painters','-depsc', 'Figures/CSD.eps', '-r250');
 %% Plots
 disp('Plotting...')
-figure('Name', 'Unfiltered Data'),stack_plot(amplifier_data)
+figure('Name', 'Unfiltered Data'),stack_plot(amplifier_data);
 set(gcf,'PaperUnits','inches','PaperPosition',[0 0 4 3]);...
     print(gcf,'-painters','-depsc', 'Figures/Raw_data.eps', '-r250');
-figure('Name','Singe Unit Waveforms'),SingleUnits(allSpikes,Fs,200);
+figure('Name','Singe Unit Waveforms'),SingleUnits(allSpikes);
 set(gcf,'PaperUnits','inches','PaperPosition',[0 0 4 3]);...
     print(gcf,'-painters','-depsc', 'Figures/Single_unit_waveforms.eps', '-r250');
 figure('Name','Multi-Unit Activity'),MUA(dataHigh);
 set(gcf,'PaperUnits','inches','PaperPosition',[0 0 4 3]);...
     print(gcf,'-painters','-depsc', 'Figures/MultiUnit.eps', '-r250');
-figure('Name','LFP'),LFP(dataLow);xlim([5E5 7E5]); 
+figure('Name','LFP'),LFP(dataLow); 
 set(gcf,'PaperUnits','inches','PaperPosition',[0 0 4 3]);...
     print(gcf,'-painters','-depsc', 'Figures/LFP.eps', '-r250');
 %%
-linescan = spineScan();
-
-% smoother = smooth(linescan,0.1,'sgolay',3);
+try
+encoder_data = convert_encoder(board_adc_data(2,:),timestamps);
+catch ME
+    disp('No ADC data')
+    return
+end
+figure('Name','Pulse Data');plot(encoder_data.rotate_pulse);
+figure('Name','Angular Distance');bar(encoder_data.ang_distance);
+figure('Name','Angular Velocity');bar(encoder_data.ang_velocity,'FaceColor',[.16 .835 .384],'EdgeColor','none');
+figure('Name','Avg. Angular Velocity');avgV = movmean(encoder_data.ang_velocity,2);bar(avgV,'FaceColor',[.16 .835 .384],'EdgeColor','none');
