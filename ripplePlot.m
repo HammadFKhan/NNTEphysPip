@@ -33,7 +33,7 @@ for ii=1:rippleplot
     axis off
 end
 set(gcf,'PaperUnits','inches','PaperPosition',[0 0 4 3]);...
-    print(gcf,'-painters','-depsc', 'Figures/Ripple.eps', '-r250');
+    print(gcf,'-painters','-dpng', 'Figures/Ripple.png', '-r250');
 
 figure('Name','SPW-R Data')
 subplot 221
