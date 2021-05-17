@@ -1,0 +1,27 @@
+function dataIntan = preprocess_filtering(IntanData,channel_num)
+Fs = 20000;
+d = designfilt('bandstopiir','FilterOrder',2, ...
+               'HalfPowerFrequency1',59,'HalfPowerFrequency2',61, ...
+               'DesignMethod','butter','SampleRate',Fs);
+% Design butterworth filters for single unit
+Fc = [250 1000];
+Wn = Fc./(Fs/2);
+[b1,a1] = butter(6,Wn,'bandpass');
+
+% Design butterworth filters for LFP
+Fc = [250];
+Wn = Fc./(Fs/2);
+[b4,a4] = butter(2,Wn,'low');
+
+rawData = filtfilt(d,IntanData(channel_num,:));
+lowpassData  = filtfilt(b4,a4,rawData);
+bandpassData = filtfilt(b1,a1,rawData);
+
+dataIntan.rawData(channel_num,:) = rawData;
+dataIntan.lowpassData(channel_num,:) = lowpassData;
+dataIntan.bandpassData(channel_num,:) = bandpassData;
+
+dataIntan.LFP.(['Channel' num2str(channel_num)]) = lowpassData;
+dataIntan.MUA.(['Channel' num2str(channel_num)]) = bandpassData;
+end
+
