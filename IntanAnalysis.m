@@ -42,20 +42,11 @@ spikeCount = zeros(length(channel_num),1);
 ripples = {};
 %%
 H = waitbar(0,'Compiling...');
+%%
+intanData = preprocess_filtering(amplifier_data);
+intanData = spikeSorting(intanData);
+%%
 for i = 1:channel_num(end)
-    warning('off','all')
-    waitbar(i/channel_num(end),H)
-    rawData = filtfilt(d,amplifier_data(channel_num(i),:));
-    lowpassData  = filtfilt(b4,a4,rawData);
-    bandpassData = filtfilt(b1,a1,rawData);
-    
-    dataS.rawData(i,:) = rawData;
-    dataS.lowpassData(i,:) = lowpassData;
-    dataS.bandpassData(i,:) = bandpassData;
-    
-    dataLow.(['Channel' num2str(i)]) = lowpassData;
-    dataHigh.(['Channel' num2str(i)]) = bandpassData;
-    
     %find spikes
     thresh = threshStd*std(bandpassData);
     [pks,locs] = findpeaks(-bandpassData,Fs,'MinPeakHeight',thresh,'MinPeakDistance',.001);
@@ -115,7 +106,7 @@ end
 
 for ii = 1:size(rippleBatch,2)
     LFPData = dataLow.(string(fn(ii)));
-    rawData = dataS.rawData(ii,:);
+    rawData = intanData.rawData(ii,:);
     findCh = (rippleBatch(ii).rippleData.ripples(2,2))*Fs;
     try
         findDataLFP(ii,:) = LFPData(1,-.1*Fs+findCh:.1*Fs+findCh);
@@ -142,7 +133,12 @@ set(gcf,'PaperUnits','inches','PaperPosition',[0 0 4 3]);...
 
 figure('Name','CSD');
 channelmap = ones(size(findDataLFP,1),1);
-Vq = interp2(findDataLFP,5);
+try
+    Vq = interp2(findDataLFP,5);
+catch ME
+    disp('Sample set is too small for interpolation, plotting raw...');
+    Vq = findDataLFP;
+end
 imagesc(-100:100,channelmap,Vq);colormap(jet); colorbar;box off;set(gca,'YTick',[]);
 set(gcf,'PaperUnits','inches','PaperPosition',[0 0 4 3]);...
     print(gcf,'-painters','-depsc', 'Figures/CSD.eps', '-r250');
