@@ -1,14 +1,22 @@
-function ripplePlot(rippleData,data,stats,maps)
+function ripplePlot(Ripples,Fs)
+% Parsing
+maps = Ripples.maps;
+stats = Ripples.stats;
+data = Ripples.data;
+LFP = Ripples.rippleOnset.LFP;
+SWR = Ripples.rippleOnset.SWR;
+cfs = Ripples.rippleOnset.cfs;
+waveletFreq = Ripples.rippleOnset.f;
 % Optionally, plot results
 figure('Name','Detected Signal')
-plot(rippleData.timestamps,rippleData.signal);hold on;
-for j=1:size(rippleData.ripples,1)
-    plot([rippleData.ripples(j,1) rippleData.ripples(j,1)],ylim,'g-');
-    plot([rippleData.ripples(j,2) rippleData.ripples(j,2)],ylim,'k-');
-    plot([rippleData.ripples(j,3) rippleData.ripples(j,3)],ylim,'r-');
+plot(Ripples.timestamps,Ripples.signal);hold on;
+for j=1:size(Ripples.ripples,1)
+    plot([Ripples.ripples(j,1) Ripples.ripples(j,1)],ylim,'g-');
+    plot([Ripples.ripples(j,2) Ripples.ripples(j,2)],ylim,'k-');
+    plot([Ripples.ripples(j,3) Ripples.ripples(j,3)],ylim,'r-');
 end
-plot(xlim,[rippleData.lowThresholdFactor rippleData.lowThresholdFactor],'k','linestyle','--');
-plot(xlim,[rippleData.highThresholdFactor rippleData.highThresholdFactor],'k-');
+plot(xlim,[Ripples.lowThresholdFactor Ripples.lowThresholdFactor],'k','linestyle','--');
+plot(xlim,[Ripples.highThresholdFactor Ripples.highThresholdFactor],'k-');
 axis tight
 box off
 set(gcf,'PaperUnits','inches','PaperPosition',[0 0 4 3]);...
@@ -66,7 +74,7 @@ electrode = 1;
 f = figure;set(f,'name',['Ripple Stats - ' int2str(electrode)]);
 
 subplot(2,2,1);a = gca;hold on;
-plot(((1:rippleData.nBins)'-ceil(rippleData.nBins/2))/rippleData.nBins*diff(rippleData.durations),maps(electrode).ripples','b');
+plot(((1:Ripples.nBins)'-ceil(Ripples.nBins/2))/Ripples.nBins*diff(Ripples.durations),maps(electrode).ripples','b');
 
 subplot(2,2,2);
 b = bar(stats(electrode).acg.t,stats(electrode).acg.data);set(b,'FaceColor','r');xlabel('Autocorrelogram');
@@ -88,4 +96,33 @@ axes(a);xlabel(['r=' num2str(stats(electrode).durationAmplitude.rho(1,2)) ' p=' 
 
 set(gcf,'PaperUnits','inches','PaperPosition',[0 0 5 3]);...
     print(gcf,'-painters','-depsc', 'Figures/SWR-stats.eps', '-r250');
+
+%% Ripple Onset
+
+figure('Name','SWR Onset Frequency')
+for ii = 1:size(SWR,2)
+    plotSize = ceil(sqrt(size(SWR,2)));
+    subplot(plotSize,plotSize,ii),imagesc(-150:150,waveletFreq,abs(cfs(:,:,ii)))
+    xlabel('Time (s)')
+    ylabel('Frequency (Hz)')
+    axis xy
+    colormap(jet)
+    % ylim([0 250])
+%     title('CWT of Ripple Data')
+end
+% set(gcf,'PaperUnits','inches','PaperPosition',[0 0 4 3]);...
+%     print(gcf,'-painters','-depsc', 'Figures/SWRonset.eps', '-r250');
+
+figure('Name','CSD');
+channelmap = ones(size(LFP,2),1);
+avgLFP = mean(LFP,3);
+try
+    Vq = interp2(avgLFP,5);
+catch ME
+    disp('Sample set is too small for interpolation, plotting raw...');
+    Vq = avgLFP;
+end
+imagesc(-150:150,channelmap,Vq);colormap(jet); colorbar;box off;set(gca,'YTick',[]);
+% set(gcf,'PaperUnits','inches','PaperPosition',[0 0 4 3]);...
+%     print(gcf,'-painters','-depsc', 'Figures/CSD.eps', '-r250');
 end
