@@ -93,13 +93,13 @@ for j = 1:size(Ripples.detectedripples,2)
             else
                 findDataRaw(:,ii) = rawData(start:stop,1);
                 findSpikes(:,:,ii) = Spikes.binary(:,start:stop);
-                for jj = 1:filtData.channel_num
-                    findDataLFP(:,jj,ii) = LFPData(start:stop,jj);                    
-                end
+%                 for jj = 1:filtData.channel_num
+%                     findDataLFP(:,jj,ii) = LFPData(start:stop,jj);                    
+%                 end
             end
             [cfs(:,:,ii),f] = cwt(findDataRaw(:,ii),Fs,'FrequencyLimits',[0.1 500]);
         end
-        Ripples(rippleChannel).rippleOnset.LFP = findDataLFP;
+%         Ripples(rippleChannel).rippleOnset.LFP = findDataLFP;
         Ripples(rippleChannel).rippleOnset.SWR = findDataRaw;
         Ripples(rippleChannel).rippleOnset.PeriStim = findSpikes;
         Ripples(rippleChannel).rippleOnset.cfs = cfs;
