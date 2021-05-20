@@ -4,17 +4,22 @@ close all;
 read_Intan_RHD2000_file
 % % amplifier_data = amplifier_data(:,1:100000);
 % t_amplifier = t_amplifier(1:100000);
-amplifier_data_sorted = channelSortEdge(amplifier_data);
-amplifier_data = amplifier_data_sorted;
+% amplifier_data_sorted = channelSortEdge(amplifier_data);
+% amplifier_data = amplifier_data_sorted;
+amplifier_data = flip(amplifier_data,1);
 %%
 % set(0,'DefaultFigureWindowStyle','docked')
 filtData = preprocess_filtering(amplifier_data,t_amplifier);
 Spikes = spikeSorting(filtData);
 Ripples = rippleDetection(filtData);
 Ripples = rippleAnalysis(filtData,Ripples);
-ripplePlot(Ripples);
+%%
+data = filtData.lowpassData(:,1:20000)';
+spacing = 2E-5;
+[CSDoutput]  = CSD(data,20000,spacing,'inverse',spacing*5);
 %% Plots
 disp('Plotting...')
+ripplePlot(Ripples);
 figure('Name', 'Unfiltered Data'),stack_plot(amplifier_data);
 set(gcf,'PaperUnits','inches','PaperPosition',[0 0 4 3]);...
     print(gcf,'-painters','-depsc', 'Figures/Raw_data.eps', '-r250');
