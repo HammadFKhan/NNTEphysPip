@@ -113,16 +113,16 @@ end
 % set(gcf,'PaperUnits','inches','PaperPosition',[0 0 4 3]);...
 %     print(gcf,'-painters','-depsc', 'Figures/SWRonset.eps', '-r250');
 
-figure('Name','CSD');
-channelmap = ones(size(LFP,2),1);
-avgLFP = mean(LFP,3);
-try
-    Vq = interp2(avgLFP,5);
-catch ME
-    disp('Sample set is too small for interpolation, plotting raw...');
-    Vq = avgLFP;
-end
-imagesc(-150:150,channelmap,Vq);colormap(jet); colorbar;box off;set(gca,'YTick',[]);
+% figure('Name','CSD');
+% channelmap = ones(size(LFP,2),1);
+% avgLFP = mean(LFP,3);
+% try
+%     Vq = interp2(avgLFP,5);
+% catch ME
+%     disp('Sample set is too small for interpolation, plotting raw...');
+%     Vq = avgLFP;
+% end
+% imagesc(-150:150,channelmap,Vq);colormap(jet); colorbar;box off;set(gca,'YTick',[]);
 % set(gcf,'PaperUnits','inches','PaperPosition',[0 0 4 3]);...
 %     print(gcf,'-painters','-depsc', 'Figures/CSD.eps', '-r250');
 end
