@@ -8,7 +8,7 @@ d = designfilt('bandstopiir','FilterOrder',2, ...
                'HalfPowerFrequency1',59,'HalfPowerFrequency2',61, ...
                'DesignMethod','butter','SampleRate',Fs);
 % Design butterworth filters for single unit
-Fc = [250 1000];
+Fc = [250 3000];
 Wn = Fc./(Fs/2);
 [b1,a1] = butter(6,Wn,'bandpass');
 

@@ -12,13 +12,21 @@ amplifier_data = flip(amplifier_data,1);
 filtData = preprocess_filtering(amplifier_data,t_amplifier);
 Spikes = spikeSorting(filtData);
 Ripples = rippleDetection(filtData);
-Ripples = rippleAnalysis(filtData,Ripples);
+Ripples = rippleAnalysis(filtData,Ripples,Spikes);
+%%
+PeriStimt = sum(Ripples.rippleOnset.PeriStim,3);
+PeriStimH = sum(PeriStimt,1);
+correlation = corrcoef(PeriStimt);
+correctNan = isnan(correlation);
+correlation = correlation+correctNan;
+[vectorized, sim_index] = cosine_similarity(PeriStimH(:,1:5000),10);
 %%
 data = filtData.lowpassData(:,1:20000)';
 spacing = 2E-5;
 [CSDoutput]  = CSD(data,20000,spacing,'inverse',spacing*5);
 %% Plots
 disp('Plotting...')
+figure,spikePlot = Show_Spikes(Spikes_Binary);
 ripplePlot(Ripples);
 figure('Name', 'Unfiltered Data'),stack_plot(amplifier_data);
 set(gcf,'PaperUnits','inches','PaperPosition',[0 0 4 3]);...

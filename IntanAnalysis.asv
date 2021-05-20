@@ -4,69 +4,40 @@ close all;
 read_Intan_RHD2000_file
 % % amplifier_data = amplifier_data(:,1:100000);
 % t_amplifier = t_amplifier(1:100000);
-amplifier_data_sorted = channelSortEdge(amplifier_data);
-amplifier_data = amplifier_data_sorted;
+% amplifier_data_sorted = channelSortEdge(amplifier_data);
+% amplifier_data = amplifier_data_sorted;
+amplifier_data = flip(amplifier_data,1);
 %%
 % set(0,'DefaultFigureWindowStyle','docked')
 filtData = preprocess_filtering(amplifier_data,t_amplifier);
 Spikes = spikeSorting(filtData);
 Ripples = rippleDetection(filtData);
-Ripples = rippleAnalysis(filtData,Ripples);
-ripplePlot(Ripples);
+Ripples = rippleAnalysis(filtData,Ripples,Spikes);
 %%
-fn = fieldnames(dataLow);
-% findData = zeros(30,.3*Fs+1);
-
-for ii = 1:size(rippleBatch,2)
-    LFPData = dataLow.(string(fn(ii)));
-    rawData = filtData.rawData(ii,:);
-    findCh = (rippleBatch(ii).rippleData.ripples(2,2))*Fs;
-    try
-        findDataLFP(ii,:) = LFPData(1,-.1*Fs+findCh:.1*Fs+findCh);
-        findDataRaw(ii,:) = rawData(1,-.1*Fs+findCh:.1*Fs+findCh);
-    catch ME
-        disp('Not all channels were analyzed')
-        break
-    end
-end
-figure('Name','SWR Onset Frequency')
-for j = 1:size(findDataRaw,1)
-    [cfs,f] = cwt(findDataRaw(j,:),Fs,'FrequencyLimits',[20 300]);
-    % plot(abs(cfs(1,:)));
-    subplot(6,6,j),imagesc(-100:100,f,abs(cfs))
-%     xlabel('Time (s)')
-%     ylabel('Frequency (Hz)')
-    axis xy
-    colormap(jet)
-    % ylim([0 250])
-%     title('CWT of Ripple Data')
-end
-set(gcf,'PaperUnits','inches','PaperPosition',[0 0 4 3]);...
-    print(gcf,'-painters','-depsc', 'Figures/SWRonset.eps', '-r250');
-
-figure('Name','CSD');
-channelmap = ones(size(findDataLFP,1),1);
-try
-    Vq = interp2(findDataLFP,5);
-catch ME
-    disp('Sample set is too small for interpolation, plotting raw...');
-    Vq = findDataLFP;
-end
-imagesc(-100:100,channelmap,Vq);colormap(jet); colorbar;box off;set(gca,'YTick',[]);
-set(gcf,'PaperUnits','inches','PaperPosition',[0 0 4 3]);...
-    print(gcf,'-painters','-depsc', 'Figures/CSD.eps', '-r250');
+PeriStimt = sum(Ripples.rippleOnset.PeriStim,3);
+PeriStimH = sum(PeriStimt,1);
+correlation = corrcoef(PeriStimt);
+correctNan = isnan(correlation);
+correlation = correlation+correctNan-correctNan;
+[vectorized, sim_index] = cosine_similarity(PeriStimH(:,1:5000),10);
+%%
+data = filtData.lowpassData(:,1:20000)';
+spacing = 2E-5;
+[CSDoutput]  = CSD(data,20000,spacing,'inverse',spacing*5);
 %% Plots
 disp('Plotting...')
+figure,spikePlot = Show_Spikes(Spikes_Binary);
+ripplePlot(Ripples);
 figure('Name', 'Unfiltered Data'),stack_plot(amplifier_data);
 set(gcf,'PaperUnits','inches','PaperPosition',[0 0 4 3]);...
     print(gcf,'-painters','-depsc', 'Figures/Raw_data.eps', '-r250');
-figure('Name','Singe Unit Waveforms'),SingleUnits(allSpikes);
+figure('Name','Singe Unit Waveforms'),SingleUnits(Spikes.allSpikes);
 set(gcf,'PaperUnits','inches','PaperPosition',[0 0 4 3]);...
     print(gcf,'-painters','-depsc', 'Figures/Single_unit_waveforms.eps', '-r250');
-figure('Name','Multi-Unit Activity'),MUA(dataHigh);
+figure('Name','Multi-Unit Activity'),MUA(filtData.MUA);
 set(gcf,'PaperUnits','inches','PaperPosition',[0 0 4 3]);...
     print(gcf,'-painters','-depsc', 'Figures/MultiUnit.eps', '-r250');
-figure('Name','LFP'),LFP(dataLow); 
+figure('Name','LFP'),LFP(filtData.LFP); 
 set(gcf,'PaperUnits','inches','PaperPosition',[0 0 4 3]);...
     print(gcf,'-painters','-depsc', 'Figures/LFP.eps', '-r250');
 %%
