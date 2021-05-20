@@ -11,7 +11,7 @@ timestamps = filtData.ripple.timestamps;
 rippleChannel = 0;
 H = waitbar(0,'Analyzing Ripple Waveforms...');
 for j = 1:size(Ripples.detectedripples,2)
-    if isempty(Ripples.detectedripples{j}) == 0
+    if isempty(Ripples.detectedripples{j})== 0
         rippleChannel = rippleChannel+1;
         ripples = Ripples.detectedripples{j};
         signal = filtData.ripple.data(:,j);
@@ -83,7 +83,7 @@ for j = 1:size(Ripples.detectedripples,2)
         %% SWR onset
         LFPData = filtData.lowpassData';
         rawData = filtData.rawData(j,:)';
-        for ii = 1:size(Ripples.ripples,2)
+        for ii = 1:size(Ripples.ripples,1)
             start = Fs*(Ripples.ripples(ii,2)-.125);
             stop = Fs*(Ripples.ripples(ii,2)+.125);
             if start < 0 || stop > length(LFPData)
@@ -106,8 +106,9 @@ for j = 1:size(Ripples.detectedripples,2)
     else
         continue
     end
-    Ripples = rmfield(Ripples,'detectedripples');
 end
+Ripples = rmfield(Ripples,'detectedripples');
+
 close(H)
 
 
