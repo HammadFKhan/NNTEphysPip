@@ -20,12 +20,12 @@ PeriStimH = sum(PeriStimt,1);
 correlation = abs(corr(vectorized));
 correlation(isnan(correlation)) = 0;
 %%
-data = filtData.lowpassData(:,1:20000)';
-spacing = 2E-5;
-[CSDoutput]  = CSD(data,20000,spacing,'inverse',spacing*5);
+% data = filtData.lowpassData';
+% spacing = 2E-5;
+% [CSDoutput]  = CSD(data,20000,spacing,'inverse',spacing*5);
 %% Plots
 disp('Plotting...')
-% figure,spikePlot = Show_Spikes(Spikes_Binary);
+figure,spikePlot = Show_Spikes(Spikes.binary);
 figure('Name', 'Unfiltered Data'),stack_plot(amplifier_data);
 set(gcf,'PaperUnits','inches','PaperPosition',[0 0 4 3]);...
     print(gcf,'-painters','-depsc', 'Figures/Raw_data.eps', '-r250');
@@ -39,7 +39,7 @@ figure('Name','LFP'),LFP(filtData.LFP);
 set(gcf,'PaperUnits','inches','PaperPosition',[0 0 4 3]);...
     print(gcf,'-painters','-depsc', 'Figures/LFP.eps', '-r250');
 ripplePlot(Ripples);
-figure('Name','Ripple Stimulus'),h = htmp(correlation-mean(correlation,'all'),50);caxis([0 .8]);
+figure('Name','Ripple Stimulus'),h = htmp(correlation-mean(correlation,'all'),50);caxis([0 1]);
 %%
 try
 encoder_data = convert_encoder(board_adc_data(2,:),timestamps);
