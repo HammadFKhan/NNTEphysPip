@@ -23,6 +23,8 @@ correlation(isnan(correlation)) = 0;
 % data = filtData.lowpassData';
 % spacing = 2E-5;
 % [CSDoutput]  = CSD(data,20000,spacing,'inverse',spacing*5);
+
+
 %% Plots
 disp('Plotting...')
 figure,spikePlot = Show_Spikes(Spikes.binary);
