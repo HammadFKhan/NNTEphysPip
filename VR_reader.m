@@ -1,5 +1,4 @@
 %% VR Parser
-clear; clc;
 [pathname,VR_data] = batchLoad();
 
 % Distance Travelled
