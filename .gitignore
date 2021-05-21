@@ -3,3 +3,11 @@
 KilosortData/
 *.eps
 *.png
+Figures/LFP.eps
+Figures/MultiUnit.eps
+Figures/Raw_data.eps
+Figures/Residuals.eps
+Figures/RippleDetect.eps
+Figures/Single_unit_waveforms.eps
+Figures/SPW-R_Amplitude.eps
+Figures/SWR-stats.eps
