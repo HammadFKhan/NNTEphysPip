@@ -3,13 +3,14 @@ if nargin < 2 || strcmp(Fs,'')
     Fs = 20000;
     disp(['Sampling rate set at ' num2str(Fs) ' Hz for spike detection']);
 end
+ S = warning('OFF');
 findSpikes = true;
 threshStd = 5;
 channel_num = intanData.channel_num;
 bandpassData = intanData.bandpassData;
 spikeCount = zeros(channel_num,1);
 H = waitbar(0,'Spike Sorting...');
-Spikes.binary = Spike_Detector_Single(bandpassData,2.5,0.3);
+Spikes.binary = Spike_Detector_Single(bandpassData,2.5,0.2);
 for i = 1:channel_num
     waitbar(i/channel_num(end),H)
     thresh = threshStd*std(bandpassData(i,:));
