@@ -1,18 +1,9 @@
-%% Kilosort data preprocessing
-datI = int16(amplifier_data);
-kilosortOut = uigetdir();
-[SUCCESS,~,~] = mkdir(kilosortOut,filename(1:end-4));
-newDIR = dir(strcat(kilosortOut,'\',filename(1:end-4)));
-newDIR = newDIR.folder;
-fid = fopen(strcat(newDIR,'\',filename(1:end-4)),'w');
-fwrite(fid,datI,'int16');
-fclose(fid);
 %% Kilosort Analysis
-
+addpath(genpath('main'));
 path = uigetdir();
 SpikeClusters = readNPY(fullfile(path, 'spike_clusters.npy'));
 SpikeSamples = readNPY(fullfile(path, 'spike_times.npy'));
-
+%% Analysis
 Spikes.SpikeClusters = SpikeClusters;
 Spikes.SpikeSamples = SpikeSamples;
 Spikes = clusterSort(Spikes);
@@ -24,9 +15,10 @@ for i = 1:size(Spikes.Clusters,2)
     end
     subplot(sizePlot,sizePlot,i),scatter(x,y,3), axis tight, box off;
 end
-
-%% ISI
+% ISI
 Spikes = ISI(Spikes,0.005);
 Spikes = rateMap(Spikes,VR_data);
-%%
-figure,spikeImage = spike_map(Spikes.VR.spikeCount',(1:67)*2);
+% Clustered Projection
+% CLusterless Projection
+%% Plot All
+figure('name','Spike Map'),spikeImage = spike_map(Spikes.VR.spikeCount',(1:67)*2);

@@ -1,6 +1,7 @@
 %% Intan Data
 clear; clc; 
 close all;
+addpath(genpath('main'));
 read_Intan_RHD2000_file
 % % amplifier_data = amplifier_data(:,1:100000);
 % t_amplifier = t_amplifier(1:100000);
@@ -23,9 +24,18 @@ correlation(isnan(correlation)) = 0;
 % data = filtData.lowpassData';
 % spacing = 2E-5;
 % [CSDoutput]  = CSD(data,20000,spacing,'inverse',spacing*5);
-
+%% Kilsort File prep
+datI = int16(amplifier_data);
+kilosortOut = uigetdir();
+[SUCCESS,~,~] = mkdir(kilosortOut,filename(1:end-4));
+newDIR = dir(strcat(kilosortOut,'\',filename(1:end-4)));
+newDIR = newDIR.folder;
+fid = fopen(strcat(newDIR,'\',filename(1:end-4)),'w');
+fwrite(fid,datI,'int16');
+fclose(fid);
 
 %% Plots
+addpath(genpath('Figures'));
 disp('Plotting...')
 figure,spikePlot = Show_Spikes(Spikes.binary);
 figure('Name', 'Unfiltered Data'),stack_plot(amplifier_data);
