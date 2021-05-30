@@ -4,8 +4,8 @@ ops.parfor              = 0; % whether to use parfor to accelerate some parts of
 ops.verbose             = 1; % whether to print command line progress		
 ops.showfigures         = 1; % whether to plot figures during optimization		
 		
-ops.datatype            = 'dat';  % binary ('dat', 'bin') or 'openEphys'		
-ops.fbinary             = fullfile(fpath, 'sim_binary.dat'); % will be created for 'openEphys'		
+ops.datatype            = 'bin';  % binary ('dat', 'bin') or 'openEphys'		
+ops.fbinary             = fullfile(fpath, 'kilosort.bin'); % will be created for 'openEphys'		
 ops.fproc               = fullfile(fpath, 'temp_wh.dat'); % residual from RAM of preprocessed data		
 ops.root                = fpath; % 'openEphys' only: where raw files are		
 % define the channel map as a filename (string) or simply an array		
