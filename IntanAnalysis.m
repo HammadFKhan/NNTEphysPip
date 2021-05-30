@@ -8,7 +8,7 @@ read_Intan_RHD2000_file
 % amplifier_data_sorted = channelSortEdge(amplifier_data);
 % amplifier_data = amplifier_data_sorted;
 amplifier_data = flip(amplifier_data,1);
-%%
+%% Data Processing
 % set(0,'DefaultFigureWindowStyle','docked')
 filtData = preprocess_filtering(amplifier_data,t_amplifier);
 Spikes = spikeSorting(filtData);
@@ -16,7 +16,6 @@ Ripples = rippleDetection(filtData);
 Ripples = rippleAnalysis(filtData,Ripples,Spikes);
 %%
 PeriStimt = sum(Ripples.rippleOnset.PeriStim,3);
-PeriStimH = sum(PeriStimt,1);
 [vectorized,~] = cosine_similarity(PeriStimt(:,1:5000),50);
 correlation = abs(corr(vectorized));
 correlation(isnan(correlation)) = 0;
@@ -30,7 +29,7 @@ kilosortOut = uigetdir();
 [SUCCESS,~,~] = mkdir(kilosortOut,filename(1:end-4));
 newDIR = dir(strcat(kilosortOut,'\',filename(1:end-4)));
 newDIR = newDIR.folder;
-fid = fopen(strcat(newDIR,'\',filename(1:end-4)),'w');
+fid = fopen(strcat(newDIR,'\',filename(1:end-4)),'.bin','w');
 fwrite(fid,datI,'int16');
 fclose(fid);
 

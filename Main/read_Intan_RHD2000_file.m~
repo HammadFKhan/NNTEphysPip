@@ -525,15 +525,11 @@ Intan.amplifier_data = amplifier_data;
 Intan.t_amplifier = t_amplifier;
 Intan.path = path;
 Intan.filename = filename;
-Intan.frequency_parameters = frequency_parameters;
+Intan.frequency_parameters = frequncy_parameters;
 Intan.notes = notes;
 Intan.aux_input_channels = aux_input_channels;
-Intan.aux_input_data = aux_input_data;
-Intan.board_dig_in_channels = board_dig_in_channels;
-Intan.board_dig_in_data = board_dig_in_data;
 
-clear amplifier_data t_amplifier frequncy_parameters notes aux_input_channels...
-    aux_input_data board_dig_in_channels board_dig_in_data
+
 
 fprintf(1, 'Done!  Elapsed time: %0.1f seconds\n', toc);
 if (data_present)
