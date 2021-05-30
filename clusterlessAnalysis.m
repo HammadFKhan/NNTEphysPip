@@ -1,11 +1,11 @@
-function [Spikes,Ripples] = clusterlessAnalysis(Intan)
+function [Spikes,Ripples,kilosortData] = clusterlessAnalysis(Intan)
 %% Intan Data
 % Parse
 amplifier_data = Intan.amplifier_data;
 t_amplifier = Intan.t_amplifier;
 path = Intan.path;
 filename = Intan.filename;
-kilosortPrep(amplifier_data,path,filename) %Prep raw data for Kilosort Analysis
+kilosortPrep(amplifier_data,path); %Prep raw data for Kilosort Analysis
 addpath(genpath('main'));
 load chanMap.mat
 for i = 1:length(chanMap)
