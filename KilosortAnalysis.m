@@ -1,7 +1,7 @@
-function KilosortAnalysis(kilosortData)
+function rez = KilosortAnalysis(fpath,ops)
 %% Kilosort Analysis
 
-load(chanMap.mat); %### load in matlab file for channel configuration
+load chanMap.mat %### load in matlab file for channel configuration
 
 
 
@@ -9,52 +9,27 @@ load(chanMap.mat); %### load in matlab file for channel configuration
 [rez, DATA, uproj] = preprocessData(ops); % preprocess data and extract spikes for initialization
 rez                = fitTemplates(rez, DATA, uproj);  % fit templates iteratively
 rez                = fullMPMU(rez, DATA);% extract final spike times (overlapping extraction)
-% Read in kilosort data for matlab analysis
-SpikeClusters = readNPY(fullfile(path, 'spike_clusters.npy'));
-SpikeSamples = readNPY(fullfile(path, 'spike_times.npy'));
-
 % This runs the benchmark script. It will report both 1) results for the
 % clusters as provided by Kilosort (pre-merge), and 2) results after doing the best
 % possible merges (post-merge). This last step is supposed to
 % mimic what a user would do in Phy, and is the best achievable score
 % without doing splits. 
-benchmark_simulation(rez, fullfile(fpath, 'eMouseGroundTruth.mat'));
+benchmark_simulation(rez, fullfile(pwd, 'eMouseGroundTruth.mat'));
 
 % save python results file for Phy
-mkdir preAutoMerge
+mkdir(fpath,'preAutoMerge')
 rezToPhy(rez, [fpath,'/preAutoMerge']);
 
 fprintf('Kilosort took %2.2f seconds \n', toc)
 
 rez = merge_posthoc2(rez);
 disp('Automerging completed!')
-benchmark_simulation(rez, fullfile(fpath, 'eMouseGroundTruth.mat'));
+benchmark_simulation(rez, fullfile(pwd, 'eMouseGroundTruth.mat'));
 
 % save python results file for Phy
-mkdir postAutoMerge
+mkdir(fpath,'postAutoMerge')
 rezToPhy(rez, [fpath,'/postAutoMerge']);
 
 % remove temporary file
 delete(ops.fproc);
 
-
-
-%% Analysis
-Spikes.SpikeClusters = SpikeClusters;
-Spikes.SpikeSamples = SpikeSamples;
-Spikes = clusterSort(Spikes);
-sizePlot = ceil(sqrt(size(Spikes.Clusters,2)));
-for i = 1:size(Spikes.Clusters,2)
-    for ii = 1:size(Spikes.Clusters(i).cluster,2)
-        x = Spikes.Clusters(i).cluster;
-        y = ones(1,length(Spikes.Clusters(i).cluster));
-    end
-    subplot(sizePlot,sizePlot,i),scatter(x,y,3), axis tight, box off;
-end
-% ISI
-Spikes = ISI(Spikes,0.005);
-Spikes = rateMap(Spikes,VR_data);
-% Clustered Projection
-% CLusterless Projection
-%% Plot All
-% figure('name','Spike Map'),spikeImage = spike_map(Spikes.VR.spikeCount',(1:67)*2);
