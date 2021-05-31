@@ -4,7 +4,7 @@
 
 Electrophysiology Pipeline
 
-### Image and data processing pipeline for calcium imaging
+### Image and data processing pipeline for eletrophysiological recordings
 
 The main focus of this pipline is to create and combine multiple repositories to comprehensivley analyze eletrophyiological data either from shanks or microelectrode arrays. This pipeline currentley consists of clusterless analysis. More elaborate explainations are found later in this document. 
 
