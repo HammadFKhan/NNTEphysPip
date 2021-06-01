@@ -1,10 +1,19 @@
-function Spikes = rateMap(Spikes,VR_Data)
-if nargin<3 || strcmp(Fs,''), Fs = 20000; end
+function Spikes = rateMap(Spikes,VR_Data,varargin)
+if nargin<3 || strcmp(trialNumber,''), display('No Trial number was selected!') 
+end
 
-position = VR_Data{1,3}(:,3);
+p = inputParser;
+trialNumber = 3;
+
+addParameter(p,'trialNumber',trialNumber,@isnumeric);
+parse(p,Spikes,VR_Data,varargin{:});
+
+trialNumber = p.Results.trialNumber;
+
+position = VR_Data{1,trialNumber}(:,3);
 edgesPos = 0:2:200;
 VRposition = discretize(position,edgesPos);
-VRtime = VR_Data{1,3}(:,1);
+VRtime = VR_Data{1,trialNumber}(:,1);
 for i = 1:length(Spikes.Clusters)
     for ii = 1:VRposition(end)
         binFind = find(VRposition==ii);

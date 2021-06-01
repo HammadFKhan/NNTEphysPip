@@ -21,8 +21,13 @@ for i = 1:size(Spikes.Clusters,2)
 end
 % ISI
 Spikes = ISI(Spikes,0.005);
-
-Spikes = rateMap(Spikes,VR_data);
+try
+    Spikes = rateMap(Spikes,VR_data,3); %Trial number
+catch ME
+    disp('Function call for rate map was not used')
+    Spikes.VR.spikeCount = 0;
+    Spikes.VR.position = 0;
+end
 % Clustered Projection
 % CLusterless Projection
 %% Plot All

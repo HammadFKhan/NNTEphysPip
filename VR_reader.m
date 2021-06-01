@@ -1,5 +1,7 @@
 %% VR Parser
+addpath(genpath('main'));
 [pathname,VR_data] = batchLoad();
+
 
 % Distance Travelled
 for i = 3:size(VR_data,2)

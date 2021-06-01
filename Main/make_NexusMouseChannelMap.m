@@ -1,4 +1,4 @@
-function make_eMouseChannelMap(fpath)
+function make_NexusMouseChannelMap(fpath)
 % create a channel Map file for simulated data (eMouse)
 
 % here I know a priori what order my channels are in.  So I just manually 

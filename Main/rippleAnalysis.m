@@ -102,6 +102,11 @@ for j = 1:size(Ripples.detectedripples,2)
         Ripples(rippleChannel).rippleOnset.cfs = cfs;
         Ripples(rippleChannel).rippleOnset.f = f;
         waitbar(j/size(Ripples.detectedripples,2),H)
+        
+        PeriStimt = sum(Ripples.rippleOnset.PeriStim,3);
+        [vectorized,~] = cosine_similarity(PeriStimt(:,1:5000),50);
+        correlation = abs(corr(vectorized));
+        correlation(isnan(correlation)) = 0;
     else
         continue
     end
