@@ -1,4 +1,4 @@
-function Intan = read_Intan_RHD2000_file
+function Intan = read_Intan_RHD2000_file(path,file)
 
 % read_Intan_RHD2000_file
 %
@@ -16,11 +16,9 @@ function Intan = read_Intan_RHD2000_file
 % >> whos
 % >> amplifier_channels(1)
 % >> plot(t_amplifier, amplifier_data(1,:))
-
-[file, path, filterindex] = ...
-    uigetfile('*.rhd', 'Select an RHD2000 Data File', 'MultiSelect', 'off');
-
-if (file == 0)
+if nargin<2 || strcmp(file,'') || strcmp(path,'')
+    [file, path, filterindex] = ...
+        uigetfile('*.rhd', 'Select an RHD2000 Data File', 'MultiSelect', 'off');
     return;
 end
 
@@ -29,8 +27,9 @@ end
 % d = dir([path '*.rhd']);
 % file = d(end).name;
 
+filename = fullfile(path,file);
+
 tic;
-filename = [path,file];
 fid = fopen(filename, 'r');
 
 s = dir(filename);
