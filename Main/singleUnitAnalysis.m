@@ -21,14 +21,13 @@ for i = 1:size(Spikes.Clusters,2)
 end
 % ISI
 Spikes = ISI(Spikes,0.005);
-try
-    Spikes = rateMap(Spikes,VR_data,3); %Trial number
-catch ME
-    disp('Function call for rate map was not used')
-    Spikes.VR.spikeCount = 0;
-    Spikes.VR.position = 0;
-end
+Spikes = rateMap(Spikes,VR_data); %Trial number
+
 % Clustered Projection
 % CLusterless Projection
-%% Plot All
-figure('name','Spike Map'),spikeImage = spike_map(Spikes.VR.spikeCount',(1:Spikes.VR.position(end)*2));
+%% Plot Rate map
+for trial = 1:length(Spikes.VR)
+    figure('name',['Spike Map Trial ' trial]),subplot(2,1,1),...
+        spikeImage = spike_map(Spikes.VR(trial).spikeRate',(1:Spikes.VR(trial).position(end)));
+    subplot(2,1,2),plot(smoothdata(VR_data.AvgVel{1,trial},'sgolay')); axis tight, axis off;
+end
