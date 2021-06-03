@@ -1,13 +1,13 @@
-clear; clc; 
-close all;
+% clear; clc; 
+% close all;
 addpath(genpath('main'));
 
-Intan = read_Intan_RHD2000_file; %load intan data
+% Intan = read_Intan_RHD2000_file; %load intan data
 useGPU = 0;
 fpath    = Intan.path; % where on disk do you want the analysis? ideally and SSD...
 pathToYourConfigFile = strcat(pwd,'/main/'); % for this example it's ok to leave this path inside the repo, but for your own config file you *must* put it somewhere else!  
 run(fullfile(pathToYourConfigFile, 'config_eMouse.m'))
-make_NexusMouseChannelMap(pwd); % Creates channel map for electrode array
+make_NexusMouseChannelMap(fpath); % Creates channel map for electrode array
 
 %% Clusterless Analysis
 [Spikes,Ripples,filtData] = clusterlessAnalysis(Intan);
@@ -25,4 +25,4 @@ rez = KilosortAnalysis(fpath,ops);
 % Kilosort's AUTO merges should not be confused with the "best" merges done inside the
 % benchmark (those are using the real ground truth!!!)
 %% Looking at single units
-Spikes = singleUnitAnalysis(fpath,VR_data,'trialNumber',3);
+Spikes = singleUnitAnalysis(fpath,VR_data);
