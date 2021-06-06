@@ -13,7 +13,7 @@ Wn = Fc./(Fs/2);
 [b1,a1] = butter(6,Wn,'bandpass');
 
 % Design butterworth filters for LFP
-Fc = [250];
+Fc = [100];
 Wn = Fc./(Fs/2);
 [b4,a4] = butter(2,Wn,'low');
 
