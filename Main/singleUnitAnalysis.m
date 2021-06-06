@@ -27,7 +27,7 @@ Spikes = rateMap(Spikes,VR_data); %Trial number
 % CLusterless Projection
 %% Plot Rate map
 for trial = 1:length(Spikes.VR)
-    figure('name',['Spike Map Trial ' trial]),subplot(2,1,1),...
+    figure('name',['Spike Map Trial ' trial]),...
         spikeImage = spike_map(Spikes.VR(trial).spikeRate',(1:Spikes.VR(trial).position(end)));
-    subplot(2,1,2),plot(smoothdata(VR_data.AvgVel{1,trial},'sgolay')); axis tight, axis off;
+%     subplot(2,1,2),plot(smoothdata(VR_data.AvgVel{1,trial},'sgolay')); axis tight, axis off;
 end
