@@ -24,8 +24,10 @@ for trial = 1:length(VR_data.Position)
         end
         spikeRate(:,i) = spikeCount./(mapTime(:,2)-mapTime(:,1));
         Spikes.VR(trial).spikeCount(:,i) = spikeCount;
+        
     end
-    
+    spikeRate(spikeRate>=200)=0;
+    spikeRate(isnan(spikeRate))=0;
     Spikes.VR(trial).time = VR_data.Time;
     Spikes.VR(trial).mapTime = mapTime;
     Spikes.VR(trial).position = VRposition;
