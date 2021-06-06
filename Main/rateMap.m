@@ -26,8 +26,8 @@ for trial = 1:length(VR_data.Position)
         Spikes.VR(trial).spikeCount(:,i) = spikeCount;
         
     end
-    spikeRate(spikeRate>=200)=0;
-    spikeRate(isnan(spikeRate))=0;
+    spikeRate(spikeRate>=200)=0; % Negates outliers
+    spikeRate(isnan(spikeRate))=0; % If spikeRate contains NaN
     Spikes.VR(trial).time = VR_data.Time;
     Spikes.VR(trial).mapTime = mapTime;
     Spikes.VR(trial).position = VRposition;
