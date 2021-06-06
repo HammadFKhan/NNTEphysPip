@@ -1,0 +1,21 @@
+function plotPlacefield(Spikes)
+
+%Parse
+for neuron = 1:size(Spikes.PlaceFields.placeField,2)
+    for trial = 1:size(Spikes.PlaceFields.placeField,1)
+        placeField = Spikes.PlaceFields.placeField{trial,neuron};
+        spikeRate = zeros(200,1);
+        if isempty(placeField)
+            placeField = 1;
+        end
+        spikeRate(placeField(1):placeField(end)) = Spikes.VR(trial).spikeRate(placeField(1):placeField(end),neuron);
+        placeFieldMap(trial,:,neuron) = Smooth(spikeRate,2);
+    end
+    position = 1:200;
+    figure(neuron),spike_map(placeFieldMap(:,:,neuron),position);
+end
+
+allplaceFields = reshape(placeFieldMap,size(Spikes.PlaceFields.placeField,2),[]);
+
+figure(neuron),spike_map(allplaceField,1:size(allplaceFields,2));
+end
