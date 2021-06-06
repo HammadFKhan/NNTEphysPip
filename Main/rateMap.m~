@@ -11,18 +11,23 @@ for trial = 1:length(VR_data.Position)
             map(ii,1) = min(binFind);
             map(ii,2) = max(binFind);
             
-            if ii-1 == 0
-                mapTime(ii,1) = VRtime(map(ii,1)) + max(VRtime(ii-1,1)); %adds the previous trial if ther was one
+            if trial-1 == 0
+                mapTime(ii,1) = VRtime(map(ii,1));
                 mapTime(ii,2) = VRtime(map(ii,2));
-            mapTime(ii,1) = VRtime(map(ii,1)) + max(VRtime(ii-1,1)); %adds the previous trial if ther was one
-            mapTime(ii,2) = VRtime(map(ii,2));
+            else
+                mapTime(ii,1) = VRtime(map(ii,1)) + max(VR_data.Time{1,trial-1}); %adds the previous trial if ther was one
+                mapTime(ii,2) = VRtime(map(ii,2)) + max(VR_data.Time{1,trial-1});
+            end
             spikeCount(ii,1) = length(find(mapTime(ii,1)<Spikes.Clusters(i).spikeTime...
                 & Spikes.Clusters(i).spikeTime<mapTime(ii,2)));
+            
         end
-        spikeRate(:,i) = spikeCount./(mapTime(:,2)-mapTime(:,1));
+        % In the rare case that time maps are equal
+        spikeRate(:,i) = spikeCount./(mapTime(:,2)-mapTime(:,1);
         Spikes.VR(trial).spikeCount(:,i) = spikeCount;
     end
-    
+    spikeRate(spikeRate>=200)=0;
+    spikeRate(isnan(spikeRate))=0;
     Spikes.VR(trial).time = VR_data.Time;
     Spikes.VR(trial).mapTime = mapTime;
     Spikes.VR(trial).position = VRposition;
