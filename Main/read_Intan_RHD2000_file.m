@@ -19,7 +19,6 @@ function Intan = read_Intan_RHD2000_file(path,file)
 if nargin<2 || strcmp(file,'') || strcmp(path,'')
     [file, path, filterindex] = ...
         uigetfile('*.rhd', 'Select an RHD2000 Data File', 'MultiSelect', 'off');
-    return;
 end
 
 % Read most recent file automatically.
@@ -530,9 +529,6 @@ Intan.aux_input_channels = aux_input_channels;
 Intan.aux_input_data = aux_input_data;
 Intan.board_dig_in_channels = board_dig_in_channels;
 Intan.board_dig_in_data = board_dig_in_data;
-
-clear amplifier_data t_amplifier frequncy_parameters notes aux_input_channels...
-    aux_input_data board_dig_in_channels board_dig_in_data
 
 fprintf(1, 'Done!  Elapsed time: %0.1f seconds\n', toc);
 if (data_present)
