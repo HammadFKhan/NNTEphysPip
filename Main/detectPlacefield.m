@@ -14,11 +14,11 @@ for trial = 1:length(Spikes.VR)
     spikeRate = Spikes.VR(trial).spikeRate;
     for neuron = 1:size(spikeRate,2)
         mean_spikeRate = mean(spikeRate(:,neuron));
-        rateThres = 1.2*mean_spikeRate;
+        rateThres = 1.3*mean_spikeRate; %Theshold set for rate
         thresholded = spikeRate(:,neuron)>rateThres;
-        if sum(thresholded) == 0
+        if sum(thresholded) < 2 %Need at least two values for start and stop
             disp(['Thresholding Failed for neuron ' num2str(neuron)]);
-            Spikes.PlaceFields(trial).placeField{neuron} = [];
+            Spikes.PlaceFields.placeField{trial,neuron} = [];
         else
             start = find(diff(thresholded)>0);
             stop = find(diff(thresholded)<0);
@@ -37,28 +37,29 @@ for trial = 1:length(Spikes.VR)
             firstPass = [start,stop];
             if isempty(firstPass)
                 disp('Detection by thresholding failed')
-                return
-            else
-                disp(['After detection by thresholding: ' num2str(length(firstPass)) ' events.']);
-            end
-            % Discard place fields that are too large
-            placeField = [firstPass(:,1) firstPass(:,2)];
-            duration = firstPass(:,2)-firstPass(:,1);
-            max_placeField = .4*size(spikeRate(:,neuron),1);
-            placeField(duration>max_placeField,:) = [];
-            disp(['After max duration test: ' num2str(size(placeField,1)) ' events.']);
-            
-            % Discard place fields that are too small
-            duration = firstPass(:,2)-firstPass(:,1);
-            min_placeField = .05*size(spikeRate(:,neuron),1);
-            placeField(duration<min_placeField,:) = [];
-            disp(['After min duration test: ' num2str(size(placeField,1)) ' events.']);
-            
-            if isempty(placeField)
-                disp(['No place field detected for neuron ' num2str(neuron)]);
                 Spikes.PlaceFields.placeField{trial,neuron} = [];
             else
-                Spikes.PlaceFields.placeField{trial,neuron} = placeField;
+                disp(['After detection by thresholding: ' num2str(length(firstPass)) ' events.']);
+                
+                % Discard place fields that are too large
+                placeField = [firstPass(:,1) firstPass(:,2)];
+                duration = firstPass(:,2)-firstPass(:,1);
+                max_placeField = .4*size(spikeRate(:,neuron),1);
+                placeField(duration>max_placeField,:) = [];
+                disp(['After max duration test: ' num2str(size(placeField,1)) ' events.']);
+                
+                % Discard place fields that are too small
+                duration = firstPass(:,2)-firstPass(:,1);
+                min_placeField = .03*size(spikeRate(:,neuron),1);
+                placeField(duration<min_placeField,:) = [];
+                disp(['After min duration test: ' num2str(size(placeField,1)) ' events.']);
+                
+                if isempty(placeField)
+                    disp(['No place field detected for neuron ' num2str(neuron)]);
+                    Spikes.PlaceFields.placeField{trial,neuron} = [];
+                else
+                    Spikes.PlaceFields.placeField{trial,neuron} = placeField;
+                end
             end
         end
     end
