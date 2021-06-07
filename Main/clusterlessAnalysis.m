@@ -7,10 +7,10 @@ path = Intan.path;
 filename = Intan.filename;
 kilosortPrep(amplifier_data,path); %Prep raw data for Kilosort Analysis
 addpath(genpath('main'));
-load chanMap.mat
-for i = 1:length(chanMap)
-    amplifier_data(i,:) = amplifier_data(chanMap(i),:);
-end
+% load chanMap.mat
+% for i = 1:length(chanMap)
+%     amplifier_data(i,:) = amplifier_data(chanMap(i),:);
+% end
 %% Data Processing
 filtData = preprocess_filtering(amplifier_data,t_amplifier);
 Spikes = spikeSorting(filtData);
