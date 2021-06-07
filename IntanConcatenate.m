@@ -6,7 +6,7 @@ pathname = fullfile(pathname);
 directory = dir(pathname);
 
 count = 1;
-for idx = 4:length(directory)
+for idx = 5:length(directory)
     file = directory(idx).folder;
     path = directory(idx).name;
     Intan = read_Intan_RHD2000_file(file,path);   
