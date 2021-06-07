@@ -13,7 +13,7 @@ Wn = Fc./(Fs/2);
 [b1,a1] = butter(6,Wn,'bandpass');
 
 % Design butterworth filters for LFP
-Fc = [100];
+Fc = [250];
 Wn = Fc./(Fs/2);
 [b4,a4] = butter(2,Wn,'low');
 
@@ -29,16 +29,29 @@ rawData = filtfilt(d,IntanData(i,:));
 lowpassData  = filtfilt(b4,a4,rawData);
 bandpassData = filtfilt(b1,a1,rawData);
 
+pow = fastrms(lowpassData,15);    
+    mRipple(i) = mean(pow);
+    meRipple(i) = median(pow);
+    mmRippleRatio(i) = mRipple(i)./meRipple(i);
+    
 filtData.rawData(i,:) = rawData;
 filtData.lowpassData(i,:) = lowpassData;
 filtData.bandpassData(i,:) = bandpassData;
-
 filtData.LFP.(['Channel' num2str(i)]) = lowpassData;
 filtData.MUA.(['Channel' num2str(i)]) = bandpassData;
-
 filtData.ripple.data(:,i) = FiltFiltM(b3,a3,rawData);
 filtData.channel_num = channel_num;
 end
+
+mmRippleRatio(mRipple<1) = 0;
+mmRippleRatio(meRipple<1) = 0;
+
+[~,loc] = max(mmRippleRatio);
+bestLFPchan = loc;
+
+disp(['Recommended LFP channel ' bestLFPchan]);
 filtData.ripple.timestamps(:,1) = time;
+filtData.bestLFPchan = bestLFPchan;
+filtData.LFPpower = mmRippleRatio;
 close(H)
 
