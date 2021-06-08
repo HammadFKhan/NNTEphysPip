@@ -12,6 +12,7 @@ make_NexusMouseChannelMap(fpath); % Creates channel map for electrode array
 %% Clusterless Analysis
 [Spikes,Ripples,filtData] = clusterlessAnalysis(Intan);
 %% Kilosort Analysis
+set(0,'DefaultFigureWindowStyle','normal')
 rez = KilosortAnalysis(fpath,ops);
 % now fire up Phy and check these results. There should still be manual
 % work to be done (mostly merges, some refinements of contaminated clusters). 
@@ -25,6 +26,7 @@ rez = KilosortAnalysis(fpath,ops);
 % Kilosort's AUTO merges should not be confused with the "best" merges done inside the
 % benchmark (those are using the real ground truth!!!)
 %% Looking at single units
+set(0,'DefaultFigureWindowStyle','docked')
 Spikes = singleUnitAnalysis(fpath,VR_data);
 Spikes = detectPlacefield(Spikes);
 plotPlacefield(Spikes);
