@@ -29,4 +29,4 @@ rez = KilosortAnalysis(fpath,ops);
 set(0,'DefaultFigureWindowStyle','docked')
 Spikes = singleUnitAnalysis(fpath,VR_data);
 Spikes = detectPlacefield(Spikes);
-plotPlacefield(Spikes);
+Spikes = plotPlacefield(Spikes);
