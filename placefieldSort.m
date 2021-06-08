@@ -22,12 +22,13 @@ end
 sortedPlaceFields = placeFields(idx_sort,:);
 padding = length(find(FRmax==0));
 sortedPlaceFields = sortedPlaceFields(padding+1:end,:);
-% Normalize Place Fields for visualization
 
+% Normalize Place Fields for visualization
 for ii = 1:size(sortedPlaceFields,1)
     maxV = max(sortedPlaceFields(ii,:));
     minV = min(sortedPlaceFields(ii,:));
     normPlaceFields(ii,:) = (sortedPlaceFields(ii,:)-minV)./(maxV-minV);
+    % Clean up noise
 end
 
 
