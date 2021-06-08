@@ -23,7 +23,7 @@ ax = time;
 colormap(jet);
 imagesc(spikeImage,'Xdata',time);
 h = colorbar;
-set(get(h,'title'),'string','Norm SR (%)');
+set(get(h,'title'),'string','FR');
 axis on;axis tight;box off;
 xlabel('Position'); 
 ylabel('Neuron');
