@@ -17,5 +17,5 @@ CustomXLabels(mod(XLabels,ticksize) ~= 0) = " ";
 CustomYLabels = CustomXLabels;
 h.XDisplayLabels = CustomXLabels;
 h.YDisplayLabels = CustomYLabels;
-h.YDisplayData = flipud(h.YDisplayData);  % equivalent to 'YDir', 'Reverse'
+% h.YDisplayData = flipud(h.YDisplayData);  % equivalent to 'YDir', 'Reverse'
 end
