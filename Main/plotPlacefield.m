@@ -20,7 +20,7 @@ for neuron = 1:size(Spikes.PlaceFields.placeField,2)
             placeFieldperTrial(neuron,:,trial) = Smooth(spikeRate,3); % neuron x position x trial
         end
     end
-    allplaceFieldsAvg(neuron,:) = mean(allplaceFields(9:16,:),1); %Change the numbers for trial
+    allplaceFieldsAvg(neuron,:) = mean(allplaceFields(1:8,:),1); %Change the numbers for trial
     position = 1:trackLength;
     s = ceil(sqrt(size(Spikes.PlaceFields.placeField,2)));
     subplot(s,s,neuron),spike_map(placeFieldMap(:,:,neuron),position);
@@ -38,5 +38,6 @@ Spikes.allplaceFields = allplaceFieldsAvg;
 % Sort Place Fields
 [sortedPlaceFields,normPlaceFields] = placefieldSort(allplaceFieldsAvg);
 figure('Name','Sorted Place Fields'),spike_map(sortedPlaceFields,position);
-figure('Name','Normalized Place Fields'),spike_map(normPlaceFields,position);
+figure('Name','Normalized Place Fields'),spike_map(normPlaceFields(:,1:100),position);
+Spikes.PlaceFields.normPlaceFields = normPlaceFields;
 end
