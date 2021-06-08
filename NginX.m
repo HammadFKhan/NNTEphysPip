@@ -28,5 +28,7 @@ rez = KilosortAnalysis(fpath,ops);
 %% Looking at single units
 set(0,'DefaultFigureWindowStyle','docked')
 Spikes = singleUnitAnalysis(fpath,VR_data);
+%% Place Fields
 Spikes = detectPlacefield(Spikes);
+Spikes = placeFieldAnalysis(Spikes);
 Spikes = plotPlacefield(Spikes);
