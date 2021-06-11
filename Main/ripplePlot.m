@@ -8,19 +8,20 @@ SWR = Ripples.rippleOnset.SWR;
 cfs = Ripples.rippleOnset.cfs;
 waveletFreq = Ripples.rippleOnset.f;
 % Optionally, plot results
-figure('Name','Detected Signal')
-plot(Ripples.timestamps,Ripples.signal);hold on;
-for j=1:size(Ripples.ripples,1)
-    plot([Ripples.ripples(j,1) Ripples.ripples(j,1)],ylim,'g-');
-    plot([Ripples.ripples(j,2) Ripples.ripples(j,2)],ylim,'k-');
-    plot([Ripples.ripples(j,3) Ripples.ripples(j,3)],ylim,'r-');
-end
-plot(xlim,[Ripples.lowThresholdFactor Ripples.lowThresholdFactor],'k','linestyle','--');
-plot(xlim,[Ripples.highThresholdFactor Ripples.highThresholdFactor],'k-');
-axis tight
-box off
-set(gcf,'PaperUnits','inches','PaperPosition',[0 0 4 3]);...
-    print(gcf,'-painters','-depsc', 'Figures/RippleDetect.eps', '-r250');
+% figure('Name','Detected Signal')
+% subplot(4,1,[1 3]),plot(Ripples.timestamps,Ripples.signal);hold on;
+% for j=1:size(Ripples.ripples,1)
+%     plot([Ripples.ripples(j,1) Ripples.ripples(j,1)],ylim,'g-');
+%     plot([Ripples.ripples(j,2) Ripples.ripples(j,2)],ylim,'k-');
+%     plot([Ripples.ripples(j,3) Ripples.ripples(j,3)],ylim,'r-');
+% end
+% plot(xlim,[Ripples.lowThresholdFactor Ripples.lowThresholdFactor],'k','linestyle','--');
+% plot(xlim,[Ripples.highThresholdFactor Ripples.highThresholdFactor],'k-');
+% subplot(4,1,4),plot(VR_data.AvgVel{1,1});
+% axis tight
+% box off
+% set(gcf,'PaperUnits','inches','PaperPosition',[0 0 4 3]);...
+%     print(gcf,'-painters','-depsc', 'Figures/RippleDetect.eps', '-r250');
 
 [~,dursort]=sort(data.duration,1,'descend');
 [~,ampsort]=sort(data.peakAmplitude,1,'descend');
