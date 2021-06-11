@@ -23,15 +23,6 @@ correlation(isnan(correlation)) = 0;
 % data = filtData.lowpassData';
 % spacing = 2E-5;
 % [CSDoutput]  = CSD(data,20000,spacing,'inverse',spacing*5);
-%% Kilsort File prep
-datI = int16(amplifier_data);
-kilosortOut = uigetdir();
-[SUCCESS,~,~] = mkdir(kilosortOut,filename(1:end-4));
-newDIR = dir(strcat(kilosortOut,'\',filename(1:end-4)));
-newDIR = newDIR.folder;
-fid = fopen(strcat(newDIR,'\',filename(1:end-4)),'.bin','w');
-fwrite(fid,datI,'int16');
-fclose(fid);
 
 %% Plots
 addpath(genpath('Figures'));
