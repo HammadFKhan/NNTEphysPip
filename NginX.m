@@ -9,8 +9,11 @@ pathToYourConfigFile = strcat(pwd,'/main/'); % for this example it's ok to leave
 run(fullfile(pathToYourConfigFile, 'config_eMouse.m'))
 make_NexusMouseChannelMap(fpath); % Creates channel map for electrode array
 
-%% Clusterless Analysis
-[Spikes,Ripples,filtData] = clusterlessAnalysis(Intan);
+%% Ripples
+[Ripples,filtData] = SWR(Intan);
+plotClusterless(Ripples,filtData,Intan)
+%% LFP
+
 %% Kilosort Analysis
 set(0,'DefaultFigureWindowStyle','normal')
 rez = KilosortAnalysis(fpath,ops);
@@ -31,4 +34,4 @@ Spikes = singleUnitAnalysis(fpath,VR_data);
 %% Place Fields
 Spikes = detectPlacefield(Spikes);
 Spikes = placeFieldAnalysis(Spikes);
-Spikes = plotPlacefield(Spikes);
+plotPlacefield(Spikes);
