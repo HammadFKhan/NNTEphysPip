@@ -1,4 +1,7 @@
-function spikeImage = spike_map(DeltaFoverF,time)
+function spikeImage = spike_map(DeltaFoverF,time,color)
+if nargin < 3 || strcmp(color,'')
+    color = jet;
+end
 xyv = DeltaFoverF;
 x = length(xyv(1,:)); % Extract x value
 y = length(xyv(:, 1)); % Extract y value
@@ -20,7 +23,7 @@ end
 % if y<25
 ax = time;
 % [grad,~]=colorGradient([.1 .1 .1],[1 1 1],64);
-colormap(jet);
+colormap(color);
 imagesc(spikeImage,'Xdata',time);
 h = colorbar;
 set(get(h,'title'),'string','FR');
