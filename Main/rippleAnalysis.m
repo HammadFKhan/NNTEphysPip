@@ -83,13 +83,13 @@ for j = 1:size(Ripples.detectedripples,2)
         %% SWR onset
         LFPData = filtData.lowpassData';
         rawData = filtData.rawData(j,:)';
-        count = 0;
+        count = 1;
         for ii = 1:size(Ripples.ripples,1)
             start = Fs*(Ripples.ripples(ii,2)-.125);
             stop = Fs*(Ripples.ripples(ii,2)+.125);
             if start > 0 && stop < length(LFPData)
                 findDataRaw(:,count) = rawData(start:stop,1);
-                findSpikes(:,:,count) = Spikes.binary(:,start:stop);
+%                 findSpikes(:,:,count) = Spikes.binary(:,start:stop);
                 findDataLFP(:,:,count) = LFPData(start:stop,:);
                 [cfs(:,:,count),f] = cwt(findDataRaw(:,count),Fs,'FrequencyLimits',[0.1 500]); 
             else
@@ -98,20 +98,19 @@ for j = 1:size(Ripples.detectedripples,2)
         end
         Ripples(rippleChannel).rippleOnset.LFP = findDataLFP;
         Ripples(rippleChannel).rippleOnset.SWR = findDataRaw;
-        Ripples(rippleChannel).rippleOnset.PeriStim = findSpikes;
+%         Ripples(rippleChannel).rippleOnset.PeriStim = findSpikes;
         Ripples(rippleChannel).rippleOnset.cfs = cfs;
         Ripples(rippleChannel).rippleOnset.f = f;
         waitbar(j/size(Ripples.detectedripples,2),H)
         
-        PeriStimt = sum(Ripples.rippleOnset.PeriStim,3);
-        [vectorized,~] = cosine_similarity(PeriStimt(:,1:5000),50);
-        correlation = abs(corr(vectorized));
-        correlation(isnan(correlation)) = 0;
+%         PeriStimt = sum(Ripples.rippleOnset.PeriStim,3);
+%         [vectorized,~] = cosine_similarity(PeriStimt(:,1:5000),50);
+%         correlation = abs(corr(vectorized));
+%         correlation(isnan(correlation)) = 0;
     else
         continue
     end
 end
-Ripples = rmfield(Ripples,'detectedripples');
 
 close(H)
 
