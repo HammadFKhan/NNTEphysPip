@@ -15,6 +15,6 @@ end
 VR_data.AvgVel = AvgVel;
 VR_data.Position = Position;
 VR_data.Dist = vertcat(Dist{:});
-VR_data.Time = Time
+VR_data.Time = Time;
 
 clear Time AvgVel Position Dist count
