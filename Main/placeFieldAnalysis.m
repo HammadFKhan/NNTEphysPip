@@ -1,6 +1,6 @@
 function Spikes = placeFieldAnalysis(Spikes)
 trackLength = 200;
-trialStart = 1;
+trialStart = 7;
 trialCutoff = 8;
 disp(['Track Length set to ' num2str(trackLength) ' cm'])
 disp(['Trial Cutoff set to ' num2str(trialCutoff) ' runs'])
@@ -94,11 +94,13 @@ for trial = 1:size(placeFieldperTrial,3)
                 placeFieldWidth(ii,trial) = abs(findplaceFieldWidth(stop(1))-findplaceFieldWidth(1));
                 centeredPF = Smooth(normPlaceFields(ii,findplaceFieldWidth(1):findplaceFieldWidth(stop(1))),4)';
             end
-            plot(centeredPF,'LineWidth',2), hold on;
+            width = placeFieldWidth(ii,trial)+1;
+            centeredPF = padarray(centeredPF,[0 200-width],0,'post');
+            centeredPlaceFields(ii,:,trial) = centeredPF;
         end
     end
-    width = mean(placeFieldWidth(:,trial),1)+1;
     normplaceFieldperTrial{trial} = normPlaceFields;
+    avg_centeredPlaceFields(trial,:) = mean(centeredPlaceFields(:,:,trial),1);
 end
 
 % Mean Place Fields
@@ -148,6 +150,12 @@ if size(rho,1)<size(allplaceFields,2)
     disp(['Spatial scale factor set to ' num2str(size(rho,1)) ' bins instead of ' num2str(trackLength) ' bins'])
 end
 %% Remapping candidates
+% Check FR for each place cell across trials
+for trial = 1:size(normplaceFieldperTrial,2)
+    for neuron = 1:size(normplaceFieldperTrial{1,trial},1)
+    FR(neuron,trial) = mean(normplaceFieldperTrial{1,trial}(neuron,:),2);
+    end
+end
 
 % Spike Data
 %% Outputs
@@ -160,5 +168,7 @@ Spikes.PlaceFields.normPlaceFields = normPlaceFields; % Normalized by peak FR (v
 Spikes.PlaceFields.populationVector = rho;
 Spikes.PlaceFields.informationRate = informationRate;
 Spikes.PlaceFields.placeFieldWidth = placeFieldWidth;
+Spikes.PlaceFields.centeredPlaceFields = centeredPlaceFields;
+Spikes.PlaceFields.avg_centeredPlaceFields = avg_centeredPlaceFields;
 disp('Done!')
 
