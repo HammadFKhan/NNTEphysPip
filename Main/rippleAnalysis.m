@@ -78,7 +78,7 @@ for j = 1:size(Ripples.detectedripples,2)
         Ripples(rippleChannel).stats = stats;
         Ripples(rippleChannel).maps = maps;
         Ripples(rippleChannel).data = data;
-        Ripples.nBins = nBins;
+        Ripples(rippleChannel).nBins = nBins;
         
         %% SWR onset
         LFPData = filtData.lowpassData';
@@ -91,9 +91,10 @@ for j = 1:size(Ripples.detectedripples,2)
                 findDataRaw(:,count) = rawData(start:stop,1);
 %                 findSpikes(:,:,count) = Spikes.binary(:,start:stop);
                 findDataLFP(:,:,count) = LFPData(start:stop,:);
-                [cfs(:,:,count),f] = cwt(findDataRaw(:,count),Fs,'FrequencyLimits',[0.1 500]); 
+                [cfs(:,:,count),f] = cwt(findDataRaw(:,count),Fs,'FrequencyLimits',[0.1 600]); 
+                count = count+1;
             else
-              count = count+1;  
+              count = count;  
             end
         end
         Ripples(rippleChannel).rippleOnset.LFP = findDataLFP;
