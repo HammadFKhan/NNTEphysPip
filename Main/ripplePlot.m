@@ -1,4 +1,4 @@
-function ripplePlot(Ripples,Fs)
+function ripplePlot(Ripples)
 % Parsing
 maps = Ripples.maps;
 stats = Ripples.stats;
