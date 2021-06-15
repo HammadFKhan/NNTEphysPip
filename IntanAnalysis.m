@@ -11,9 +11,9 @@ amplifier_data = flip(amplifier_data,1);
 %% Data Processing
 % set(0,'DefaultFigureWindowStyle','docked')
 filtData = preprocess_filtering(amplifier_data,t_amplifier);
-Spikes = spikeSorting(filtData);
+% Spikes = spikeSorting(filtData);
 Ripples = rippleDetection(filtData);
-Ripples = rippleAnalysis(filtData,Ripples,Spikes);
+Ripples = rippleAnalysis(filtData,Ripples);
 %%
 PeriStimt = sum(Ripples.rippleOnset.PeriStim,3);
 [vectorized,~] = cosine_similarity(PeriStimt(:,1:5000),50);
