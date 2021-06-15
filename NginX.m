@@ -15,6 +15,7 @@ plotClusterless(Ripples,filtData,Intan)
 %% LFP
 
 %% Kilosort Analysis
+kilosortPrep(Intan.allIntan,fpath)
 set(0,'DefaultFigureWindowStyle','normal')
 rez = KilosortAnalysis(fpath,ops);
 % now fire up Phy and check these results. There should still be manual
