@@ -8,7 +8,7 @@ for i = 1:length(Spikes.Clusters)
     ISI = diff(cluster);
     Spikes.Clusters(i).ISI = ISI;
     Spikes.Clusters(i).spikeTime = cluster;
-    subplot(sizePlot,sizePlot,i),histogram(Spikes.Clusters(i).ISI,'BinWidth',Interval),axis tight,box off;
+    subplot(sizePlot,sizePlot,i),histogram(Spikes.Clusters(i).ISI,'BinWidth',Interval,'FaceColor',[0 0 0]),axis tight,box off;
     title(['Cluster ' num2str(i)]);
     set(gca,'YTick','','YTickLabel','');
     xlabel('Time (s)')
