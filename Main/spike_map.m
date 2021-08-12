@@ -23,12 +23,12 @@ end
 % if y<25
 ax = time;
 % [grad,~]=colorGradient([.1 .1 .1],[1 1 1],64);
-colormap(color);
+% colormap(grad);
 imagesc(spikeImage,'Xdata',time);
 h = colorbar;
 set(get(h,'title'),'string','FR');
 axis on;axis tight;box off;
-xlabel('Position'); 
+xlabel('Time'); 
 ylabel('Neuron');
 % else
 %     imshow(spikeImage);axis on;axis tight;box off;

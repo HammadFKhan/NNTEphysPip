@@ -25,18 +25,15 @@ for trial = 1:length(VR_data.Position)
             end
             spikeCount(ii,1) = length(find(mapTime(ii,1)<Spikes.Clusters(i).spikeTime...
                 & Spikes.Clusters(i).spikeTime<mapTime(ii,2)));
+            sumPosition = sum(dP(binFind,1));
+            Vel(i,1) = i;
+            Vel(i,2) = sumPosition;
         end
         spikeRate(:,i) = spikeCount./(mapTime(:,2)-mapTime(:,1));
         Spikes.VR(trial).spikeCount(:,i) = spikeCount;
+        
+      
     end
-    % Custom moving velocity window
-    for i = 1:VRtimebin(end)
-        findBinT = find(VRtimebin==i);
-        sumPosition = sum(dP(findBinT,1)); %#ok<FNDSB>
-        Vel(i,1) = i;
-        Vel(i,2) = sumPosition;
-    end
-    
     spikeRate(spikeRate>=200)=0; % Negates outliers
     spikeRate(isnan(spikeRate))=0; % If spikeRate contains NaN
     Spikes.VR(trial).time = VRtimebin;

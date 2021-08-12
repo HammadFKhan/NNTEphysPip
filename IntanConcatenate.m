@@ -6,11 +6,11 @@ pathname = fullfile(pathname);
 directory = dir(pathname);
 
 count = 1;
-for idx = 3:length(directory)
+for idx = 3:20
     file = directory(idx).folder;
     path = directory(idx).name;
     Intan = read_Intan_RHD2000_file(file,path);   
-    allIntan{count} = Intan.board_dig_in_data;
+    allIntan{count} = Intan.amplifier_data(33:96,:);
     count = count+1;
 end % load Intan files
 % Concatenate intan files for the whole session

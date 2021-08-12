@@ -30,5 +30,4 @@ for trial = 1:length(Spikes.VR)
     figure('name',['Spike Map Trial ' num2str(trial)]),...
     subplot(2,1,1),spikeImage = spike_map(Spikes.VR(trial).spikeRate',(1:Spikes.VR(trial).position(end)));
     subplot(2,1,2),bar(Spikes.VR.Velocity(:,1),Spikes.VR.Velocity(:,2));
-    yline(mean(Spikes.VR.Velocity(:,2)),'r--');
 end

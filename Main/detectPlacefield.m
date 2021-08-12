@@ -14,7 +14,7 @@ for trial = 1:length(Spikes.VR)
     spikeRate = Spikes.VR(trial).spikeRate;
     for neuron = 1:size(spikeRate,2)
         mean_spikeRate = mean(spikeRate(:,neuron));
-        rateThres = 1.3*mean_spikeRate; %Theshold set for rate
+        rateThres = 1.2*mean_spikeRate; %Theshold set for rate
         thresholded = spikeRate(:,neuron)>rateThres;
         if sum(thresholded) < 2 %Need at least two values for start and stop
             disp(['Thresholding Failed for neuron ' num2str(neuron)]);
@@ -44,7 +44,7 @@ for trial = 1:length(Spikes.VR)
                 % Discard place fields that are too large
                 placeField = [firstPass(:,1) firstPass(:,2)];
                 duration = firstPass(:,2)-firstPass(:,1);
-                max_placeField = .4*size(spikeRate(:,neuron),1);
+                max_placeField = .35*size(spikeRate(:,neuron),1);
                 placeField(duration>max_placeField,:) = [];
                 disp(['After max duration test: ' num2str(size(placeField,1)) ' events.']);
                 

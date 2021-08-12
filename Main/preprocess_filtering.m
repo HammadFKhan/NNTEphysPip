@@ -43,6 +43,9 @@ filtData.ripple.data(:,i) = FiltFiltM(b3,a3,rawData);
 filtData.channel_num = channel_num;
 end
 
+medianSignal = median(filtData.bandpassData);
+commonModeAvg = filtData.bandpassData-medianSignal;
+filtData.commonModeAvg = commonModeAvg;
 mmRippleRatio(mRipple<1) = 0;
 mmRippleRatio(meRipple<1) = 0;
 

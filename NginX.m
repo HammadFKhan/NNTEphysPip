@@ -7,12 +7,14 @@ useGPU = 0;
 fpath    = Intan.path; % where on disk do you want the analysis? ideally and SSD...
 pathToYourConfigFile = strcat(pwd,'/main/'); % for this example it's ok to leave this path inside the repo, but for your own config file you *must* put it somewhere else!  
 run(fullfile(pathToYourConfigFile, 'config_eMouse.m'))
-make_NexusMouseChannelMap(fpath); % Creates channel map for electrode array
+make_UCLAMouseChannelMap(fpath); % Creates channel map for electrode array
 
 %% Ripples
 [Ripples,filtData] = SWR(Intan);
 plotClusterless(Ripples,filtData,Intan)
 %% LFP
+filtData = preprocess_filtering(amplifier_data,t_amplifier);
+Spikes = spikeSorting(filtData);
 
 %% Kilosort Analysis
 kilosortPrep(Intan.allIntan,fpath)

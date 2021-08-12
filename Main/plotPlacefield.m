@@ -26,8 +26,8 @@ end
 [grad,~]=colorGradient([1 1 1],[.1 .1 .1],64); %color map gradient for nice visuals
 figure('Name','Place Field per Trial')
 count = 1;
-for perTrial = 1:8
-    subplot(1,8,count),spike_map(normplaceFieldperTrial{perTrial}(:,1:100),1:100,grad);
+for perTrial = 17:20
+    subplot(1,4,count),spike_map(normplaceFieldperTrial{perTrial}(:,1:100),1:100,grad);
     hold on,colorbar( 'off' ),set(gca,'ytick',[]),...
 set(gca,'yticklabel',[]),xlabel(''),ylabel('')
     title(['Trial ' num2str(count)])

@@ -10,25 +10,15 @@ read_Intan_RHD2000_file
 % amplifier_data = flip(amplifier_data,1);
 %% Data Processing
 % set(0,'DefaultFigureWindowStyle','docked')
-filtData = preprocess_filtering(amplifier_data,t_amplifier);
+filtData = preprocess_filtering(amplifier_data(33:96,:),t_amplifier);
 Spikes = spikeSorting(filtData);
 Ripples = rippleDetection(filtData);
 Ripples = rippleAnalysis(filtData,Ripples);
-%%
-PeriStimt = sum(Ripples.rippleOnset.PeriStim,3);
-[vectorized,~] = cosine_similarity(PeriStimt(:,1:5000),50);
-correlation = abs(corr(vectorized));
-correlation(isnan(correlation)) = 0;
-%%
-% data = filtData.lowpassData';
-% spacing = 2E-5;
-% [CSDoutput]  = CSD(data,20000,spacing,'inverse',spacing*5);
-
 %% Plots
 addpath(genpath('Figures'));
 disp('Plotting...')
 figure,spikePlot = Show_Spikes(Spikes.binary);
-figure('Name', 'Unfiltered Data'),stack_plot(amplifier_data);
+figure('Name', 'Unfiltered Data'),stack_plot(amplifier_data(32:97,:));
 set(gcf,'PaperUnits','inches','PaperPosition',[0 0 4 3]);...
     print(gcf,'-painters','-depsc', 'Figures/Raw_data.eps', '-r250');
 figure('Name','Singe Unit Waveforms'),SingleUnits(Spikes.allSpikes);

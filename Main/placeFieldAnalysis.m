@@ -1,7 +1,7 @@
 function Spikes = placeFieldAnalysis(Spikes)
 trackLength = 200;
-trialStart = 7;
-trialCutoff = 8;
+trialStart = 17;
+trialCutoff = 20;
 disp(['Track Length set to ' num2str(trackLength) ' cm'])
 disp(['Trial Cutoff set to ' num2str(trialCutoff) ' runs'])
 pause(2)
