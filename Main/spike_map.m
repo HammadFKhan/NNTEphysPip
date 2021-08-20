@@ -28,7 +28,7 @@ imagesc(spikeImage,'Xdata',time);
 h = colorbar;
 set(get(h,'title'),'string','FR');
 axis on;axis tight;box off;
-xlabel('Time'); 
+xlabel('Time (s)'); 
 ylabel('Neuron');
 % else
 %     imshow(spikeImage);axis on;axis tight;box off;
