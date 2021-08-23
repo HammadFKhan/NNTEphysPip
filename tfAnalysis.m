@@ -27,14 +27,16 @@ spikeTime = vertcat(fixSpiketime{:});
 figure,
 subplot(4,1,1),stack_plot(filtData.lowpassData(12:15,1:100000)); title('LFP Band')
 subplot(4,1,2),stack_plot(filtData.commonModeAvg(12,1:100000));title('Spike Band')
-subplot(4,1,3),plot_matrix(X1,t,f);
-subplot(4,1,4),spike_map(C,0:t2,f2); clim([0,1]),ylabel('Frequency (Hz)'),axis xy,title('Coherency');
+subplot(4,1,3),plot_matrix(X1,t,f); colormap(jet)
+subplot(4,1,4),imagesc(0:t,f2,C'); clim([0,1]),ylabel('Frequency (Hz)'),axis xy,title('Coherency');
 %% Coherency Correlation
 idx = find(10<f2 & f2<30);
 beta = f(idx);
 betaCoherence = C(:,idx)';
 betaAvg = mean(betaCoherence);
+
 figure,
 subplot(3,1,1),imagesc(0:t2,f2,C'); clim([0,1]),ylabel('Frequency (Hz)'),axis xy,title('Coherency'),colorbar,colormap(jet);
-subplot(3,1,2),imagesc(0:t2,beta,betaCoherence),ylabel('Frequency (Hz)'),axis xy,title('Beta Band Coherency'),colorbar;
-% subplot(3,1,3),plot(Smooth(betaAvg,2)), box off
+subplot(3,1,2),imagesc(0:t2,beta,betaCoherence),ylabel('Frequency (Hz)')...
+    ,axis xy,title('Beta Band Coherency'),colorbar, clim([0 1]);
+subplot(3,1,3),plot(Smooth(betaAvg,2)), box off

@@ -9,7 +9,7 @@ pathToYourConfigFile = strcat(pwd,'/main/'); % for this example it's ok to leave
 run(fullfile(pathToYourConfigFile, 'config_eMouse.m'))
 make_UCLAMouseChannelMap(fpath); % Creates channel map for electrode array
 %%
-filtData = preprocess_filtering(Intan.allIntan(:,1:400000),t_amplifier);
+filtData = preprocess_filtering(Intan.allIntan(:,1:400000),Intan.t_amplifier);
 
 %% Ripples
 [Ripples,filtData] = SWR(Intan);
