@@ -17,10 +17,9 @@ end % load Intan files
 Intan.allIntan = horzcat(allIntan{:});
 Intan.allIntan = single(Intan.allIntan);
 % Fix recording offset
-Intan.offset = 1; % second
-Intan.offsetSample = Intan.frequency_parameters.amplifier_sample_rate*offset;
-disp(['Adjusting for ' offset 'second offset']);
-Intan.allIntan = Intan.allIntan(:,offsetSample:size(Intan.allIntan,2)-offsetSample);
+offset = 1; % second
+offsetSample = Intan.frequency_parameters*offset;
+Intan.allIntan = Intan.allIntan(offSetSamo
 clear amplifier_data t_amplifier frequncy_parameters notes aux_input_channels...
     aux_input_data board_dig_in_channels board_dig_in_data amplifier_channels
 

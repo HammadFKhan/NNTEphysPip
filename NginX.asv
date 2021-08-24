@@ -35,9 +35,9 @@ rez = KilosortAnalysis(fpath,ops);
 set(0,'DefaultFigureWindowStyle','docked')
 Spikes = singleUnitAnalysis(fpath,VR_data);
 %% LFP
-LFP = preprocess_filtering(Intan.allIntan(:,1:1000000));
+LFP = preprocess_filtering(Intan.);
 %% Time-Frequency Analysis
-Spikes = tfAnalysis(Spikes,LFP)
+
 %% Place Fields
 Spikes = detectPlacefield(Spikes);
 Spikes = placeFieldAnalysis(Spikes);
