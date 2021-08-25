@@ -53,8 +53,8 @@ mmRippleRatio(meRipple<1) = 0;
 bestLFPchan = loc;
 
 disp(['Recommended LFP channel ' bestLFPchan]);
-% filtData.ripple.timestamps(:,1) = time;
-% filtData.bestLFPchan = bestLFPchan;
-% filtData.LFPpower = mmRippleRatio;
+filtData.ripple.timestamps(:,1) = time;
+filtData.bestLFPchan = bestLFPchan;
+filtData.LFPpower = mmRippleRatio;
 close(H)
 
