@@ -99,7 +99,8 @@ s.y=probewiring(:,3);
 s.z=probewiring(:,4); s.z=s.z-min(s.z);
 s.shaft=probewiring(:,5);
 s.tipelectrode=tipelectrode;
-s.sorted = probewiring(idx_sort,:);
+s.sorted_probe_wiring = probewiring(idx_sort,:);
+s.sorted_electrodes  = s.sorted_probe_wiring(:,1);
 
 
 %To plot the labeled channels:
