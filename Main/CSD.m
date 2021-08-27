@@ -203,7 +203,7 @@ function [CSDoutput]  = CSD(data,SR,spacing,varargin);
     if CSDtype == 1; % plots the CSD for the standard CSD method 
         MC = max(max(abs(CSD(:,2:end-1)))); % absolute maximum CSD
         yAxisM = MC*(size(CSD,2)-2); % starting baseline for plots
-        figure(1) % plots the CSD data for the 2nd to 2nd last electrode
+%         figure(1) % plots the CSD data for the 2nd to 2nd last electrode
         subplot(1,3,2);
         for j = 1:(size(CSD,2)-2);    
             plot(xAxis,CSD(:,j+1)+yAxisM,'k');
@@ -222,7 +222,7 @@ function [CSDoutput]  = CSD(data,SR,spacing,varargin);
         CSD = CSD';
         MC = max(max(abs(CSD))); % absolute maximum CSD
         yAxisM = MC*size(CSD,2); % starting baseline for plots
-        figure(1) % plots the CSD data for all electrodes
+%         figure(1) % plots the CSD data for all electrodes
         subplot(1,3,2);
         for j = 1:size(CSD,2);    
             plot(xAxis,CSD(:,j)+yAxisM,'k');
@@ -266,9 +266,9 @@ function [CSDoutput]  = CSD(data,SR,spacing,varargin);
     clims = [-M M]; % gives the upper and lower limit for the colormap
     figure('name','Inverse CSD')
     if CSDtype == 1 % standard CSD method
-        Vq = smoothdata(CSD(:,2:end-1)','gaussian');
+        Vq = smoothdata(CSD(:,2:end-1)','gaussian',5);
         im = imagesc(CSD(:,2:end-1)',clims); % CSD as heatmap 
-        colormap(flipud(jet)); % blue = source; red = sink
+        colormap(jet); % blue = sink; red = source
         cb = colorbar('SouthOutside');
         set(gca,'Ytick',[1:1:size(data,2)-1]);
         set(gca, 'YTickLabel',[2:1:size(data,2)-1]); % electrode number
