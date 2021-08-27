@@ -31,13 +31,18 @@ rez = KilosortAnalysis(fpath,ops);
 % mean there are merges left to do even after this step. 
 % Kilosort's AUTO merges should not be confused with the "best" merges done inside the
 % benchmark (those are using the real ground truth!!!)
+
+%% LFP
+LFP = fastpreprocess_filtering(Intan.allIntan,8192);
+LFP = bestLFP(LFP);
+%% CSD
+[CSDoutput]  = CSD(LFP.LFP(:,1:10048)'/1000,1024,2E-5);
 %% Looking at single units
 set(0,'DefaultFigureWindowStyle','docked')
 Spikes = singleUnitAnalysis(fpath,VR_data);
-%% LFP
-LFP = preprocess_filtering(Intan.allIntan(:,1:1000000));
 %% Time-Frequency Analysis
-Spikes = tfAnalysis(Spikes,LFP)
+Spikes = tfAnalysis(Spikes,LFP.coherenceLFP);
+plotTF(TimeFreq,LFP)
 %% Place Fields
 Spikes = detectPlacefield(Spikes);
 Spikes = placeFieldAnalysis(Spikes);
