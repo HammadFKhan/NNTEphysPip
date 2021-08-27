@@ -5,7 +5,7 @@ for trial = 1:length(VR_data.Position)
     edgesPos = 0:1:ceil(VR_data.Position{1}(end));
     VRposition =  discretize(position,edgesPos);
     time = VR_data.Time{trial};
-    edgesTime = 0:3:1020; %Bin width on the track
+    edgesTime = 0:3:16600; %Bin width on the track
     VRtimebin = discretize(time,edgesTime);
     checkBin = find(diff(VRtimebin)>1);
     
@@ -45,7 +45,7 @@ for trial = 1:length(VR_data.Position)
         Vel(i,2) = sumPosition;
     end
 
-    spikeRate(spikeRate>=40)=0; % Negates outliers
+    spikeRate(spikeRate>=200)=0; % Negates outliers
     spikeRate(isnan(spikeRate))=0; % If spikeRate contains NaN
     Spikes.VR(trial).time = VRtimebin;
     Spikes.VR(trial).mapTime = mapTime;
