@@ -3,7 +3,6 @@ path = [fpath,'/preAutoMerge'];
 %% Read in kilosort data for matlab analysis
 SpikeClusters = readNPY(fullfile(path, 'spike_clusters.npy'));
 SpikeSamples = readNPY(fullfile(path, 'spike_times.npy'));
-
 %% Analysis
 Spikes.SpikeClusters = SpikeClusters;
 Spikes.SpikeSamples = SpikeSamples;
@@ -20,7 +19,7 @@ for i = 1:size(Spikes.Clusters,2)
     end
 end
 % ISI
-Spikes = ISI(Spikes,0.03);
+Spikes = ISI(Spikes,0.03,8192); %Spikes, Interval, Fs
 Spikes = rateMap(Spikes,VR_data); %Trial number
 
 % Clustered Projection
@@ -41,8 +40,12 @@ Velocity = Spikes.VR.Velocity(:,2);
 velocityTrig = 1.2*mean(Velocity);
 loc = find(Velocity>=velocityTrig);
 
-spikeRateTrig = Spikes.VR(1).spikeRate(loc,:);
+% Make time window around trigger
+
+spikeRateTrig = Spikes.VR(1).spikeRate(loc,:); 
 normTrig = (spikeRateTrig-min(spikeRateTrig,[],1))./(max(spikeRateTrig,[],1)-min(spikeRateTrig,[],1));
+
+% Plot
 figure('name',['Spike Map Trial Velocity Triggered']),...
     subplot(2,1,1),spikeImage = spike_map(normTrig',(1:size(loc,1))); clim([0 1]);
 subplot(2,1,2),bar(1:size(loc,1),Spikes.VR.Velocity(loc,2));
