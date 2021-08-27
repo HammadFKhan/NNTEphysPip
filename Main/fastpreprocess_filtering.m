@@ -1,25 +1,39 @@
-function filtData = fastpreprocess_filtering(IntanData,Fs)
+function LFP = fastpreprocess_filtering(intanData,Fs)
 
-if nargin < 3 || strcmp(Fs,'')
+if nargin < 2 || strcmp(Fs,'')
     Fs = 20000;
     disp(['Sampling rate set at ' num2str(Fs) ' Hz for filtering']);
 end
+
+
+downSampleFreq = 1024;
+
 % Notch Filtering
-channel_num = size(IntanData,1);
+channel_num = size(intanData,1);
 d = designfilt('bandstopiir','FilterOrder',2, ...
     'HalfPowerFrequency1',59,'HalfPowerFrequency2',61, ...
-    'DesignMethod','butter','SampleRate',Fs);
+    'DesignMethod','butter','SampleRate',downSampleFreq);
 
 d1 = designfilt('bandstopiir','FilterOrder',2, ...
     'HalfPowerFrequency1',119,'HalfPowerFrequency2',121, ...
-    'DesignMethod','butter','SampleRate',Fs);
-H = waitbar(0,'Filtering...');
+    'DesignMethod','butter','SampleRate',downSampleFreq);
+
+Fc = [128];
+Wn = Fc./(Fs/2);
+b = fir1(5,Wn,'low');
+
+% Design butterworth filters for LFP
+% Fc = [128];
+% Wn = Fc./(Fs/2);
+% [b4,a4] = fir1(2,Wn,'low');
+disp(['Downsampling to ' num2str(downSampleFreq) ' Hz...'])
 for i = 1:channel_num
-waitbar(i/channel_num(end),H)
-rawData60 = filtfilt(d,double(IntanData(i,:)));
-rawData120 = filtfilt(d1,rawData60);  
-filtData.rawData(i,:) = rawData120;
-filtData.channel_num = channel_num;
+    downsample_Data(i,:) = resample(double(intanData(i,:))',downSampleFreq,Fs)';
 end
-close(H)
+disp('Filtering...')
+lowpass = zeros(channel_num,size(downsample_Data,2));
+rawData60 = filtfilt(d,downsample_Data);
+rawData120 = filtfilt(d1,rawData60); 
+LFP.LFP = filtfilt(b,1,rawData120);
+LFP.channel_num = channel_num;
 
