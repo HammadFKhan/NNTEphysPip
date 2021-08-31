@@ -4,14 +4,14 @@ addpath(genpath('main'));
 pathname = uigetdir(pwd,'Input Directory');
 pathname = fullfile(pathname);
 directory = dir(pathname);
-Fs =  Intan.frequency_parameters.amplifier_sample_rate;
 count = 1;
 downsampleRate = 4;
 targetedFs = 8192;
 for idx = 3:63
     file = directory(idx).folder;
     path = directory(idx).name;
-    Intan = read_Intan_RHD2000_file(file,path);   
+    Intan = read_Intan_RHD2000_file(file,path); 
+    Fs =  Intan.frequency_parameters.amplifier_sample_rate;
     allIntan{count} = resample(Intan.amplifier_data(33:96,:)',targetedFs,Fs);
     count = count+1;
 end % load Intan files
@@ -28,7 +28,7 @@ Intan.allIntan  = Intan.allIntan(s.sorted_electrodes,:);
 Intan.offset = 1; % second
 Intan.offsetSample = Intan.frequency_parameters.amplifier_sample_rate*Intan.offset;
 disp(['Adjusting for ' num2str(Intan.offset) ' second offset']);
-Intan.allIntan = Intan.allIntan(:,Intan.offsetSample:size(Intan.allIntan,2)-Intan.offsetSample);
+Intan.allIntan = Intan.allIntan(:,Intan.offsetSample:size(Intan.allIntan,2));
 clear amplifier_data t_amplifier frequncy_parameters notes aux_input_channels...
     aux_input_data board_dig_in_channels board_dig_in_data amplifier_channels
 
