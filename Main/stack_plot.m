@@ -7,7 +7,7 @@ baseline = max(DeltaFoverF,[],'all');
 time = (1:x)/Fs;
 for i = 1:y
     gradient = i/y;
-    plot(time,5*DeltaFoverF(i,:)+(.7*baseline),'LineWidth',1,'Color',[.5 .5 .5 .8]); hold on;
+    plot(time,2*DeltaFoverF(i,:)+(.7*baseline),'LineWidth',1,'Color',[.5 .5 .5 .8]); hold on;
     baseline = baseline + max(DeltaFoverF,[],'all');
 end
 axis tight,box off
