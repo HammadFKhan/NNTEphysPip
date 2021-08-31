@@ -108,7 +108,7 @@ function [CSDoutput]  = CSD(data,SR,spacing,varargin);
     if CSDtype == 1; % plots the voltages for the standard CSD method 
         MmV = max(max(abs(data(:,2:end-1)))); % absolute maximum voltage
         yAxisM = MmV*(size(data,2)-2); % starting baseline for plots
-        figure('name','LFP Response @ CF'); % plots voltage data for the 2nd to 2nd last electrode
+        figure; % plots voltage data for the 2nd to 2nd last electrode
         subplot(1,3,1);          
         for j = 1:(size(data,2)-2);    
             plot(xAxis,data(:,j+1)+yAxisM,'k');
