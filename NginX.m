@@ -34,15 +34,16 @@ rez = KilosortAnalysis(fpath,ops);
 
 %% LFP
 LFP = fastpreprocess_filtering(Intan.allIntan,8192);
+LFP = bandFilter(LFP);
 LFP = bestLFP(LFP);
 %% CSD
-[CSDoutput]  = CSD(LFP.LFP(:,1:10048)'/1000,1024,2E-5);
+[CSDoutput]  = CSD(LFP.LFP(:,1:8192)'/1000,1024,2E-5);
 %% Looking at single units
 set(0,'DefaultFigureWindowStyle','docked')
 Spikes = singleUnitAnalysis(fpath,VR_data);
 %% Time-Frequency Analysis
 Spikes = tfAnalysis(Spikes,LFP.coherenceLFP);
-plotTF(TimeFreq,LFP)
+plotTF(Spikes,LFP)
 %% Place Fields
 Spikes = detectPlacefield(Spikes);
 Spikes = placeFieldAnalysis(Spikes);
