@@ -5,7 +5,7 @@ if nargin < 2 || strcmp(Fs,'')
     disp(['Sampling rate set at ' num2str(Fs) ' Hz for filtering']);
 end
 
-
+LFP.Fs = Fs;
 downSampleFreq = 1024;
 
 % Notch Filtering
@@ -18,18 +18,16 @@ d1 = designfilt('bandstopiir','FilterOrder',2, ...
     'HalfPowerFrequency1',119,'HalfPowerFrequency2',121, ...
     'DesignMethod','butter','SampleRate',downSampleFreq);
 
-Fc = [128];
+Fc = [254];
 Wn = Fc./(Fs/2);
-b = fir1(5,Wn,'low');
+b = fir1(10,Wn,'low');
 
 % Design butterworth filters for LFP
 % Fc = [128];
 % Wn = Fc./(Fs/2);
 % [b4,a4] = fir1(2,Wn,'low');
 disp(['Downsampling to ' num2str(downSampleFreq) ' Hz...'])
-for i = 1:channel_num
-    downsample_Data(i,:) = resample(double(intanData(i,:))',downSampleFreq,Fs)';
-end
+downsample_Data = resample(double(intanData)',downSampleFreq,Fs)';
 disp('Filtering...')
 lowpass = zeros(channel_num,size(downsample_Data,2));
 rawData60 = filtfilt(d,downsample_Data);
