@@ -34,4 +34,4 @@ rawData60 = filtfilt(d,downsample_Data);
 rawData120 = filtfilt(d1,rawData60); 
 LFP.LFP = filtfilt(b,1,rawData120);
 LFP.channel_num = channel_num;
-
+LFP.downSampleFreq = downSampleFreq;
