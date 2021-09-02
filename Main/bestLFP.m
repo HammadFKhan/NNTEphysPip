@@ -12,6 +12,9 @@ for chan = 1:size(LFP,1)
     end
 end
 disp('Resampling to original Frequency');
-LFP.coherenceLFP = resample(median(medianLFP,1),8192,1024);
+LFP.bestLFP = median(medianLFP,1); %Best LFP for Phase Phase Analysis
+LFP.coherenceLFP = resample(LFP.bestLFP,8192,1024); %Spike coherence LFP
+LFP.times = (1:size(LFP.bestLFP,2))/LFP.downSampleFreq;
+
 
 
