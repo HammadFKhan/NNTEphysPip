@@ -1,20 +1,16 @@
 function LFP = bandFilter(LFP)
 
-Fs = LFP.Fs;
-% Filters
-% Design butterworth filters for LFP
-Fc = [1 10];
-Wn = Fc./(Fs/2);
-[b1,a1] = butter(2,Wn,'bandpass');
+Fs = LFP.downSampleFreq;
+% Filter signals using FIR linear regression
+disp('Filtering band frequencies...')
+theta = customFilt(LFP.bestLFP,Fs,[4 10]);
+beta = customFilt(LFP.bestLFP,Fs,[10 30]);
+gamma = customFilt(LFP.bestLFP,Fs,[30 80]);
+%% Compute Band Power
+LFP.theta_temppow  = 10*log10(abs(hilbert(theta)).^2);
+LFP.beta_temppow  = 10*log10(abs(hilbert(beta)).^2);
+LFP.gamma_temppow  = 10*log10(abs(hilbert(gamma)).^2);
 
-Fc = [10 30];
-Wn = Fc./(Fs/2);
-[b2,a2] = butter(2,Wn,'bandpass');
-
-Fc = [30 80];
-Wn = Fc./(Fs/2);
-[b3,a3] = butter(2,Wn,'bandpass');
-disp('Band Filtering...')
-LFP.theta_band = filtfilt(b1,a1,LFP.LFP);
-LFP.beta_band = filtfilt(b2,a2,LFP.LFP);
-LFP.gamma_band = filtfilt(b3,a3,LFP.LFP);
+LFP.theta_band = theta;
+LFP.beta_band = beta;
+LFP.gamma_band = gamma;
