@@ -1,0 +1,10 @@
+function LFP = bandFilter(LFP)
+
+Fs = LFP.Fs;
+% Filter signals using FIR linear regression
+theta = customFilt(data,Fs,[1 10]);
+beta = customFilt(data,Fs,[10 30]);
+gamma = customFilt(data,Fs,[30 80]);
+LFP.theta_band = theta;
+LFP.beta_band = beta;
+LFP.gamma_band = gamma;
