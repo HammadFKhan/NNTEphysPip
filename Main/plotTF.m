@@ -1,42 +1,22 @@
-function plotTF(Spikes,LFP)
-tf = Spikes.tf;
+function plotTF(TimeFreq,LFP)
+oscillators = TimeFreq.tf.oscillators;
+wavelet = TimeFreq.tf.wavelet;
+interpLevel = 2;
+figure(5)
+% imagesc(-1000:1000,oscillators.tb.f,test'),colormap(jet),axis xy, colorbar
+imagesc(-1000:1000,oscillators.tg.f,interp2(mean(oscillators.tb.phi,3)',interpLevel)),colormap(jet),axis xy, colorbar
+imagesc(-1000:1000,oscillators.tg.f,interp2(mean(oscillators.tg.phi,3)',interpLevel)),colormap(jet),axis xy, colorbar
+imagesc(-1000:1000,oscillators.tb.f,interp2(mean(oscillators.bg.phi,3)',interpLevel)),colormap(jet),axis xy, colorbar
 
-% figure,plot_matrix(tf.mbroad,tf.t,tf.broad.f); colormap(jet), title('Theta Spectrogram')
-% figure,imagesc(0:tf.t,tf.broad.f,tf.broad.C(:,:,100)'),ylabel('Frequency (Hz)')...
-%     ,axis xy,title('Beta Band Coherency'),colorbar;
-% figure,imagesc(0:tf.t,tf.broad.f,mean(tf.broad.phi,3)'),ylabel('Frequency (Hz)')...
-%     ,axis xy,title('Beta Band Phase'),colorbar;
-figure,
-subplot(4,1,1),stack_plot(LFP.LFP(1:12,1:2048)); title('Microprobe Data')
-subplot(4,1,2),plot_matrix(tf.mtheta,tf.t,tf.theta.f); colormap(jet), title('Theta Spectrogram')
-subplot(4,1,3),plot_matrix(tf.mbeta,tf.t,tf.beta.f); title('Beta Spectrogram')
-subplot(4,1,4),plot_matrix(tf.mgamma,tf.t,tf.gamma.f); title('Gamma Spectrogram')
+figure(6)
+mtheta = TimeFreq.mtheta*(wavelet.theta_f(end)-wavelet.theta_f(1))+wavelet.theta_f(1);
+subplot(2,3,1),imagesc(-1000:1000,wavelet.theta_f,interp2(mean(abs(wavelet.theta_cfs),3),interpLevel)),title('\theta Spectrogram'),colormap(jet),axis xy
+subplot(2,3,4),plot(TimeFreq.mtheta),axis off;
+subplot(2,3,2),imagesc(-1000:1000,wavelet.beta_f,interp2(mean(abs(wavelet.beta_cfs),3),interpLevel)),title('\beta Spectrogram'),colormap(jet),axis xy
+subplot(2,3,5),plot(TimeFreq.mbeta),axis off;
+subplot(2,3,3),imagesc(-1000:1000,wavelet.gamma_f,interp2(mean(abs(wavelet.gamma_cfs),3),interpLevel)),title('\gamma Spectrogram'),colormap(jet),axis xy
+subplot(2,3,6),plot(TimeFreq.mgamma),axis off;
 
-figure,
-interpLevel = 3;
-subplot(3,1,1),imagesc(-1000:1000,tf.theta.f,interp2(tf.theta.C(:,:,1),interpLevel)');ylabel('Frequency (Hz)'),...
-    axis xy,title('Theta Band Coherency'),colorbar,colormap(jet);
-subplot(3,1,2),imagesc(0:tf.t,tf.beta.f,interp2(mean(tf.beta.C,3),interpLevel)'),ylel('Frequency (Hz)')...
-    ,axis xy,title('Beta Band Coherency'),colorbar;
-subplot(3,1,3),imagesc(0:tf.t,tf.gamma.f,interp2(mean(tf.gamma.C,3),interpLevel)'),ylabel('Frequency (Hz)')...
-    ,axis xy,title('Gamma Band Coherency'),colorbar;
-
-figure,
-subplot(3,1,1),imagesc(0:tf.t,tf.theta.f,mean(tf.theta.phi,3)');ylabel('Frequency (Hz)'),axis xy,title('Theta Band Phase'),colorbar,colormap(jet);
-subplot(3,1,2),imagesc(0:tf.t,tf.beta.f,mean(tf.beta.phi,3)'),ylabel('Frequency (Hz)')...
-    ,axis xy,title('Beta Band Phase'),colorbar;
-subplot(3,1,3),imagesc(0:tf.t,tf.gamma.f,mean(tf.gamma.phi,3)'),ylabel('Frequency (Hz)')...
-    ,axis xy,title('Gamma Band Phase'),colorbar;
-figure,
-imagesc(-1000:1000,tf.wavelet.f,mean(abs(tf.wavelet.cfs),3)),title('Wavelet Spectrogram'),colormap(jet),axis xy
-yline(2,'w--','Linewidth',2)
-yline(10,'w--','Linewidth',2)
-yline(30,'w--','Linewidth',2)
-yline(80,'w--','Linewidth',2)
-figure,
-subplot(3,1,1),imagesc(-1000:1000,tf.wavelet.theta_f,mean(abs(tf.wavelet.theta_cfs),3)),title('Wavelet Spectrogram'),colorbar,colormap(jet),axis xy
-subplot(3,1,2),imagesc(-1000:1000,tf.wavelet.beta_f,mean(abs(tf.wavelet.beta_cfs),3)),title('Wavelet Spectrogram'),colorbar,colormap(jet),axis xy
-subplot(3,1,3),imagesc(-1000:1000,tf.wavelet.gamma_f,mean(abs(tf.wavelet.gamma_cfs),3)),title('Wavelet Spectrogram'),colorbar,colormap(jet),axis xy
 % figure,
 % % plotpad = size(tf.theta.theta,2);
 % % polarplot([zeros(1,plotpad); tf.theta.theta],[zeros(1,plotpad); ones(1,plotpad)],'k');
@@ -46,3 +26,10 @@ subplot(3,1,3),imagesc(-1000:1000,tf.wavelet.gamma_f,mean(abs(tf.wavelet.gamma_c
 % title(['Beta ITPC: ' num2str(tf.beta.itpc)]);
 % subplot(1,3,3),polarhistogram(tf.gamma.gamma,20);
 % title(['Gamma ITPC: ' num2str(tf.gamma.itpc)]);
+
+test = sort(oscillators.tb.phi,1);
+test = test.*(180/pi);
+ C = permute(test,[1 3 2]);
+ C = reshape(C,[],size(test,2),1);
+ edgesPhase = -180:1:180; %Bin width on the track
+ phaseBin = discretize(C,edgesPhase);
