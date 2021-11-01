@@ -11,8 +11,8 @@ for i = 1:y
             spikePlot(i,ii) = NaN;
         end
     end
-    plot(spikePlot(i,:),'.','MarkerEdgeColor','k'); hold on;
-%     plot_raster(spikePlot(i,:)); hold on;
+%     plot(spikePlot(i,:),'.','MarkerEdgeColor','k'); hold on;
+    plot_raster(spikePlot(i,:)); hold on;
     baseline = baseline + 1;
 end
 ylim ([0,y+1]);
