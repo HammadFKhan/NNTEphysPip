@@ -266,12 +266,12 @@ function [CSDoutput]  = CSD(data,SR,spacing,varargin);
     clims = [-M M]; % gives the upper and lower limit for the colormap
     figure('name','Inverse CSD')
     if CSDtype == 1 % standard CSD method
-        Vq = smoothdata(CSD(:,2:end-1)','gaussian',5);
-        im = imagesc(CSD(:,2:end-1)',clims); % CSD as heatmap 
+        Vq = interp2(CSD(:,2:end-1)',3);
+        im = imagesc(Vq,clims); % CSD as heatmap 
         colormap(jet); % blue = sink; red = source
         cb = colorbar('SouthOutside');
-        set(gca,'Ytick',[1:1:size(data,2)-1]);
-        set(gca, 'YTickLabel',[2:1:size(data,2)-1]); % electrode number
+%         set(gca,'Ytick',[1:1:size(data,2)-1]);
+%         set(gca, 'YTickLabel',[2:1:size(data,2)-1]); % electrode number
     else % inverse CSD method
         Vq = smoothdata(CSD','movmedian',3);
         im = imagesc(CSD',clims); % CSD as heatmap 
