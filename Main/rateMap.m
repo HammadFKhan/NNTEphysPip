@@ -2,19 +2,49 @@ function Spikes = rateMap(Spikes,VR_data)
 
 for trial = 1:length(VR_data.Position)
     position = VR_data.Position{trial};
-    edgesPos = 0:1:ceil(VR_data.Position{1}(end));
+    edgesPos = 0:1:abs(ceil(VR_data.Position{1}(end)));
     VRposition =  discretize(position,edgesPos);
     time = VR_data.Time{trial};
-    edgesTime = 0:3:16600; %Bin width on the track
+    edgesTime = 0:4:VR_data.Time{1}(end); %Bin width on the track
     VRtimebin = discretize(time,edgesTime);
-    checkBin = find(diff(VRtimebin)>1);
     
+    % Checks bin twice
+    checkBin = find(diff(VRtimebin)>1);
     if isempty(size(checkBin,1))==0 %Checks for binning error
         for check = 1:size(checkBin,1)
             checkValue = checkBin(check)+1; %Adds 1 to the location of the skipped cell
             VRtimebin(checkValue,1) = VRtimebin(checkValue,1)-1;
         end
     end
+    
+    checkBin = find(diff(VRtimebin)>1);
+     if isempty(size(checkBin,1))==0 %Checks for binning error
+        for check = 1:size(checkBin,1)
+            checkValue = checkBin(check)+1; %Adds 1 to the location of the skipped cell
+            VRtimebin(checkValue,1) = VRtimebin(checkValue,1)-1;
+        end
+     end
+    
+     checkBin = find(diff(VRtimebin)>1);
+     if isempty(size(checkBin,1))==0 %Checks for binning error
+        for check = 1:size(checkBin,1)
+            checkValue = checkBin(check)+1; %Adds 1 to the location of the skipped cell
+            VRtimebin(checkValue,1) = VRtimebin(checkValue,1)-1;
+        end
+     end
+    
+     checkBin = find(diff(VRtimebin)>1);
+     if isempty(size(checkBin,1))==0 %Checks for binning error
+        for check = 1:size(checkBin,1)
+            checkValue = checkBin(check)+1; %Adds 1 to the location of the skipped cell
+            VRtimebin(checkValue,1) = VRtimebin(checkValue,1)-1;
+        end
+    end
+    
+    % Checks for NaN values
+    nanValues = find(isnan(VRtimebin)); 
+    VRtimebin(isnan(VRtimebin)) = VRtimebin(nanValues(1)-1,1); % Assigns last value to NaN
+    
     VRtime = VR_data.Time{trial};
     dP = diff(position);
     dP = vertcat(0,dP);
@@ -45,7 +75,7 @@ for trial = 1:length(VR_data.Position)
         Vel(i,2) = sumPosition;
     end
 
-    spikeRate(spikeRate>=200)=0; % Negates outliers
+    spikeRate(spikeRate>=250)=0; % Negates outliers
     spikeRate(isnan(spikeRate))=0; % If spikeRate contains NaN
     Spikes.VR(trial).time = VRtimebin;
     Spikes.VR(trial).mapTime = mapTime;
