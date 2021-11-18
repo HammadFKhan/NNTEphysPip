@@ -33,12 +33,13 @@ rez = KilosortAnalysis(fpath,ops);
 % benchmark (those are using the real ground truth!!!)
 
 %% LFP
+set(0,'DefaultFigureWindowStyle','normal')
 LFP = fastpreprocess_filtering(Intan.allIntan,8192);
 LFP = bestLFP(LFP);
 LFP = bandFilter(LFP);
 LFPplot(LFP)
 %% CSD
-[CSDoutput]  = CSD(LFP.LFP(:,1:8192)'/1000,1024,2E-5);
+[CSDoutput]  = CSD(LFP.LFP(:,59400:59512)'/1000,1024,2E-5);
 %% Looking at single units
 set(0,'DefaultFigureWindowStyle','docked')
 Spikes = singleUnitAnalysis(fpath,VR_data);
