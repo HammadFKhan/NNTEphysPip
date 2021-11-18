@@ -18,9 +18,9 @@ d1 = designfilt('bandstopiir','FilterOrder',2, ...
     'HalfPowerFrequency1',119,'HalfPowerFrequency2',121, ...
     'DesignMethod','butter','SampleRate',downSampleFreq);
 
-Fc = [254];
+Fc = [1 254];
 Wn = Fc./(Fs/2);
-b = fir1(10,Wn,'low');
+b = fir1(10,Wn,'bandpass');
 
 % Design butterworth filters for LFP
 % Fc = [128];
