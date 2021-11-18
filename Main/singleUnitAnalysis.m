@@ -1,5 +1,5 @@
 function Spikes = singleUnitAnalysis(fpath,VR_data)
-path = [fpath,'/preAutoMerge'];
+path = [fpath,'/postAutoMerge'];
 %% Read in kilosort data for matlab analysis
 SpikeClusters = readNPY(fullfile(path, 'spike_clusters.npy'));
 SpikeSamples = readNPY(fullfile(path, 'spike_times.npy'));
@@ -29,7 +29,7 @@ spikeRate = Spikes.VR(1).spikeRate;
 norm = (spikeRate-min(spikeRate,[],1))./(max(spikeRate,[],1)-min(spikeRate,[],1));
 for trial = 1:length(Spikes.VR)
     figure('name',['Spike Map Trial ' num2str(trial)]),...
-    subplot(2,1,1),spikeImage = spike_map(norm',(1:3*Spikes.VR(trial).time(end))); clim([0 1]);
+    subplot(2,1,1),spikeImage = spike_map(norm',(1:3*Spikes.VR(trial).time(end)));
     subplot(2,1,2),bar(3*Spikes.VR.Velocity(:,1),Spikes.VR.Velocity(:,2));
     ylabel('Velocity cm/s')
     yline(mean(Spikes.VR.Velocity(:,2)),'r--'); box off
@@ -37,12 +37,23 @@ for trial = 1:length(Spikes.VR)
 end
 %% Velocity Triggered Analysis
 Velocity = Spikes.VR.Velocity(:,2);
-velocityTrig = 1.2*mean(Velocity);
-loc = find(Velocity>=velocityTrig);
+velocityTrig = 1; %Triggered at 1 cm
+loc = find(abs(Velocity)>=velocityTrig);
 
 % Make time window around trigger
 
 spikeRateTrig = Spikes.VR(1).spikeRate(loc,:); 
+baselineSpike = mean(Spikes.VR(1).spikeRate,1);
+figure
+for i = 1:length(loc)
+    if (loc(i)<=2 || loc(i)>=size(spikeRate,1)-2)
+        spikeRatewin{i} = [];
+    else
+        spikeRatewin{i} = Spikes.VR(1).spikeRate(loc(i)-2:loc(i)+2,:)-baselineSpike;
+    end
+end
+spikeRateall = (horzcat(spikeRatewin{:}));
+plot(mean(spikeRateall,2));
 normTrig = (spikeRateTrig-min(spikeRateTrig,[],1))./(max(spikeRateTrig,[],1)-min(spikeRateTrig,[],1));
 
 % Plot
@@ -50,5 +61,5 @@ figure('name',['Spike Map Trial Velocity Triggered']),...
     subplot(2,1,1),spikeImage = spike_map(normTrig',(1:size(loc,1))); clim([0 1]);
 subplot(2,1,2),bar(1:size(loc,1),Spikes.VR.Velocity(loc,2));
 ylabel('Velocity cm/s')
-yline(mean(Spikes.VR.Velocity(:,2)),'r--'); box off
+yline(velocityTrig,'r--'); box off
 ylim([-0.2 6])
