@@ -7,12 +7,12 @@ directory = dir(pathname);
 count = 1;
 downsampleRate = 4;
 targetedFs = 8192;
-for idx = 3:63
+for idx = 3:(length(directory)-1)
     file = directory(idx).folder;
     path = directory(idx).name;
     Intan = read_Intan_RHD2000_file(file,path); 
     Fs =  Intan.frequency_parameters.amplifier_sample_rate;
-    allIntan{count} = resample(Intan.amplifier_data(33:96,:)',targetedFs,Fs);
+    allIntan{count} = resample(Intan.amplifier_data',targetedFs,Fs);
     count = count+1;
 end % load Intan files
 Fs = Intan.frequency_parameters.amplifier_sample_rate;
