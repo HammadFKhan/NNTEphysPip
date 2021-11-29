@@ -1,7 +1,7 @@
 % clear; clc; 
 % close all;
 addpath(genpath('main'));
-
+IntanConcatenate
 % Intan = read_Intan_RHD2000_file(); %load intan data
 useGPU = 0;
 fpath    = Intan.path; % where on disk do you want the analysis? ideally and SSD...
@@ -10,7 +10,6 @@ run(fullfile(pathToYourConfigFile, 'config_eMouse.m'))
 make_UCLAMouseChannelMap(fpath); % Creates channel map for electrode array
 %%
 % filtData = preprocess_filtering(Intan.allIntan(:,1:400000),Intan.t_amplifier);
-
 %% Ripples
 % [Ripples,filtData] = SWR(Intan);
 % plotClusterless(Ripples,filtData,Intan)
@@ -39,10 +38,18 @@ LFP = bestLFP(LFP);
 LFP = bandFilter(LFP);
 LFPplot(LFP)
 %% CSD
-[CSDoutput]  = CSD(LFP.LFP(:,59400:59512)'/1000,1024,2E-5);
+[CSDoutput]  = CSD(flip(LFP.LFP(:,1:1024)'/1E6,1),1024,2E-5);
 %% Looking at single units
 set(0,'DefaultFigureWindowStyle','docked')
 Spikes = singleUnitAnalysis(fpath,VR_data);
+%%
+set(0,'DefaultFigureWindowStyle','normal')
+[spikeAmps, spikeDepths, templateDepths, tempAmps, tempsUnW, templateDuration, waveforms] =...
+    templatePositionsAmplitudes(fpath,ycoords);
+% figure,
+% plot(waveforms(1:30,20:end-20)','color',[0.5 0.5 0.5 0.25]), hold on;
+% plot(mean(waveforms(1:30,20:end-20),1),'k','LineWidth',2)
+sortedSpikeRate = depthSpikePlot(Spikes,templateDepths);
 %% Time-Frequency Analysis
 TimeFreq = tfAnalysis(Spikes,LFP);
 plotTF(TimeFreq,LFP)
