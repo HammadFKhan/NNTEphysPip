@@ -22,13 +22,13 @@ rezToPhy(rez, [fpath,'/preAutoMerge']);
 
 fprintf('Kilosort took %2.2f seconds \n', toc)
 
-rez = merge_posthoc2(rez);
+rez2 = merge_posthoc2(rez);
 disp('Automerging completed!')
-benchmark_simulation(rez, fullfile(pwd, 'eMouseGroundTruth.mat'));
+benchmark_simulation(rez2, fullfile(pwd, 'eMouseGroundTruth.mat'));
 
 % save python results file for Phy
 mkdir(fpath,'postAutoMerge')
-rezToPhy(rez, [fpath,'/postAutoMerge']);
+rezToPhy(rez2, [fpath,'/postAutoMerge']);
 
 % remove temporary file
 delete(ops.fproc);
