@@ -1,7 +1,7 @@
 function LFPplot(LFP)
 Fs = LFP.downSampleFreq;
-start = 586*Fs;
-win = 5*Fs;
+start = 200*Fs;
+win = 2*Fs;
 stop = start+win-1;
 figure(3),set(gcf, 'Position',  [100, 100, 400, 500]),
  %Plot the first 5 seconds of data
