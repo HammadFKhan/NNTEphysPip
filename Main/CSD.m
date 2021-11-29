@@ -266,7 +266,7 @@ function [CSDoutput]  = CSD(data,SR,spacing,varargin);
     clims = [-M M]; % gives the upper and lower limit for the colormap
     figure('name','Inverse CSD')
     if CSDtype == 1 % standard CSD method
-        Vq = interp2(CSD(:,2:end-1)',3);
+        Vq = smoothdata(CSD(:,2:end-1)','movmedian',6);
         im = imagesc(Vq,clims); % CSD as heatmap 
         colormap(jet); % blue = sink; red = source
         cb = colorbar('SouthOutside');
