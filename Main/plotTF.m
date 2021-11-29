@@ -5,9 +5,9 @@ tf = TimeFreq.tf;
 interpLevel = 2;
 figure(),set(gcf, 'Position',  [100, 100, 500, 100]),
 % imagesc(-1000:1000,oscillators.tb.f,test'),colormap(jet),axis xy, colorbar
-subplot(1,3,1),imagesc(-1000:1000,oscillators.tg.f,interp2(mean(oscillators.tb.phi,3)',interpLevel)),colorbar,title('\theta Phase'),colormap(jet),axis xy,clim([-0.35 0.35]) 
-subplot(1,3,2),imagesc(-1000:1000,oscillators.tg.f,interp2(mean(oscillators.tg.phi,3)',interpLevel)),colorbar,title('\beta Phase'),colormap(jet),axis xy, clim([-0.35 0.35])
-subplot(1,3,3),imagesc(-1000:1000,oscillators.tb.f,interp2(mean(oscillators.bg.phi,3)',interpLevel)),colorbar,title('\gamma Phase'),colormap(jet),axis xy,clim([-0.35 0.35])
+subplot(1,3,1),imagesc(-1000:1000,oscillators.tg.f,interp2(mean(oscillators.tb.phi,3)',interpLevel)),colorbar,title('\theta Phase'),colormap(jet),axis xy,caxis([-0.35 0.35]) 
+subplot(1,3,2),imagesc(-1000:1000,oscillators.tg.f,interp2(mean(oscillators.tg.phi,3)',interpLevel)),colorbar,title('\beta Phase'),colormap(jet),axis xy, caxis([-0.35 0.35])
+subplot(1,3,3),imagesc(-1000:1000,oscillators.tb.f,interp2(mean(oscillators.bg.phi,3)',interpLevel)),colorbar,title('\gamma Phase'),colormap(jet),axis xy,caxis([-0.35 0.35])
 ylim([10 30])
 figure()
 mtheta = TimeFreq.mtheta*(wavelet.theta_f(end)-wavelet.theta_f(1))+wavelet.theta_f(1);
@@ -25,9 +25,9 @@ thetaPower = mean(thetaTrial)';
 betaPower = mean(betaTrial)';
 gammaPower = mean(gammaTrial)';
 figure,
-subplot(1,3,1),imagesc(thetaTrial),colormap(jet),colorbar, axis xy,clim([0 25])
-subplot(1,3,2),imagesc(betaTrial),colormap(jet),colorbar, axis xy,clim([0 25])
-subplot(1,3,3),imagesc((gammaTrial)),colormap(jet),colorbar, axis xy,clim([0 25])
+subplot(1,3,1),imagesc(thetaTrial),colormap(jet),colorbar, axis xy,caxis([0 25])
+subplot(1,3,2),imagesc(betaTrial),colormap(jet),colorbar, axis xy,caxis([0 25])
+subplot(1,3,3),imagesc((gammaTrial)),colormap(jet),colorbar, axis xy,caxis([0 25])
 
 
 % for i = 1:size(tf.theta.itpc,1)
