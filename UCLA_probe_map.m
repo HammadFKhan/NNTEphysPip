@@ -87,7 +87,7 @@ probewiring=[
 
 tipelectrode=78;    %nearest tip-electrode vertical distance in microns.
 
-connector_position='bottom';
+connector_position='top';
 
 [~,idx_sort] = sort(probewiring(:,4),1); % Ascending list of locations
 s=[];
