@@ -58,7 +58,7 @@ normTrig = (spikeRateTrig-min(spikeRateTrig,[],1))./(max(spikeRateTrig,[],1)-min
 
 % Plot
 figure('name',['Spike Map Trial Velocity Triggered']),...
-    subplot(2,1,1),spikeImage = spike_map(normTrig',(1:size(loc,1))); clim([0 1]);
+    subplot(2,1,1),spikeImage = spike_map(normTrig',(1:size(loc,1))); caxis([0 1]);
 subplot(2,1,2),bar(1:size(loc,1),Spikes.VR.Velocity(loc,2));
 ylabel('Velocity cm/s')
 yline(velocityTrig,'r--'); box off
