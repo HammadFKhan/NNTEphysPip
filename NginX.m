@@ -1,6 +1,9 @@
 % clear; clc; 
 % close all;
 addpath(genpath('main'));
+addpath(genpath('chronux'));
+addpath(genpath('Kilosort'));
+addpath(genpath('npy-matlab'));
 IntanConcatenate
 % Intan = read_Intan_RHD2000_file(); %load intan data
 useGPU = 0;
