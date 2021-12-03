@@ -1,46 +1,26 @@
 function Spikes = rateMap(Spikes,VR_data)
 
 for trial = 1:length(VR_data.Position)
-    position = VR_data.Position{trial};
+    position = abs(VR_data.Position{trial});
     edgesPos = 0:1:abs(ceil(VR_data.Position{1}(end)));
     VRposition =  discretize(position,edgesPos);
     time = VR_data.Time{trial};
     edgesTime = 0:4:VR_data.Time{1}(end); %Bin width on the track
     VRtimebin = discretize(time,edgesTime);
     
-    % Checks bin twice
+    % Checks binning routine
     checkBin = find(diff(VRtimebin)>1);
-    if isempty(size(checkBin,1))==0 %Checks for binning error
+    count = 0;
+    while checkBin>0
         for check = 1:size(checkBin,1)
             checkValue = checkBin(check)+1; %Adds 1 to the location of the skipped cell
             VRtimebin(checkValue,1) = VRtimebin(checkValue,1)-1;
         end
+        checkBin = find(diff(VRtimebin)>1);
+        count = count+1;
     end
-    
-    checkBin = find(diff(VRtimebin)>1);
-     if isempty(size(checkBin,1))==0 %Checks for binning error
-        for check = 1:size(checkBin,1)
-            checkValue = checkBin(check)+1; %Adds 1 to the location of the skipped cell
-            VRtimebin(checkValue,1) = VRtimebin(checkValue,1)-1;
-        end
-     end
-    
-     checkBin = find(diff(VRtimebin)>1);
-     if isempty(size(checkBin,1))==0 %Checks for binning error
-        for check = 1:size(checkBin,1)
-            checkValue = checkBin(check)+1; %Adds 1 to the location of the skipped cell
-            VRtimebin(checkValue,1) = VRtimebin(checkValue,1)-1;
-        end
-     end
-    
-     checkBin = find(diff(VRtimebin)>1);
-     if isempty(size(checkBin,1))==0 %Checks for binning error
-        for check = 1:size(checkBin,1)
-            checkValue = checkBin(check)+1; %Adds 1 to the location of the skipped cell
-            VRtimebin(checkValue,1) = VRtimebin(checkValue,1)-1;
-        end
-    end
-    
+    disp(['Binning routine adjusted: ' num2str(count)]);
+    clear count
     % Checks for NaN values
     nanValues = find(isnan(VRtimebin)); 
     VRtimebin(isnan(VRtimebin)) = VRtimebin(nanValues(1)-1,1); % Assigns last value to NaN
