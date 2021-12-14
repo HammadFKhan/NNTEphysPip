@@ -1,5 +1,5 @@
 % Time-Frequency Analysis
-function TimeFreq = tfAnalysis(Spikes,LFP)
+function [TimeFreq LFP] = tfAnalysis(Spikes,LFP)
 % Initialize Data
 params.tapers = [5 9];
 movingwin = [0.5 0.05];
@@ -26,7 +26,7 @@ Velocity = Spikes.VR.Velocity(:,2);
 velocityTrig = 1; %Triggered Velocity
 loc = 3*find(abs(Velocity)>velocityTrig); %multiply by the cause of bin value
 for trial = 1:length(loc)-1
-    window = (loc(trial)-1.00:loc(trial)+1.00);
+    window = (loc(trial)-1.50:loc(trial)+.500);
     %triggered spike time with offset of the intial spike
     %this way, each spike time is translated to a window within 1 second
     spike(trial).spikeTrig = spikeTime(window(1)<=spikeTime & spikeTime<=window(2))-window(1);
@@ -36,8 +36,12 @@ for trial = 1:length(loc)-1
     gamma(:,trial)= gammaLFP(window(1)<=downsample_LFPTime & downsample_LFPTime<=window(2));
 
 end
+% Beta Analysis
+LFP = betaBurstDetection(LFP,beta); % Detect beta burst during window
+
 TimeFreq.mtheta = mean(theta,2);
 TimeFreq.mbeta = mean(beta,2);
+LFP.betaTrials = beta;
 TimeFreq.mgamma = mean(gamma,2);
 % Oscillators Analysis
 % Phase to Phase of Theta and Beta
