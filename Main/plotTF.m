@@ -19,7 +19,6 @@ for trial = 1:size(wavelet.theta_cfs,3)
     thetaTrial(trial,:) = mean(abs(wavelet.theta_cfs(:,:,trial)),2);
     betaTrial(trial,:) = mean(abs(wavelet.beta_cfs(:,:,trial)),2);
     gammaTrial(trial,:) = mean(abs(wavelet.gamma_cfs(:,:,trial)),2);
-    
 end
 thetaPower = mean(thetaTrial)';
 betaPower = mean(betaTrial)';
