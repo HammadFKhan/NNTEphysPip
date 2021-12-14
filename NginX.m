@@ -40,6 +40,8 @@ LFP = fastpreprocess_filtering(Intan.allIntan,8192);
 LFP = bestLFP(LFP);
 LFP = bandFilter(LFP);
 LFPplot(LFP)
+%% Beta Band Analysis
+LFP = betaBurstDetection(LFP);
 %% CSD
 [CSDoutput]  = CSD(flip(LFP.LFP(:,1:1024)'/1E6,1),1024,2E-5);
 %% Looking at single units
@@ -54,8 +56,10 @@ set(0,'DefaultFigureWindowStyle','normal')
 % plot(mean(waveforms(1:30,20:end-20),1),'k','LineWidth',2)
 sortedSpikeRate = depthSpikePlot(Spikes,templateDepths);
 %% Time-Frequency Analysis
-TimeFreq = tfAnalysis(Spikes,LFP);
+[TimeFreq,LFP] = tfAnalysis(Spikes,LFP);
 plotTF(TimeFreq,LFP)
+%% Beta Analysis
+betaAnalysis(LFP)
 %% Place Fields
 Spikes = detectPlacefield(Spikes);
 Spikes = placeFieldAnalysis(Spikes);
