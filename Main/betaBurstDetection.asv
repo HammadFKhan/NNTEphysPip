@@ -2,16 +2,15 @@ function LFP = betaBurstDetection(LFP,betaTrials)
 if nargin<2
     beta_signal = LFP.beta_band';
 else
-    beta_signal = betaTrials';
+    beta_signal = betaTrials;
 end
-for i = 1:size(beta_signal,1)
 Fs = LFP.downSampleFreq;
 timestamps(:,1) = (1:length(beta_signal))/Fs; % Timepoint for each sample
 LFP.betaBurst = [];
 lowThresholdFactor = 1; % Beta envolope must exceed lowThresholdFactor*stdev
 highThresholdFactor = 2.5; % Beta peak must exceed highThresholdFactor*stdev
-minInterRippleInterval = 30; % 30ms
-minBetaDuration = 50; % 20ms
+minInterRippleInterval = 25; % 30ms
+minBetaDuration = 50; % 50ms
 maxBetaDuration = 250; % 200ms
 noise = [];
 windowLength = round(11);
@@ -115,6 +114,8 @@ for idx = 1:size(beta_signal,2)
         continue
     end
     LFP.betaBurst.detectedBeta{idx} = betaBurst;
+    LFP.betaBurst.detectedBeta{idx} = betaBurst;
+    LFP.betaBurst.NumDetectedBeta(idx,1) = size(betaBurst,1);
     LFP.betaBurst.lowThresholdFactor = lowThresholdFactor;
     LFP.betaBurst.highThresholdFactor = highThresholdFactor;
 end
