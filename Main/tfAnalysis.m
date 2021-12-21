@@ -24,9 +24,9 @@ downsample_LFPTime = LFP.times';
 % Set up state triggered analysis
 Velocity = Spikes.VR.Velocity(:,2);
 velocityTrig = 1; %Triggered Velocity
-loc = 3*find(abs(Velocity)>velocityTrig); %multiply by the cause of bin value
+loc = Spikes.VR.binWinTime*find(abs(Velocity)>velocityTrig); %multiply by the cause of bin value
 for trial = 1:length(loc)-1
-    window = (loc(trial)-1.50:loc(trial)+.500);
+    window = [loc(trial)-1.50,loc(trial)+.500];
     %triggered spike time with offset of the intial spike
     %this way, each spike time is translated to a window within 1 second
     spike(trial).spikeTrig = spikeTime(window(1)<=spikeTime & spikeTime<=window(2))-window(1);
