@@ -113,6 +113,7 @@ for idx = 1:size(beta_signal,2)
         LFP.betaBurst.detectedBeta{idx} = [];
         continue
     end
+    LFP.betaBurst.beta{idx} = beta_signal;
     LFP.betaBurst.detectedBeta{idx} = betaBurst;
     LFP.betaBurst.NumDetectedBeta(idx,1) = size(betaBurst,1);
     LFP.betaBurst.lowThresholdFactor = lowThresholdFactor;
