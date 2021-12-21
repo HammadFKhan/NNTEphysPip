@@ -286,7 +286,6 @@ function [CSDoutput]  = CSD(data,SR,spacing,varargin);
     axis([0,max(xAxis),-inf,inf]);
     ylabel('Electrode');
     xlabel('Time (ms)');
-    title('CSD (\color{red}sink, \color{blue}source\color{black})');
 
     % Function output
     CSDoutput = CSD;
