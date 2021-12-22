@@ -30,12 +30,13 @@ if plt ==1
     maxdiff = max(eventdiff)*Fs;
     peakWin = ceil(maxdiff/2);
     % betaEvents = zeros(size(detectedBeta{1},1),maxdiff);
-    for i = 1:size(detectedBeta,1)
-        %     pos1 = detectedBeta{1}(i,1)*Fs;
-        %     pos2 = detectedBeta{1}(i,3)*Fs;
-        peak = detectedBeta(i,2)*Fs;
+    
+    % Plot beta events
+     for i = 1:size(detectedBeta,1)
+            pos1 = detectedBeta{1}(i,1)*Fs;
+            pos2 = detectedBeta{1}(i,3)*Fs;
         if trialFlag == 1
-            peakAlign(i,:) = LFP.betaTrials(peak-peakWin:peak+peakWin);
+            peakAlign(i,:) = LFP.betaTrials(peak-peakWin:peak+peakWin,i);
         else
             peakAlign(i,:) = LFP.beta_band(peak-peakWin:peak+peakWin);
         end
@@ -46,7 +47,27 @@ if plt ==1
         %     else
         %         betaEvents(i,:) = horzcat(originalSignal,zeros(1,padding));
         %     end
-    end
+     end
+     if trialFlag == 1
+         % Align Peaks of beta events
+         for i = 1:size(detectedBeta,1)
+             %     pos1 = detectedBeta{1}(i,1)*Fs;
+             %     pos2 = detectedBeta{1}(i,3)*Fs;
+             peak = detectedBeta(i,2)*
+             peakAlign(i,:) = LFP.betaTrials(peak-peakWin:peak+peakWin,i);
+             %     originalSignal = LFP.beta_band(1,pos1:pos2);
+             %     padding = maxdiff-size(originalSignal,2);
+             %     if padding < 0
+             %         betaEvents(i,:) = originalSignal(1,1:end+padding);
+             %     else
+             %         betaEvents(i,:) = horzcat(originalSignal,zeros(1,padding));
+             %     end
+         end
+     else
+           %     pos1 = detectedBeta{1}(i,1)*Fs;
+             %     pos2 = detectedBeta{1}(i,3)*Fs;
+         peakAlign(i,:) = LFP.beta_band(peak-peakWin:peak+peakWin);
+     end
     figure,
     plot(peakAlign','Color',[0.5 0.5 0.5 0.5]); hold on
     plot(mean(peakAlign,1),'k','lineWidth',2)
