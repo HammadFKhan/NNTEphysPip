@@ -1,11 +1,15 @@
-function LFP = betaBurstDetection(LFP,betaTrials)
+function LFP = betaBurstDetection(LFP,betaTrials,window)
+
+Fs = LFP.downSampleFreq;
 if nargin<2
     beta_signal = LFP.beta_band';
+    timestamps(:,1) = (1:length(beta_signal))/Fs; % Timepoint for each sample
+    window = [];
 else
     beta_signal = betaTrials;
+    trialFlag = 1;
 end
-Fs = LFP.downSampleFreq;
-timestamps(:,1) = (1:length(beta_signal))/Fs; % Timepoint for each sample
+
 LFP.betaBurst = [];
 lowThresholdFactor = 1; % Beta envolope must exceed lowThresholdFactor*stdev
 highThresholdFactor = 2.5; % Beta peak must exceed highThresholdFactor*stdev
@@ -13,6 +17,7 @@ minInterRippleInterval = 25; % 30ms
 minBetaDuration = 50; % 50ms
 maxBetaDuration = 250; % 200ms
 noise = [];
+
 windowLength = round(11);
 H = waitbar(0,'Detecting Beta Events...');
 for idx = 1:size(beta_signal,2)
@@ -20,11 +25,12 @@ for idx = 1:size(beta_signal,2)
     data = struct();
     stats = struct();
     maps = struct();
-    
+    if trialFlag
+        timestamps = window(idx,1):1/Fs:window(idx,2);
+        timestamps = timestamps';
+    end
     signal = beta_signal(:,idx);
-    squaredSignal = signal.^2;
-    window = ones(windowLength,1)/windowLength;
-    
+    squaredSignal = signal.^2;    
     normalizedSquaredSignal = squaredSignal - mean(squaredSignal)/std(squaredSignal);
     % Detect beta periods by thresholding normalized squared signal
     thresholded = normalizedSquaredSignal > (lowThresholdFactor*std(squaredSignal));
@@ -118,5 +124,6 @@ for idx = 1:size(beta_signal,2)
     LFP.betaBurst.NumDetectedBeta(idx,1) = size(betaBurst,1);
     LFP.betaBurst.lowThresholdFactor = lowThresholdFactor;
     LFP.betaBurst.highThresholdFactor = highThresholdFactor;
+    LFP.betaBurst.window = window;
 end
 close(H)
