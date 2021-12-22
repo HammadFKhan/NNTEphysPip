@@ -11,7 +11,9 @@ end
 
 betaDuration = (detectedBeta(:,3)-detectedBeta(:,1)).*1000;
 betaAmplitude = detectedBeta(:,4);
-
+% Calculate CSD
+t = LFP.LFP(:,window(1)*1024:window(2)*1024);
+[CSDoutput]  = CSD(t'/1E6,1024,2E-5);
 
 %% Plot Beta Events
 plt = 1;
@@ -53,7 +55,6 @@ if plt ==1
          for i = 1:size(detectedBeta,1)
              %     pos1 = detectedBeta{1}(i,1)*Fs;
              %     pos2 = detectedBeta{1}(i,3)*Fs;
-             peak = detectedBeta(i,2)*
              peakAlign(i,:) = LFP.betaTrials(peak-peakWin:peak+peakWin,i);
              %     originalSignal = LFP.beta_band(1,pos1:pos2);
              %     padding = maxdiff-size(originalSignal,2);
