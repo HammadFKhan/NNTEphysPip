@@ -11,7 +11,9 @@ end
 
 betaDuration = (detectedBeta(:,3)-detectedBeta(:,1)).*1000;
 betaAmplitude = detectedBeta(:,4);
-
+% Calculate CSD
+t = LFP.LFP(:,window(1)*1024:window(2)*1024);
+[CSDoutput]  = CSD(t'/1E6,1024,2E-5);
 
 %% Plot Beta Events
 plt = 1;
