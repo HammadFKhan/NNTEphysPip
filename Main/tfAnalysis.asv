@@ -1,5 +1,5 @@
 % Time-Frequency Analysis
-function TimeFreq = tfAnalysis(Spikes,LFP)
+function [TimeFreq LFP] = tfAnalysis(Spikes,LFP)
 % Initialize Data
 params.tapers = [5 9];
 movingwin = [0.5 0.05];
@@ -24,11 +24,12 @@ downsample_LFPTime = LFP.times';
 % Set up state triggered analysis
 Velocity = Spikes.VR.Velocity(:,2);
 velocityTrig = 1; %Triggered Velocity
-loc = 3*find(abs(Velocity)>velocityTrig); %multiply by the cause of bin value
+loc = Spikes.VR.binWinTime*find(abs(Velocity)>velocityTrig); %multiply by the cause of bin value
 for trial = 1:length(loc)-1
-    window = (loc(trial)-1.50:loc(trial)+.500);
+    window = [loc(trial)-1.50,loc(trial)+.500];
     %triggered spike time with offset of the intial spike
     %this way, each spike time is translated to a window within 1 second
+    timestamps(trial,:) = window; % Global timestamps for signal reference
     spike(trial).spikeTrig = spikeTime(window(1)<=spikeTime & spikeTime<=window(2))-window(1);
     LFPTrig(:,trial) = coherencyLFP(window(1)<=LFPTime & LFPTime<=window(2));
     theta(:,trial)= thetaLFP(window(1)<=downsample_LFPTime & downsample_LFPTime<=window(2));
@@ -36,12 +37,14 @@ for trial = 1:length(loc)-1
     gamma(:,trial)= gammaLFP(window(1)<=downsample_LFPTime & downsample_LFPTime<=window(2));
 
 end
+t = LFP.LFP(:,window(1)*1024:window(2)*1024);
+[CSDoutput]  = CSD(t'/1E6,1024,2E-5);
 % Beta Analysis
-LFP = betaBurstDetection(LFP,beta); % Detect beta burst during window
-
+LFP = betaBurstDetection(LFP,beta,timestamps); % Detect beta burst during window
 
 TimeFreq.mtheta = mean(theta,2);
 TimeFreq.mbeta = mean(beta,2);
+LFP.betaTrials = beta;
 TimeFreq.mgamma = mean(gamma,2);
 % Oscillators Analysis
 % Phase to Phase of Theta and Beta
