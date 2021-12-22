@@ -37,8 +37,6 @@ for trial = 1:length(loc)-1
     gamma(:,trial)= gammaLFP(window(1)<=downsample_LFPTime & downsample_LFPTime<=window(2));
 
 end
-t = LFP.LFP(:,window(1)*1024:window(2)*1024);
-[CSDoutput]  = CSD(t'/1E6,1024,2E-5);
 % Beta Analysis
 LFP = betaBurstDetection(LFP,beta,timestamps); % Detect beta burst during window
 
