@@ -1,11 +1,11 @@
 % Time-Frequency Analysis
-function [TimeFreq LFP] = tfAnalysis(Spikes,LFP)
+function [TimeFreq,LFP,betaGroup] = tfAnalysis(Spikes,LFP)
 % Initialize Data
 params.tapers = [5 9];
 movingwin = [0.5 0.05];
 params.pad = 2;
 params.Fs = 8192;
-
+TimeFreq = [];
 % Set up Spike data
 for trial = 1:size(Spikes.Clusters,2)
     fixSpiketime{trial} = Spikes.Clusters(trial).spikeTime';
@@ -25,8 +25,6 @@ downsample_LFPTime = LFP.times';
 Velocity = Spikes.VR.Velocity(:,2);
 velocityTrig = 1; %Triggered Velocity
 loc = Spikes.VR.binWinTime*find(abs(Velocity)>velocityTrig); %multiply by the cause of bin value
-
-
 
 % Check and adjust data structure for depth or single electrode analysis
 if size(thetaLFP,1)>1
@@ -56,9 +54,14 @@ else
 end
 
 % Beta Analysis
-for electrode = 1:64
-    Group = betaBurstDetection(LFP,beta(:,electrode,:),timestamps); % Detect beta burst during window
+if size(thetaLFP,2)>1
+    for electrode = 1:64
+        betaGroup(electrode).electrode = groupBetaBurstDetection(LFP,beta(:,electrode,:),timestamps); % Detect beta burst during window
+    end
+else
+    LFP = betaBurstDetection(LFP,beta,timestamps);
 end
+return % temporary return function
 TimeFreq.mtheta = mean(theta,2);
 TimeFreq.mbeta = mean(beta,2);
 LFP.betaTrials = beta;
