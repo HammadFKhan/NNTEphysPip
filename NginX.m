@@ -56,10 +56,18 @@ set(0,'DefaultFigureWindowStyle','normal')
 % plot(mean(waveforms(1:30,20:end-20),1),'k','LineWidth',2)
 sortedSpikeRate = depthSpikePlot(Spikes,templateDepths);
 %% Time-Frequency Analysis
-[TimeFreq,LFP] = tfAnalysis(Spikes,LFP);
+[TimeFreq,LFP,betaGroup] = tfAnalysis(Spikes,LFP);
 plotTF(TimeFreq,LFP)
 %% Beta Analysis
-betaAnalysis(LFP)
+for i = 1:64
+peakAlign{i} = betaAnalysis(betaGroup(i).electrode);
+end 
+%%
+for i = 1:64
+    mPeakAlign(:,i) = mean(peakAlign{i},1);
+end
+figure,stack_plot(flip(mPeakAlign'),0.2,1.5)
+figure,imagesc(mPeakAlign')
 %% Place Fields
 Spikes = detectPlacefield(Spikes);
 Spikes = placeFieldAnalysis(Spikes);
