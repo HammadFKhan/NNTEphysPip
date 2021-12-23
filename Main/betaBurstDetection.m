@@ -6,9 +6,10 @@ if nargin<2
     timestamps(:,1) = (1:length(beta_signal))/Fs; % Timepoint for each sample
     window = [];
 else
-    beta_signal = betaTrials;
+    beta_signal = squeeze(betaTrials);
     trialFlag = 1;
 end
+
 
 LFP.betaBurst = [];
 lowThresholdFactor = 1; % Beta envolope must exceed lowThresholdFactor*stdev
