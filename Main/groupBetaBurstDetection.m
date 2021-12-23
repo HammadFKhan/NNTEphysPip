@@ -120,6 +120,7 @@ for idx = 1:size(beta_signal,2)
         betaGroup.betaBurst.detectedBeta{idx} = [];
         continue
     end
+    betaGroup.LFP = LFP.LFP;
     betaGroup.downSampleFreq = Fs;
     betaGroup.beta_band = LFP.beta_band(electrode,:);
     betaGroup.betaBurst.detectedBeta{idx} = betaBurst;
