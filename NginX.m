@@ -38,7 +38,7 @@ rez = KilosortAnalysis(fpath,ops);
 set(0,'DefaultFigureWindowStyle','normal')
 LFP = fastpreprocess_filtering(Intan.allIntan,8192);
 LFP = bestLFP(LFP);
-LFP = bandFilter(LFP);
+LFP = bandFilter(LFP,'depth'); % Extract LFPs based on 'depth' or 'single'
 LFPplot(LFP)
 %% Beta Band Analysis
 LFP = betaBurstDetection(LFP);
