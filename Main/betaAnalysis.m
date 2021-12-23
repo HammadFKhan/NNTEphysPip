@@ -1,5 +1,5 @@
 % Beta analysis
-function peakAlign = betaAnalysis(LFP)
+function [peakAlign,csd] = betaAnalysis(LFP)
 detectedBeta = LFP.betaBurst.detectedBeta;
 window = LFP.betaBurst.window;
 Fs = LFP.downSampleFreq;
@@ -65,10 +65,12 @@ if plt ==1
         %         betaEvents(i,:) = horzcat(originalSignal,zeros(1,padding));
         %     end
      end
-    figure,
-    plot(peakAlign','Color',[0.5 0.5 0.5 0.5]); hold on
-    plot(mean(peakAlign,1),'k','lineWidth',2)
-    xlim([0 maxdiff])
+     csd = CSDoutput;
+%     figure,
+%     plot(peakAlign','Color',[0.5 0.5 0.5 0.5]); hold on
+%     plot(mean(peakAlign,1),'k','lineWidth',2)
+%     xlim([0 maxdiff])
+    
     
 %     figure,lineError(1:size(peakAlign,2),peakAlign,'std') % Pass std or ste for error plotting
 %     blah = abs(wavelet);
