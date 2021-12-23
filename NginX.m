@@ -60,14 +60,19 @@ sortedSpikeRate = depthSpikePlot(Spikes,templateDepths);
 plotTF(TimeFreq,LFP)
 %% Beta Analysis
 for i = 1:64
-peakAlign{i} = betaAnalysis(betaGroup(i).electrode);
+[peakAlign{i},csd{i}] = betaAnalysis(betaGroup(i).electrode);
 end 
-%%
+%% Plot beta traces
 for i = 1:64
     mPeakAlign(:,i) = mean(peakAlign{i},1);
 end
 figure,stack_plot(flip(mPeakAlign'),0.2,1.5)
 figure,imagesc(mPeakAlign')
+%% Plot beta CSD
+for i = 1:64
+    mcsd(:,:,i) = mean(csd{i},3);
+end
+mcsd = mean(mcsd,3);
 %% Place Fields
 Spikes = detectPlacefield(Spikes);
 Spikes = placeFieldAnalysis(Spikes);
