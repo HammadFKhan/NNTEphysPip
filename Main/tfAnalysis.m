@@ -23,7 +23,7 @@ downsample_LFPTime = LFP.times';
 
 % Set up state triggered analysis
 Velocity = Spikes.VR.Velocity(:,2);
-velocityTrig = 1; %Triggered Velocity
+velocityTrig = 2; %Triggered Velocity
 loc = Spikes.VR.binWinTime*find(abs(Velocity)>velocityTrig); %multiply by the cause of bin value
 
 % Check and adjust data structure for depth or single electrode analysis
@@ -55,7 +55,7 @@ end
 
 % Beta Analysis
 if size(thetaLFP,2)>1
-    for electrode = 1:64
+    for electrode = 1:size(LFP.medianLFP,1) % Checks electrode size for median
         betaGroup(electrode).electrode = groupBetaBurstDetection(LFP,beta(:,electrode,:),timestamps,electrode); % Detect beta burst during window
     end
 else
