@@ -57,23 +57,20 @@ set(0,'DefaultFigureWindowStyle','normal')
 sortedSpikeRate = depthSpikePlot(Spikes,templateDepths);
 %% Time-Frequency Analysis
 [TimeFreq,LFP,betaGroup] = tfAnalysis(Spikes,LFP);
-plotTF(TimeFreq,LFP)
-%% Beta Analysis
-for i = 1:64
+%plotTF(TimeFreq,LFP)
+%% Beta Analysis for each electrode
+for i = 1:size(LFP.medianLFP,1) % Checks electrode size for median
 [peakAlign{i},csd{i}] = betaAnalysis(betaGroup(i).electrode);
 end 
-%% Plot beta traces
-for i = 1:64
+%% Plot beta traces for each electrode
+for i = 1:size(LFP.medianLFP,1) % Checks electrode size for median
     mPeakAlign(:,i) = mean(peakAlign{i},1);
 end
 figure,stack_plot(flip(mPeakAlign'),0.2,1.5)
 figure,imagesc(mPeakAlign')
-%% Plot beta CSD
-for i = 1:64
+%% Plot beta CSD for each electrode
+for i = 1:size(LFP.medianLFP,1) % Checks electrode size for median
     mcsd(:,:,i) = mean(csd{i},3);
 end
 mcsd = mean(mcsd,3);
-%% Place Fields
-Spikes = detectPlacefield(Spikes);
-Spikes = placeFieldAnalysis(Spikes);
-plotPlacefield(Spikes);
+figure,imagesc(interp2((mcsd'),2)),colormap(jet)
