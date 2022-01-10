@@ -29,8 +29,8 @@ spikeRate = Spikes.VR(1).spikeRate;
 norm = (spikeRate-min(spikeRate,[],1))./(max(spikeRate,[],1)-min(spikeRate,[],1));
 for trial = 1:length(Spikes.VR)
     figure('name',['Spike Map Trial ' num2str(trial)]),...
-    subplot(2,1,1),spikeImage = spike_map(norm',(1:3*Spikes.VR(trial).time(end)));
-    subplot(2,1,2),bar(3*Spikes.VR.Velocity(:,1),Spikes.VR.Velocity(:,2));
+    subplot(2,1,1),spikeImage = spike_map(norm',(1:Spikes.VR(trial).binWinTime*Spikes.VR(trial).time(end)));
+    subplot(2,1,2),bar(Spikes.VR(trial).binWinTime*Spikes.VR.Velocity(:,1),Spikes.VR.Velocity(:,2));
     ylabel('Velocity cm/s')
     yline(mean(Spikes.VR.Velocity(:,2)),'r--'); box off
     ylim([-0.2 6])

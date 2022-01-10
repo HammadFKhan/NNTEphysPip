@@ -63,6 +63,5 @@ for trial = 1:length(VR_data.Position)
     Spikes.VR(trial).position = VRposition;
     Spikes.VR(trial).spikeRate = spikeRate;
     Spikes.VR(trial).Velocity = Vel;
-    Spikes.VR(trial).binWinTime = binWinTime;
     clear mapTime spikeRate VRposition spikeCount
 end

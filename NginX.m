@@ -38,8 +38,10 @@ rez = KilosortAnalysis(fpath,ops);
 set(0,'DefaultFigureWindowStyle','normal')
 LFP = fastpreprocess_filtering(Intan.allIntan,8192);
 LFP = bestLFP(LFP);
-LFP = bandFilter(LFP);
-LFPplot(LFP)
+LFP = bandFilter(LFP,'depth'); % Extract LFPs based on 'depth' or 'single'
+% LFPplot(LFP)
+%% Beta Band Analysis
+LFP = betaBurstDetection(LFP);
 %% CSD
 [CSDoutput]  = CSD(flip(LFP.LFP(:,1:1024)'/1E6,1),1024,2E-5);
 %% Looking at single units
@@ -54,9 +56,36 @@ set(0,'DefaultFigureWindowStyle','normal')
 % plot(mean(waveforms(1:30,20:end-20),1),'k','LineWidth',2)
 sortedSpikeRate = depthSpikePlot(Spikes,templateDepths);
 %% Time-Frequency Analysis
-TimeFreq = tfAnalysis(Spikes,LFP);
-plotTF(TimeFreq,LFP)
-%% Place Fields
-Spikes = detectPlacefield(Spikes);
-Spikes = placeFieldAnalysis(Spikes);
-plotPlacefield(Spikes);
+[TimeFreq,LFP,betaGroup] = tfAnalysis(Spikes,LFP);
+%plotTF(TimeFreq,LFP)
+%% Beta Analysis for each electrode
+for i = 1:size(LFP.medianLFP,1) % Checks electrode size for median
+    disp(['Electrode: ' num2str(i)])
+    [peakAlign{i},csd{i},betaNorm{i},f,stats(i)] = betaAnalysis(betaGroup(i).electrode);
+end 
+%%
+set(0,'DefaultFigureWindowStyle','normal')
+norm = vertcat(betaNorm{:});
+for i = 1:length(betaNorm)
+    peakNorm(i,:) = max(betaNorm{i},[],2);
+end
+figure,imagesc(f,1:64,interp2(peakNorm)),colormap(jet),axis xy,set(gcf, 'Position',  [100, 100,300, 500])
+figure,imagesc(-100:100,-100:100,norm),colormap(jet),colorbar,axis xy,set(gcf, 'Position',  [100, 100, 300, 500])
+% Plot stats across electrodes
+bstats = cell2mat(struct2cell(stats));
+bstats = squeeze(bstats)';
+figure,bar(bstats(:,1),'BarWidth',1),set(gcf, 'Position',  [100, 100, 500, 500])
+figure,bar(bstats(:,2),'BarWidth',1),set(gcf, 'Position',  [100, 100, 500, 500])
+figure,bar(bstats(:,3),'BarWidth',1),set(gcf, 'Position',  [100, 100, 500, 500])
+%% Plot beta traces for each electrode
+for i = 1:size(LFP.medianLFP,1) % Checks electrode size for median
+    mPeakAlign(:,i) = mean(peakAlign{i},1);
+end
+figure,stack_plot(flip(mPeakAlign'),0.2,1.5)
+figure,imagesc(mPeakAlign')
+%% Plot beta CSD for each electrode
+for i = 1:size(LFP.medianLFP,1) % Checks electrode size for median
+    mcsd(:,:,i) = mean(csd{i},3);
+end
+mcsd = mean(mcsd,3);
+figure,imagesc(interp2(smoothdata((mcsd')),2)),colormap(jet)

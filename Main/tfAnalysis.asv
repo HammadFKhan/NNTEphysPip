@@ -55,21 +55,18 @@ end
 
 % Beta Analysis
 if size(thetaLFP,2)>1
-    for electrode = 1:size(LFP.medianLFP,1) % Checks electrode size for median
+    for electrode = 1:size(L
         betaGroup(electrode).electrode = groupBetaBurstDetection(LFP,beta(:,electrode,:),timestamps,electrode); % Detect beta burst during window
     end
 else
     LFP = betaBurstDetection(LFP,beta,timestamps);
 end
+return % temporary return function
 TimeFreq.mtheta = mean(theta,2);
 TimeFreq.mbeta = mean(beta,2);
 LFP.betaTrials = beta;
 TimeFreq.mgamma = mean(gamma,2);
-
-%% ITPC of velocity triggered Frequency
-
-return % temporary return function
-%% Oscillators Analysis using Chronux
+% Oscillators Analysis
 % Phase to Phase of Theta and Beta
 params.Fs = 1024;
 params.fpass = [4 30];
