@@ -1,15 +1,19 @@
 %% Compute and plot TF-ITPC for one electrode
-function tf = itpc(LFP,electrode)
+function tf = itpc(LFP,timestamps)
+% add argument for specific electrode!!
 % wavelet parameters
 num_frex = 40; % Frequency resolution
 min_freq =  2; % Lower frequency bound
 max_freq = 40; % Upper frequency bound
+timestamps = timestamps.*1024;
+pnts = timestamps(1,2)-timestamps(1,1); % Sample size of each trial
+trials = length(timestamps); % Running event trials
+Fs = LFP.downSampleFreq;
 
-pnts = size(LFP.medianLFP,2); % Sample size
-trials = size(velocityTrig); % Running event trials
-
-channel2use = electrode; % Set reference channel
-
+% build data format time x trials
+for i = 1:trials
+    data(:,i) = LFP.medianLFP(32,timestamps(i,1):timestamps(i,2));
+end
 % set range for variable number of wavelet cycles
 range_cycles = [ 4 10 ];
 
@@ -23,9 +27,10 @@ half_wave_size = (length(time)-1)/2;
 nWave = length(time);
 nData = pnts*trials; %total size of data (sample points x trials)
 nConv = nWave+nData-1;
-
+for electrode = 30
+channel2use = electrode; % Set reference channel
 % FFT of data (doesn't change on frequency iteration)
-dataX = fft( reshape(data(channel2use,:,:),1,nData) ,nConv);
+dataX = fft( reshape(data,[],1) ,nConv)';
 
 % initialize output time-frequency data
 tf = zeros(num_frex,pnts);
@@ -49,7 +54,8 @@ end
 
 %% plot results
 figure(1), clf
-contourf(times,frex,tf,15,'linecolor','none')
+imagesc(0:2049,frex,10*log(tf))
 set(gca,'clim',[0 .6],'ydir','normal','xlim',[-300 1000])
 title('ITPC')
 colormap(jet),colorbar
+end
