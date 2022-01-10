@@ -61,12 +61,15 @@ if size(thetaLFP,2)>1
 else
     LFP = betaBurstDetection(LFP,beta,timestamps);
 end
-return % temporary return function
 TimeFreq.mtheta = mean(theta,2);
 TimeFreq.mbeta = mean(beta,2);
 LFP.betaTrials = beta;
 TimeFreq.mgamma = mean(gamma,2);
-% Oscillators Analysis
+
+%% ITPC of velocity triggered Frequency
+
+return % temporary return function
+%% Oscillators Analysis using Chronux
 % Phase to Phase of Theta and Beta
 params.Fs = 1024;
 params.fpass = [4 30];
