@@ -67,7 +67,7 @@ LFP.betaTrials = beta;
 TimeFreq.mgamma = mean(gamma,2);
 
 %% ITPC of velocity triggered Frequency
-
+phaseSync = itpc(LFP,timestamps);
 return % temporary return function
 %% Oscillators Analysis using Chronux
 % Phase to Phase of Theta and Beta
