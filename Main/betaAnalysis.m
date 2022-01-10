@@ -1,5 +1,5 @@
 % Beta analysis
-function [peakAlign,csd] = betaAnalysis(LFP)
+function [peakAlign,csd,norm,f,stats] = betaAnalysis(LFP)
 detectedBeta = LFP.betaBurst.detectedBeta;
 window = LFP.betaBurst.window;
 Fs = LFP.downSampleFreq;
@@ -10,8 +10,9 @@ else
     detectedBeta = cell2mat(detectedBeta);
 end
 
-betaDuration = (detectedBeta(:,3)-detectedBeta(:,1)).*1000;
-betaAmplitude = detectedBeta(:,4);
+stats.betaDuration = mean((detectedBeta(:,3)-detectedBeta(:,1)).*1000);
+stats.betaAmplitude = mean(detectedBeta(:,4));
+stats.betaER = mean(LFP.betaBurst.NumDetectedBeta);  
 CSDoutput = [];
 %CSD during velocity window
 % for i = 1:size(window,1)
@@ -36,11 +37,11 @@ if plt ==1
         eventdiff(i) = detectedBeta(i,3)-detectedBeta(i,1);
     end
     
-    figure('Name', 'Residuals')
-    scatterhist(betaDuration,betaAmplitude,'kernel','on','Location','SouthWest',...
-        'Direction','out','Color','kbr','LineStyle',{'-','-.',':'},...
-        'LineWidth',[2,2,2],'Nbins',[20 100], 'marker','.','markersize',10)
-    box off
+%     figure('Name', 'Residuals')
+%     scatterhist(betaDuration,betaAmplitude,'kernel','on','Location','SouthWest',...
+%         'Direction','out','Color','kbr','LineStyle',{'-','-.',':'},...
+%         'LineWidth',[2,2,2],'Nbins',[20 100], 'marker','.','markersize',10)
+%     box off
 
     % Create array for beta events
     maxdiff = 257;
@@ -71,10 +72,11 @@ if plt ==1
 %     plot(mean(peakAlign,1),'k','lineWidth',2)
 %     xlim([0 maxdiff])
     
+%Beta event profile
     
 %     figure,lineError(1:size(peakAlign,2),peakAlign,'std') % Pass std or ste for error plotting
-%     blah = abs(wavelet);
-%     norm = (blah-min(blah,[],'all'))/(max(blah,[],'all')-min(blah,[],'all'));
-%     [wavelet,f] = cwt(mean(peakAlign,1),1024,'FrequencyLimits',[1 30]);
+    [wavelet,f] = cwt(mean(peakAlign,1),1024,'FrequencyLimits',[1 30]);
+    blah = abs(wavelet);
+    norm = (blah-min(blah,[],'all'))/(max(blah,[],'all')-min(blah,[],'all'));
 %     figure,imagesc((-maxdiff/2):(maxdiff/2),f,norm),colormap(jet),colorbar
 end
