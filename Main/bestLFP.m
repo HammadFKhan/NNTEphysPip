@@ -12,7 +12,7 @@ for chan = 1:size(LFP.LFP,1)
     end
 end
 disp('Resampling to original Frequency');
-LFP.medianLFP = medianLFP;
+LFP.medianLFP = LFP.LFP;
 LFP.bestLFP = median(medianLFP,1); %Best LFP for Phase Phase Analysis
 commonModeAvg = medianLFP-mean(medianLFP);
 filtData.commonModeAvg = commonModeAvg;
