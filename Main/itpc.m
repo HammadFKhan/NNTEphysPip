@@ -10,10 +10,6 @@ pnts = timestamps(1,2)-timestamps(1,1); % Sample size of each trial
 trials = length(timestamps); % Running event trials
 Fs = LFP.downSampleFreq;
 
-% build data format time x trials
-for i = 1:trials
-    data(:,i) = LFP.medianLFP(32,timestamps(i,1):timestamps(i,2));
-end
 % set range for variable number of wavelet cycles
 range_cycles = [ 4 10 ];
 
@@ -28,7 +24,11 @@ nWave = length(time);
 nData = pnts*trials; %total size of data (sample points x trials)
 nConv = nWave+nData-1;
 for electrode = 30
-channel2use = electrode; % Set reference channel
+% build data format time x trials
+for i = 1:trials
+    data(:,i) = LFP.medianLFP(electrode,timestamps(i,1):timestamps(i,2));
+end
+
 % FFT of data (doesn't change on frequency iteration)
 dataX = fft( reshape(data,[],1) ,nConv)';
 
