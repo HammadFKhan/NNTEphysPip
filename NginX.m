@@ -47,7 +47,7 @@ LFP = betaBurstDetection(LFP);
 %% Looking at single units
 set(0,'DefaultFigureWindowStyle','docked')
 Spikes = singleUnitAnalysis(fpath,VR_data);
-%%
+%% Calculate Depth profile
 set(0,'DefaultFigureWindowStyle','normal')
 [spikeAmps, spikeDepths, templateDepths, tempAmps, tempsUnW, templateDuration, waveforms] =...
     templatePositionsAmplitudes(fpath,ycoords);
