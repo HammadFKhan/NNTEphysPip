@@ -12,7 +12,7 @@ for trial = 1:size(Spikes.Clusters,2)
 end
 spikeTime = sort(vertcat(fixSpiketime{:}));
 
-coherencyLFP =LFP.coherenceLFP'; % Reference LFP for spiking data
+coherencyLFP =LFP.coherenceLFP'; % Reference LFP for spiking data (matched Fs) 
 thetaLFP = LFP.theta_band'; %Downsampled LFP for P:P analysis
 betaLFP = LFP.beta_band';
 gammaLFP = LFP.gamma_band';
@@ -23,7 +23,7 @@ downsample_LFPTime = LFP.times';
 
 % Set up state triggered analysis
 Velocity = Spikes.VR.Velocity(:,2);
-velocityTrig = 1; %Triggered Velocity
+velocityTrig = 2; %Triggered Velocity
 loc = Spikes.VR.binWinTime*find(abs(Velocity)>velocityTrig); %multiply by the cause of bin value
 
 % Check and adjust data structure for depth or single electrode analysis
@@ -67,7 +67,7 @@ LFP.betaTrials = beta;
 TimeFreq.mgamma = mean(gamma,2);
 
 %% ITPC of velocity triggered Frequency
-phaseSync = itpc(LFP,timestamps,30);
+phaseSync = itpc(LFP,timestamps,10);
 return % temporary return function
 %% Oscillators Analysis using Chronux
 % Phase to Phase of Theta and Beta
@@ -110,18 +110,18 @@ disp('Analyzing Gamma Band...')
 % tf.mbroad = mean(tf.broad.X,3);
 % tf.mebroad = median(tf.broad.X,3);
 
-% Inter-trial Phase Clustering
+% Inter-trial Phase Clustering of Spike-LFP
 C = permute(tf.theta.phi,[1 3 2]);
 C = reshape(C,[],size(tf.theta.phi,2),1);
 C1 = permute(tf.beta.phi,[1 3 2]);
 C1 = reshape(C1,[],size(tf.beta.phi,2),1);
 C2 = permute(tf.gamma.phi,[1 3 2]);
 C2 = reshape(C2,[],size(tf.gamma.phi,2),1);
-for j = 1:size(tf.theta.phi,2)
+for j = 1:size(tf.theta.phi,2) %ITPC for each frequency
     tf.theta.theta{j} = C(:,j);
     tf.theta.itpc(j,1) = abs(mean(exp(1i*tf.theta.theta{j})));
 end
-for j = 1:size(tf.beta.phi,2)
+for j = 1:size(tf.beta.phi,2) %ITPC for each frequency
     tf.beta.beta{j} = C1(:,j);
     tf.beta.itpc(j,1) = abs(mean(exp(1i*tf.beta.beta{j})));
 end
@@ -129,15 +129,15 @@ for j = 1:size(tf.gamma.phi,2)
     tf.gamma.gamma{j} = C2(:,j);
     tf.gamma.itpc(j,1) = abs(mean(exp(1i*tf.gamma.gamma{j})));
 end
-disp('Performing Wavelet Analysis...')
-for trial = 1:size(LFPTrig,2)
-    [tf.wavelet.cfs(:,:,trial),tf.wavelet.f] = cwt(LFPTrig(:,trial),1024,'FrequencyLimits',[0 80]);
-    [tf.wavelet.theta_cfs(:,:,trial),tf.wavelet.theta_f] = cwt(theta(:,trial),1024,'FrequencyLimits',[4 10]);
-    
-    [tf.wavelet.beta_cfs(:,:,trial),tf.wavelet.beta_f] = cwt(beta(:,trial),1024,'FrequencyLimits',[10 30]);
-    
-    [tf.wavelet.gamma_cfs(:,:,trial),tf.wavelet.gamma_f] = cwt(gamma(:,trial),1024,'FrequencyLimits',[30 80]);
-
-end
+% disp('Performing Wavelet Analysis...')
+% for trial = 1:size(LFPTrig,2)
+%     [tf.wavelet.cfs(:,:,trial),tf.wavelet.f] = cwt(LFPTrig(:,trial),1024,'FrequencyLimits',[0 80]);
+%     [tf.wavelet.theta_cfs(:,:,trial),tf.wavelet.theta_f] = cwt(theta(:,trial),1024,'FrequencyLimits',[4 10]);
+%     
+%     [tf.wavelet.beta_cfs(:,:,trial),tf.wavelet.beta_f] = cwt(beta(:,trial),1024,'FrequencyLimits',[10 30]);
+%     
+%     [tf.wavelet.gamma_cfs(:,:,trial),tf.wavelet.gamma_f] = cwt(gamma(:,trial),1024,'FrequencyLimits',[30 80]);
+% 
+% end
 TimeFreq.tf = tf;
 end
