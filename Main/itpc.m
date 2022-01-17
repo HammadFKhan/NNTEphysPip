@@ -1,9 +1,14 @@
 %% Compute and plot TF-ITPC for one electrode
-function tf = itpc(LFP,timestamps)
+function tf = itpc(LFP,timestamps,electrode)
 % add argument for specific electrode!!
+% if nargin<3
+%     numelectrode = [];
+% else
+%     numelectrode = 64;
+% end
 % wavelet parameters
-num_frex = 40; % Frequency resolution
-min_freq =  2; % Lower frequency bound
+num_frex = 30; % Frequency resolution
+min_freq =  5; % Lower frequency bound
 max_freq = 40; % Upper frequency bound
 timestamps = timestamps.*1024;
 pnts = timestamps(1,2)-timestamps(1,1); % Sample size of each trial
@@ -23,6 +28,7 @@ half_wave_size = (length(time)-1)/2;
 nWave = length(time);
 nData = pnts*trials; %total size of data (sample points x trials)
 nConv = nWave+nData-1;
+%%
 for electrode = 30
 % build data format time x trials
 for i = 1:trials
@@ -54,8 +60,8 @@ end
 
 %% plot results
 figure(1), clf
-imagesc(0:2049,frex,10*log(tf))
-set(gca,'clim',[0 .6],'ydir','normal','xlim',[-300 1000])
+contourf(-1023:1024,frex,tf,25,'linecolor','none')
+set(gca,'clim',[0 .8],'ydir','normal')
 title('ITPC')
-colormap(jet),colorbar
+colormap(parula),colorbar
 end
