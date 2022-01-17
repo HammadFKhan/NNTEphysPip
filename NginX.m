@@ -54,6 +54,7 @@ set(0,'DefaultFigureWindowStyle','normal')
 % figure,
 % plot(waveforms(1:30,20:end-20)','color',[0.5 0.5 0.5 0.25]), hold on;
 % plot(mean(waveforms(1:30,20:end-20),1),'k','LineWidth',2)
+% test
 sortedSpikeRate = depthSpikePlot(Spikes,templateDepths);
 %% Time-Frequency Analysis
 [TimeFreq,LFP,betaGroup] = tfAnalysis(Spikes,LFP);
