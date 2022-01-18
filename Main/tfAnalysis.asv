@@ -42,7 +42,7 @@ downsample_LFPTime = LFP.times';
 
 % Set up state triggered analysis
 Velocity = Spikes.VR.Velocity(:,2);
-velocityTrig = 2; %Triggered Velocity
+velocityTrig = 1; %Triggered Velocity
 loc = Spikes.VR.binWinTime*find(abs(Velocity)>velocityTrig); %multiply by the cause of bin value
 
 % Check and adjust data structure for depth or single electrode analysis
@@ -141,39 +141,44 @@ disp('Analyzing Theta Band for Layer 2/3...')
 params.fpass = [4 10];
 [tf.depth.L23.theta.C,tf.depth.L23.theta.phi,S12,S1,S2,t2,tf.theta.f,zerosp]=cohgramcpt(LFPTrig,L23spike,movingwin,params);
 disp('Analyzing Theta Band for Layer 4...')
-[tf.depth.L4.theta.C,tf.depth.L23.theta.phi,S12,S1,S2,t2,tf.theta.f,zerosp]=cohgramcpt(LFPTrig,L4spike,movingwin,params);
+[tf.depth.L4.theta.C,tf.depth.L4.theta.phi,S12,S1,S2,t2,tf.theta.f,zerosp]=cohgramcpt(LFPTrig,L4spike,movingwin,params);
 disp('Analyzing Theta Band for Layer 5...')
-[tf.depth.L5.theta.C,tf.depth.L23.theta.phi,S12,S1,S2,t2,tf.theta.f,zerosp]=cohgramcpt(LFPTrig,L5spike,movingwin,params);
+[tf.depth.L5.theta.C,tf.depth.L5.theta.phi,S12,S1,S2,t2,tf.theta.f,zerosp]=cohgramcpt(LFPTrig,L5spike,movingwin,params);
 
 % Beta Band Analysis
 params.fpass = [10 30];
 disp('Analyzing Beta Band for Layer 2/3...')
 [tf.depth.L23.beta.C,tf.depth.L23.beta.phi,S12,S1,S2,t2,tf.beta.f,zerosp]=cohgramcpt(LFPTrig,L23spike,movingwin,params);
 disp('Analyzing Beta Band for Layer 4...')
-[tf.depth.L4.beta.C,tf.depth.L23.beta.phi,S12,S1,S2,t2,tf.beta.f,zerosp]=cohgramcpt(LFPTrig,L4spike,movingwin,params);
+[tf.depth.L4.beta.C,tf.depth.L4.beta.phi,S12,S1,S2,t2,tf.beta.f,zerosp]=cohgramcpt(LFPTrig,L4spike,movingwin,params);
 disp('Analyzing Beta Band for Layer 5...')
-[tf.depth.L5.beta.C,tf.depth.L23.beta.phi,S12,S1,S2,t2,tf.beta.f,zerosp]=cohgramcpt(LFPTrig,L5spike,movingwin,params);
+[tf.depth.L5.beta.C,tf.depth.L5.beta.phi,S12,S1,S2,t2,tf.beta.f,zerosp]=cohgramcpt(LFPTrig,L5spike,movingwin,params);
 
 % Gamma Band Analysis
 params.fpass = [30 80];
 disp('Analyzing Gamma Band for Layer 2/3...')
 [tf.depth.L23.gamma.C,tf.depth.L23.gamma.phi,S12,S1,S2,t2,tf.gamma.f,zerosp]=cohgramcpt(LFPTrig,L23spike,movingwin,params);
 disp('Analyzing Gamma Band for Layer 4...')
-[tf.depth.L4.gamma.C,tf.depth.L23.gamma.phi,S12,S1,S2,t2,tf.gamma.f,zerosp]=cohgramcpt(LFPTrig,L4spike,movingwin,params);
+[tf.depth.L4.gamma.C,tf.depth.L4.gamma.phi,S12,S1,S2,t2,tf.gamma.f,zerosp]=cohgramcpt(LFPTrig,L4spike,movingwin,params);
 disp('Analyzing Gamma Band for Layer 5...')
-[tf.depth.L5.gamma.C,tf.depth.L23.gamma.phi,S12,S1,S2,t2,tf.gamma.f,zerosp]=cohgramcpt(LFPTrig,L5spike,movingwin,params);
+[tf.depth.L5.gamma.C,tf.depth.L5.gamma.phi,S12,S1,S2,t2,tf.gamma.f,zerosp]=cohgramcpt(LFPTrig,L5spike,movingwin,params);
 
 %% Inter-trial Phase Clustering of Spike-LFP
-[tf.theta.theta,tf.theta.itpc,tf.beta.beta,tf.beta.itpc,tf.gamma.gamma,tf.gamma.itpc] = chronuxITPC(tf.theta.phi,tf.beta.phi,tf.gamma.phi);
+% [tf.theta.theta,tf.theta.itpc,tf.beta.beta,tf.beta.itpc,tf.gamma.gamma,tf.gamma.itpc] = chronuxITPC(tf.theta.phi,tf.beta.phi,tf.gamma.phi);
+
+
+
 
 %% Inter-trial Phase Clustering of Spike-LFP per Layer
 disp('ITPC for layer 2/3')
-[tf.theta.theta,tf.theta.itpc,tf.beta.beta,tf.beta.itpc,tf.depth.L23.gamma.gamma,tf.gamma.itpc] = chronuxITPC(tf.theta.phi,tf.beta.phi,tf.gamma.phi);
-disp('ITPC for layer 2/3')
-[tf.theta.theta,tf.theta.itpc,tf.beta.beta,tf.beta.itpc,tf.gamma.gamma,tf.gamma.itpc] = chronuxITPC(tf.theta.phi,tf.beta.phi,tf.gamma.phi);
-disp('ITPC for layer 2/3')
-[tf.theta.theta,tf.theta.itpc,tf.beta.beta,tf.beta.itpc,tf.gamma.gamma,tf.gamma.itpc] = chronuxITPC(tf.theta.phi,tf.beta.phi,tf.gamma.phi);
-
+[tf.depth.L23.theta.theta,tf.depth.L23.theta.itpc,tf.depth.L23.beta.beta,tf.depth.L23.beta.itpc,tf.depth.L23.gamma.gamma,tf.depth.L23.gamma.itpc]...
+    = chronuxITPC(tf.depth.L23.theta.phi,tf.depth.L23.beta.phi,tf.depth.L23.gamma.phi);
+disp('ITPC for layer 4')
+[tf.depth.L4.theta.theta,tf.depth.L4.theta.itpc,tf.depth.L4.beta.beta,tf.depth.L4.beta.itpc,tf.depth.L4.gamma.gamma,tf.depth.L4.gamma.itpc]...
+    = chronuxITPC(tf.depth.L4.theta.phi,tf.depth.L4.beta.phi,tf.depth.L4.gamma.phi);
+disp('ITPC for layer 5')
+[tf.depth.L5.theta.theta,tf.depth.L5.theta.itpc,tf.depth.L5.beta.beta,tf.depth.L5.beta.itpc,tf.depth.L5.gamma.gamma,tf.depth.L5.gamma.itpc]...
+    = chronuxITPC(tf.depth.L5.theta.phi,tf.depth.L5.beta.phi,tf.depth.L5.gamma.phi);
 
 
 % disp('Performing Wavelet Analysis...')
