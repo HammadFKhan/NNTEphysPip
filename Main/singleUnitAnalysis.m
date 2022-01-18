@@ -1,5 +1,5 @@
 function Spikes = singleUnitAnalysis(fpath,VR_data)
-path = [fpath,'/postAutoMerge'];
+path = [fpath,'/preAutoMerge'];
 %% Read in kilosort data for matlab analysis
 SpikeClusters = readNPY(fullfile(path, 'spike_clusters.npy'));
 SpikeSamples = readNPY(fullfile(path, 'spike_times.npy'));
