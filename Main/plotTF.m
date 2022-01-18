@@ -26,8 +26,13 @@ figure,imagesc(-1000:1000,oscillators.bg.f,interp2(mean(oscillators.bg.C,3),inte
 % subplot(1,3,2),imagesc(betaTrial),colormap(jet),colorbar, axis xy,caxis([0 25])
 % subplot(1,3,3),imagesc((gammaTrial)),colormap(jet),colorbar, axis xy,caxis([0 25])
 
+% Spike-coherence
+figure,imagesc(-1000:1000,tf.theta.f,interp2(mean(tf.theta.C,3),interpLevel)),caxis([0 .5]),title('\theta Spike Coupling'),colormap(jet),axis xy,set(gcf, 'Position',  [100, 100, 500, 500])
+figure,imagesc(-1000:1000,tf.beta.f,interp2(mean(tf.beta.C,3),interpLevel)),caxis([0 .5]),title('\beta Spike Coupling'),colormap(jet),axis xy,set(gcf, 'Position',  [100, 100, 500, 500])
+figure,imagesc(-1000:1000,tf.gamma.f,interp2(mean(tf.gamma.C,3),interpLevel)),caxis([0 .5]),title('\gamma Spike Coupling'),colormap(jet),axis xy,set(gcf, 'Position',  [100, 100, 500, 500])
 
-figure(),
+
+figure('Name','All Layers'),
 % plotpad = size(tf.theta.theta,2);
 % polarplot([zeros(1,plotpad); tf.theta.theta],[zeros(1,plotpad); ones(1,plotpad)],'k');
 subplot(3,1,1),polarhistogram(horzcat(tf.theta.theta{:}));
@@ -36,9 +41,70 @@ subplot(3,1,2),polarhistogram(horzcat(tf.beta.beta{:}),20);
 title(['Beta ITPC: ' num2str(mean(tf.beta.itpc))]);
 subplot(3,1,3),polarhistogram(horzcat(tf.gamma.gamma{:}),20);
 title(['Gamma ITPC: ' num2str(mean(tf.gamma.itpc))]);
+% Plots by depth
+if isfield(TimeFreq.tf,'depth')
+    % Plot Spike-coherence
+    % L2/3
+    figure,imagesc(-1000:1000,tf.theta.f,interp2(mean(tf.depth.L23.theta.C,3),interpLevel))...
+        ,caxis([0 .5]),title('\theta-L2/3 Spike Coupling'),colormap(jet),axis xy,set(gcf, 'Position',  [100, 100, 500, 500])
+    figure,imagesc(-1000:1000,tf.beta.f,interp2(mean(tf.depth.L23.beta.C,3),interpLevel))...
+        ,caxis([0 .5]),title('\beta-L2/3 Spike Coupling'),colormap(jet),axis xy,set(gcf, 'Position',  [100, 100, 500, 500])
+    figure,imagesc(-1000:1000,tf.gamma.f,interp2(mean(tf.depth.L23.gamma.C,3),interpLevel))...
+        ,caxis([0 .5]),title('\gamma-L2/3 Spike Coupling'),colormap(jet),axis xy,set(gcf, 'Position',  [100, 100, 500, 500])
+    % L4
+     figure,imagesc(-1000:1000,tf.theta.f,interp2(mean(tf.depth.L4.theta.C,3),interpLevel))...
+        ,caxis([0 .5]),title('\theta-L4 Spike Coupling'),colormap(jet),axis xy,set(gcf, 'Position',  [100, 100, 500, 500])
+    figure,imagesc(-1000:1000,tf.beta.f,interp2(mean(tf.depth.L4.beta.C,3),interpLevel))...
+        ,caxis([0 .5]),title('\beta-L4 Spike Coupling'),colormap(jet),axis xy,set(gcf, 'Position',  [100, 100, 500, 500])
+    figure,imagesc(-1000:1000,tf.gamma.f,interp2(mean(tf.depth.L4.gamma.C,3),interpLevel))...
+        ,caxis([0 .5]),title('\gamma-L4 Spike Coupling'),colormap(jet),axis xy,set(gcf, 'Position',  [100, 100, 500, 500])
+    % L5
+     figure,imagesc(-1000:1000,tf.theta.f,interp2(mean(tf.depth.L5.theta.C,3),interpLevel))...
+        ,caxis([0 .5]),title('\theta-L5 Spike Coupling'),colormap(jet),axis xy,set(gcf, 'Position',  [100, 100, 500, 500])
+    figure,imagesc(-1000:1000,tf.beta.f,interp2(mean(tf.depth.L5.beta.C,3),interpLevel))...
+        ,caxis([0 .5]),title('\beta-L5 Spike Coupling'),colormap(jet),axis xy,set(gcf, 'Position',  [100, 100, 500, 500])
+    figure,imagesc(-1000:1000,tf.gamma.f,interp2(mean(tf.depth.L5.gamma.C,3),interpLevel))...
+        ,caxis([0 .5]),title('\gamma-L5 Spike Coupling'),colormap(jet),axis xy,set(gcf, 'Position',  [100, 100, 500, 500])
+    
+    
+    % Plot ITPC
+    figure('Name','Layer2/3'),
+    subplot(3,1,1),polarhistogram(horzcat(tf.depth.L23.theta.theta{:}));
+    title(['Theta ITPC: ' num2str(mean(tf.depth.L23.theta.itpc))]);
+    subplot(3,1,2),polarhistogram(horzcat(tf.depth.L23.beta.beta{:}),20);
+    title(['Beta ITPC: ' num2str(mean(tf.depth.L23.beta.itpc))]);
+    subplot(3,1,3),polarhistogram(horzcat(tf.depth.L23.gamma.gamma{:}),20);
+    title(['Gamma ITPC: ' num2str(mean(tf.depth.L23.gamma.itpc))]);
+    
+    figure('Name','Layer4'),
+    subplot(3,1,1),polarhistogram(horzcat(tf.depth.L4.theta.theta{:}));
+    title(['Theta ITPC: ' num2str(mean(tf.depth.L4.theta.itpc))]);
+    subplot(3,1,2),polarhistogram(horzcat(tf.depth.L4.beta.beta{:}),20);
+    title(['Beta ITPC: ' num2str(mean(tf.depth.L4.beta.itpc))]);
+    subplot(3,1,3),polarhistogram(horzcat(tf.depth.L4.gamma.gamma{:}),20);
+    title(['Gamma ITPC: ' num2str(mean(tf.depth.L4.gamma.itpc))]);
+    
+    figure('Name','Layer5'),
+    subplot(3,1,1),polarhistogram(horzcat(tf.depth.L5.theta.theta{:}));
+    title(['Theta ITPC: ' num2str(mean(tf.depth.L5.theta.itpc))]);
+    subplot(3,1,2),polarhistogram(horzcat(tf.depth.L5.beta.beta{:}),20);
+    title(['Beta ITPC: ' num2str(mean(tf.depth.L5.beta.itpc))]);
+    subplot(3,1,3),polarhistogram(horzcat(tf.depth.L5.gamma.gamma{:}),20);
+    title(['Gamma ITPC: ' num2str(mean(tf.depth.L5.gamma.itpc))]);
+end
 
-
-figure,
+figure('Name','All Layers'),
 itpcAll = vertcat(tf.theta.itpc,tf.beta.itpc,tf.gamma.itpc);
 itpcF = vertcat(tf.theta.f',tf.beta.f',tf.gamma.f');
 plot(itpcF,itpcAll);
+% For each layer
+figure('Name','L2/3')
+itpcL23 = vertcat(tf.depth.L23.theta.itpc,tf.depth.L23.beta.itpc,tf.depth.L23.gamma.itpc);
+plot(itpcF,itpcL23);
+figure('Name','L4')
+itpcL4 = vertcat(tf.depth.L4.theta.itpc,tf.depth.L4.beta.itpc,tf.depth.L4.gamma.itpc);
+plot(itpcF,itpcL4);
+figure('Name','L5')
+itpcL5 = vertcat(tf.depth.L5.theta.itpc,tf.depth.L5.beta.itpc,tf.depth.L5.gamma.itpc);
+plot(itpcF,itpcL5);
+end
