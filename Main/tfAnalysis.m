@@ -49,7 +49,7 @@ loc = Spikes.VR.binWinTime*find(abs(Velocity)>velocityTrig); %multiply by the ca
 disp('Constructing Spike Windows...')
 if size(thetaLFP,1)>1
     for trial = 1:length(loc)-1
-        window = [loc(trial)-1.50,loc(trial)+.500];
+        window = [loc(trial)-1,loc(trial)+1];
         %triggered spike time with offset of the intial spike
         %this way, each spike time is translated to a window within 1 second
         timestamps(trial,:) = window; % Global timestamps for signal reference
@@ -141,27 +141,27 @@ disp('Analyzing Theta Band for Layer 2/3...')
 params.fpass = [4 10];
 [tf.depth.L23.theta.C,tf.depth.L23.theta.phi,S12,S1,S2,t2,tf.theta.f,zerosp]=cohgramcpt(LFPTrig,L23spike,movingwin,params);
 disp('Analyzing Theta Band for Layer 4...')
-[tf.depth.L4.theta.C,tf.depth.L23.theta.phi,S12,S1,S2,t2,tf.theta.f,zerosp]=cohgramcpt(LFPTrig,L4spike,movingwin,params);
+[tf.depth.L4.theta.C,tf.depth.L4.theta.phi,S12,S1,S2,t2,tf.theta.f,zerosp]=cohgramcpt(LFPTrig,L4spike,movingwin,params);
 disp('Analyzing Theta Band for Layer 5...')
-[tf.depth.L5.theta.C,tf.depth.L23.theta.phi,S12,S1,S2,t2,tf.theta.f,zerosp]=cohgramcpt(LFPTrig,L5spike,movingwin,params);
+[tf.depth.L5.theta.C,tf.depth.L5.theta.phi,S12,S1,S2,t2,tf.theta.f,zerosp]=cohgramcpt(LFPTrig,L5spike,movingwin,params);
 
 % Beta Band Analysis
 params.fpass = [10 30];
 disp('Analyzing Beta Band for Layer 2/3...')
 [tf.depth.L23.beta.C,tf.depth.L23.beta.phi,S12,S1,S2,t2,tf.beta.f,zerosp]=cohgramcpt(LFPTrig,L23spike,movingwin,params);
 disp('Analyzing Beta Band for Layer 4...')
-[tf.depth.L4.beta.C,tf.depth.L23.beta.phi,S12,S1,S2,t2,tf.beta.f,zerosp]=cohgramcpt(LFPTrig,L4spike,movingwin,params);
+[tf.depth.L4.beta.C,tf.depth.L4.beta.phi,S12,S1,S2,t2,tf.beta.f,zerosp]=cohgramcpt(LFPTrig,L4spike,movingwin,params);
 disp('Analyzing Beta Band for Layer 5...')
-[tf.depth.L5.beta.C,tf.depth.L23.beta.phi,S12,S1,S2,t2,tf.beta.f,zerosp]=cohgramcpt(LFPTrig,L5spike,movingwin,params);
+[tf.depth.L5.beta.C,tf.depth.L5.beta.phi,S12,S1,S2,t2,tf.beta.f,zerosp]=cohgramcpt(LFPTrig,L5spike,movingwin,params);
 
 % Gamma Band Analysis
 params.fpass = [30 80];
 disp('Analyzing Gamma Band for Layer 2/3...')
 [tf.depth.L23.gamma.C,tf.depth.L23.gamma.phi,S12,S1,S2,t2,tf.gamma.f,zerosp]=cohgramcpt(LFPTrig,L23spike,movingwin,params);
 disp('Analyzing Gamma Band for Layer 4...')
-[tf.depth.L4.gamma.C,tf.depth.L23.gamma.phi,S12,S1,S2,t2,tf.gamma.f,zerosp]=cohgramcpt(LFPTrig,L4spike,movingwin,params);
+[tf.depth.L4.gamma.C,tf.depth.L4.gamma.phi,S12,S1,S2,t2,tf.gamma.f,zerosp]=cohgramcpt(LFPTrig,L4spike,movingwin,params);
 disp('Analyzing Gamma Band for Layer 5...')
-[tf.depth.L5.gamma.C,tf.depth.L23.gamma.phi,S12,S1,S2,t2,tf.gamma.f,zerosp]=cohgramcpt(LFPTrig,L5spike,movingwin,params);
+[tf.depth.L5.gamma.C,tf.depth.L5.gamma.phi,S12,S1,S2,t2,tf.gamma.f,zerosp]=cohgramcpt(LFPTrig,L5spike,movingwin,params);
 
 %% Inter-trial Phase Clustering of Spike-LFP
 [tf.theta.theta,tf.theta.itpc,tf.beta.beta,tf.beta.itpc,tf.gamma.gamma,tf.gamma.itpc] = chronuxITPC(tf.theta.phi,tf.beta.phi,tf.gamma.phi);
