@@ -60,7 +60,7 @@ load chanMap
 Spikes = spikeDepthPlot(Spikes,templateDepths);
 %% Time-Frequency Analysis
 [TimeFreq,LFP,betaGroup] = tfAnalysis(Spikes,LFP);
-%plotTF(TimeFreq,LFP)
+plotTF(TimeFreq,LFP)
 %% Beta Analysis for each electrode
 for i = 1:size(LFP.medianLFP,1) % Checks electrode size for median
     disp(['Electrode: ' num2str(i)])
