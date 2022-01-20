@@ -2,7 +2,8 @@ function Spikes = spikeDepthPlot(Spikes,templateDepths)
 temp = templateDepths(1:length(Spikes.Clusters))*25;
 % find max cluster size
 [depth,idx] = sort(temp);
-
+% Removes nan values from depth
+depth(isnan(depth)) = [];
 Velocity = Spikes.VR.Velocity(:,2);
 velocityTrig = 1; %Triggered at 1 cm
 loc = find(abs(Velocity)>=velocityTrig);
