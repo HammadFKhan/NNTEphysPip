@@ -43,25 +43,34 @@ subplot(3,1,3),polarhistogram(horzcat(tf.gamma.gamma{:}),20);
 title(['Gamma ITPC: ' num2str(mean(tf.gamma.itpc))]);
 % Plots by depth
 if isfield(TimeFreq.tf,'depth')
-    % check for nan values
-    check = isnan(tf.depth.L5.theta.C);
-    [~,~,t] = findND(check==1); % Find trials that have nans
-    t = unique(t);
-    keep = 1:size(tf.depth.L5.beta.C,3);
-    keep(:,t) = [];
-    
-        
-    
     
     % Plot Spike-coherence
     % L2/3
-    figure,imagesc(-1000:1000,tf.theta.f,interp2(mean(tf.depth.L23.theta.C,3),interpLevel))...
+    % check for nan values
+    keep = [];
+    check = [];
+    check = isnan(tf.depth.L23.theta.C);
+    [~,~,t] = findND(check==1); % Find trials that have nans
+    t = unique(t);
+    keep = 1:size(tf.depth.L23.theta.C,3);
+    keep(:,t) = [];
+    
+    figure,imagesc(-1000:1000,tf.theta.f,interp2(mean(tf.depth.L23.theta.C(:,:,keep),3),interpLevel))...
         ,caxis([0 .5]),title('\theta-L2/3 Spike Coupling'),colormap(jet),axis xy,set(gcf, 'Position',  [100, 100, 500, 500])
-    figure,imagesc(-1000:1000,tf.beta.f,interp2(median(tf.depth.L23.beta.C,3),interpLevel))...
+    figure,imagesc(-1000:1000,tf.beta.f,interp2(median(tf.depth.L23.beta.C(:,:,keep),3),interpLevel))...
         ,caxis([0 .5]),title('\beta-L2/3 Spike Coupling'),colormap(jet),axis xy,set(gcf, 'Position',  [100, 100, 500, 500])
-    figure,imagesc(-1000:1000,tf.gamma.f,interp2(median(tf.depth.L23.gamma.C,3),interpLevel))...
+    figure,imagesc(-1000:1000,tf.gamma.f,interp2(median(tf.depth.L23.gamma.C(:,:,keep),3),interpLevel))...
         ,caxis([0 .5]),title('\gamma-L2/3 Spike Coupling'),colormap(jet),axis xy,set(gcf, 'Position',  [100, 100, 500, 500])
+    
     % L4
+    % check for nan values
+    keep = [];
+    check = [];
+    check = isnan(tf.depth.L4.theta.C);
+    [~,~,t] = findND(check==1); % Find trials that have nans
+    t = unique(t);
+    keep = 1:size(tf.depth.L4.theta.C,3);
+    keep(:,t) = [];
     figure,imagesc(-1000:1000,tf.theta.f,interp2(median(tf.depth.L4.theta.C,3),interpLevel))...
         ,caxis([0 .5]),title('\theta-L4 Spike Coupling'),colormap(jet),axis xy,set(gcf, 'Position',  [100, 100, 500, 500])
     figure,imagesc(-1000:1000,tf.beta.f,interp2(median(tf.depth.L4.beta.C,3),interpLevel))...
@@ -69,7 +78,16 @@ if isfield(TimeFreq.tf,'depth')
     figure,imagesc(-1000:1000,tf.gamma.f,interp2(median(tf.depth.L4.gamma.C,3),interpLevel))...
         ,caxis([0 .5]),title('\gamma-L4 Spike Coupling'),colormap(jet),axis xy,set(gcf, 'Position',  [100, 100, 500, 500])
     % L5
-    figure,imagesc(-1000:1000,tf.theta.f,interp2(mean(tf.depth.L5.theta.C,3),interpLevel))...
+    % check for nan values
+    keep = [];
+    check = [];
+    check = isnan(tf.depth.L5.theta.C);
+    [~,~,t] = findND(check==1); % Find trials that have nans
+    t = unique(t);
+    keep = 1:size(tf.depth.L5.theta.C,3);
+    keep(:,t) = [];
+    
+    figure,imagesc(-1000:1000,tf.theta.f,interp2(mean(tf.depth.L5.theta.C(:,:,keep),3),interpLevel))...
         ,caxis([0 .5]),title('\theta-L5 Spike Coupling'),colormap(jet),axis xy,set(gcf, 'Position',  [100, 100, 500, 500])
     figure,imagesc(-1000:1000,tf.beta.f,interp2(mean(tf.depth.L5.beta.C(:,:,keep),3),interpLevel))...
         ,caxis([0 .5]),title('\beta-L5 Spike Coupling'),colormap(jet),axis xy,set(gcf, 'Position',  [100, 100, 500, 500])
