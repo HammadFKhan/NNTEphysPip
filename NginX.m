@@ -34,20 +34,20 @@ rez = KilosortAnalysis(fpath,ops);
 % Kilosort's AUTO merges should not be confused with the "best" merges done inside the
 % benchmark (those are using the real ground truth!!!)
 
-%% LFP
+% LFP
 set(0,'DefaultFigureWindowStyle','normal')
 LFP = fastpreprocess_filtering(Intan.allIntan,8192);
 LFP = bestLFP(LFP);
 LFP = bandFilter(LFP,'depth'); % Extract LFPs based on 'depth' or 'single'
 % LFPplot(LFP)
-%% Beta Band Analysis
-LFP = betaBurstDetection(LFP);
-%% CSD
-[CSDoutput]  = CSD(flip(LFP.LFP(:,1:1024)'/1E6,1),1024,2E-5);
-%% Looking at single units
+% %% Beta Band Analysis
+% LFP = betaBurstDetection(LFP);
+% %% CSD
+% [CSDoutput]  = CSD(flip(LFP.LFP(:,1:1024)'/1E6,1),1024,2E-5);
+% Looking at single units
 set(0,'DefaultFigureWindowStyle','docked')
 Spikes = singleUnitAnalysis(fpath,VR_data);
-%% Calculate Depth profile
+% Calculate Depth profile
 set(0,'DefaultFigureWindowStyle','normal')
 load chanMap
 [spikeAmps, spikeDepths, templateDepths, tempAmps, tempsUnW, templateDuration, waveforms] =...
@@ -58,9 +58,12 @@ load chanMap
 % test
 
 Spikes = spikeDepthPlot(Spikes,templateDepths);
-%% Time-Frequency Analysis
+% Time-Frequency Analysis
 [TimeFreq,LFP,betaGroup] = tfAnalysis(Spikes,LFP);
 plotTF(TimeFreq,LFP)
+% TF stats of depth
+stats = tfStats(TimeFreq)
+tfDepth = TimeFreq.tf.depth;
 %% Beta Analysis for each electrode
 for i = 1:size(LFP.medianLFP,1) % Checks electrode size for median
     disp(['Electrode: ' num2str(i)])
