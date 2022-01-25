@@ -11,7 +11,7 @@ sortedSpikeRate = Spikes.VR.spikeRate(:,idx)';
 
 figure
 minmax = (sortedSpikeRate-min(sortedSpikeRate,[],1))./(max(sortedSpikeRate,[],1)-min(sortedSpikeRate,[],1));
-imagesc(1:100,depth,smoothdata(minmax,'gaussian',10)),colormap(jet),colorbar
+imagesc(1:100,depth,smoothdata(sortedSpikeRate,'gaussian',10)),colormap(jet),colorbar
 
 for i  = 1:length(Spikes.Clusters)
     clustSize(i) = size(Spikes.Clusters(i).spikeTime,2);
