@@ -42,7 +42,7 @@ downsample_LFPTime = LFP.times';
 
 % Set up state triggered analysis
 Velocity = Spikes.VR.Velocity(:,2);
-velocityTrig = 2; %Triggered Velocity
+velocityTrig = 4; %Triggered Velocity
 loc = Spikes.VR.binWinTime*find(abs(Velocity)>velocityTrig); %multiply by the cause of bin value
 
 % Check and adjust data structure for depth or single electrode analysis
