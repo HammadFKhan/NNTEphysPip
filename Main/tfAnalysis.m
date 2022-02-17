@@ -1,5 +1,7 @@
 % Time-Frequency Analysis
 function [TimeFreq,LFP,betaGroup] = tfAnalysis(Spikes,LFP)
+global useGPU
+tic
 % Initialize Data
 params.tapers = [5 9];
 movingwin = [0.5 0.05];
@@ -79,8 +81,10 @@ end
 
 % Beta Analysis
 if size(thetaLFP,2)>1
-    for electrode = 1:size(LFP.medianLFP,1) % Checks electrode size for median
-        betaGroup(electrode).electrode = groupBetaBurstDetection(LFP,beta(:,electrode,:),timestamps,electrode); % Detect beta burst during window
+    temp = LFP.medianLFP;
+    temp1 = LFP.beta_band;
+    parfor electrode = 1:size(temp,1) % Checks electrode size for median
+        betaGroup(electrode).electrode = groupBetaBurstDetection(temp1(electrode,:),beta(:,electrode,:),timestamps,1024); % Detect beta burst during window
     end
 else
     LFP = betaBurstDetection(LFP,beta,timestamps);
@@ -96,6 +100,8 @@ phaseSync = itpc(LFP,timestamps,10);
 %% Oscillators Analysis using Chronux
 % Phase to Phase of Theta and Beta
 disp('Calculating LFP Phase Coupling')
+if useGPU
+    theta = gpuArray(theta);beta = gpuArray(beta);gamma = gpuArray(gamma);
 params.Fs = 1024;
 params.fpass = [4 30];
 [tf.oscillators.tb.C,tf.oscillators.tb.phi,S12,S1,S2,tf.oscillators.t,tf.oscillators.tb.f]=cohgramc(theta,beta,movingwin,params);
@@ -189,4 +195,5 @@ disp('ITPC for layer 5')
 % 
 % end
 TimeFreq.tf = tf;
+toc
 end
