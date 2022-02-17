@@ -3,11 +3,12 @@
 addpath(genpath('main'));
 pathname = uigetdir(pwd,'Input Directory');
 pathname = fullfile(pathname);
-directory = dir(pathname);
+directory = dir(fullfile(pathname,'*.rhd')); %Parses RHD files
 count = 1;
 downsampleRate = 4;
 targetedFs = 8192;
-for idx = 3:(length(directory)-1)
+L = length(directory);
+for idx = 1:L
     file = directory(idx).folder;
     path = directory(idx).name;
     Intan = read_Intan_RHD2000_file(file,path); 
