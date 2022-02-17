@@ -39,7 +39,7 @@ for trial = 1:length(VR_data.Position)
                 mapTime(ii,1) = VRtime(map(ii,1));
                 mapTime(ii,2) = VRtime(map(ii,2));
             else
-                mapTime(ii,1) = VRtime(map(ii,1)) + max(VR_data.Time{1,trial-1}); %adds the previous trial if ther was one
+                mapTime(ii,1) = VRtime(map(ii,1)) + max(VR_data.Time{1,trial-1}); %adds the previous trial if there was one
                 mapTime(ii,2) = VRtime(map(ii,2)) + max(VR_data.Time{1,trial-1});
             end
             spikeCount(ii,1) = length(find(mapTime(ii,1)<Spikes.Clusters(i).spikeTime...
