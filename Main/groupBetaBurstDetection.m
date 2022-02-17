@@ -1,17 +1,15 @@
-function betaGroup = groupBetaBurstDetection(LFP,betaTrials,window,electrode)
-
-Fs = LFP.downSampleFreq;
+function betaGroup = groupBetaBurstDetection(LFP,betaTrials,window,Fs)
 if nargin<2
     beta_signal = LFP.beta_band';
     timestamps(:,1) = (1:length(beta_signal))/Fs; % Timepoint for each sample
     window = [];
+    LFP.betaBurst = [];
 else
     beta_signal = squeeze(betaTrials);
     trialFlag = 1;
+    betaBurst = [];
 end
 
-
-LFP.betaBurst = [];
 lowThresholdFactor = 1; % Beta envolope must exceed lowThresholdFactor*stdev
 highThresholdFactor = 2.5; % Beta peak must exceed highThresholdFactor*stdev
 minInterRippleInterval = 25; % 30ms
@@ -22,6 +20,13 @@ noise = [];
 windowLength = round(11);
 H = waitbar(0,'Detecting Beta Events...');
 for idx = 1:size(beta_signal,2)
+    betaGroup.downSampleFreq = 0;
+    betaGroup.beta_band = 0;
+    betaGroup.betaBurst.detectedBeta{idx} = 0;
+    betaGroup.betaBurst.NumDetectedBeta(idx,1) =0;
+    betaGroup.betaBurst.lowThresholdFactor = 0;
+    betaGroup.betaBurst.highThresholdFactor = 0;
+    betaGroup.betaBurst.window = 0;
     waitbar(idx/size(beta_signal,1),H)
     data = struct();
     stats = struct();
@@ -38,6 +43,11 @@ for idx = 1:size(beta_signal,2)
     
     start = find(diff(thresholded)>0);
     stop = find(diff(thresholded)<0);
+    % Check to see if there are any signals thersholded
+    if isempty(start) || isempty(stop)
+        disp('No candidates detected')
+        return
+    end
     % Exclude last beta if it is incomplete
     if length(stop) == length(start)-1,
         start = start(1:end-1);
@@ -120,9 +130,9 @@ for idx = 1:size(beta_signal,2)
         betaGroup.betaBurst.detectedBeta{idx} = [];
         continue
     end
-    betaGroup.LFP = LFP.LFP;
+%     betaGroup.LFP = LFP.LFP;
     betaGroup.downSampleFreq = Fs;
-    betaGroup.beta_band = LFP.beta_band(electrode,:);
+    betaGroup.beta_band = LFP;
     betaGroup.betaBurst.detectedBeta{idx} = betaBurst;
     betaGroup.betaBurst.NumDetectedBeta(idx,1) = size(betaBurst,1);
     betaGroup.betaBurst.lowThresholdFactor = lowThresholdFactor;
