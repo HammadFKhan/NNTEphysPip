@@ -4,9 +4,12 @@ addpath(genpath('main'));
 addpath(genpath('chronux'));
 addpath(genpath('Kilosort'));
 addpath(genpath('npy-matlab'));
+addpath(genpath('spikes-master'));
 IntanConcatenate
 % Intan = read_Intan_RHD2000_file(); %load intan data
-useGPU = 0;
+global useGPU 
+useGPU = 1;
+ParpoolConfig
 fpath    = Intan.path; % where on disk do you want the analysis? ideally and SSD...
 pathToYourConfigFile = strcat(pwd,'/main/'); % for this example it's ok to leave this path inside the repo, but for your own config file you *must* put it somewhere else!  
 run(fullfile(pathToYourConfigFile, 'config_eMouse.m'))
@@ -45,7 +48,7 @@ LFP = bandFilter(LFP,'depth'); % Extract LFPs based on 'depth' or 'single'
 % %% CSD
 % [CSDoutput]  = CSD(flip(LFP.LFP(:,1:1024)'/1E6,1),1024,2E-5);
 % Looking at single units
-set(0,'DefaultFigureWindowStyle','docked')
+% set(0,'DefaultFigureWindowStyle','docked')
 Spikes = singleUnitAnalysis(fpath,VR_data);
 % Calculate Depth profile
 set(0,'DefaultFigureWindowStyle','normal')
