@@ -1,4 +1,5 @@
 function LFP = bandFilter(LFP,varargin)
+tic
 if strcmp(varargin,'depth')
     depthTrace = 1;
 elseif strcmp(varargin,'single')
@@ -23,11 +24,12 @@ else
     theta = init;
     beta = init;
     gamma = init;
-    for i = 1:size(LFP.medianLFP,1)
+    temp = LFP.medianLFP;
+    parfor i = 1:size(temp,1) 
         % Filter signals using FIR linear regression
-        theta(i,:) = customFilt(LFP.medianLFP(i,:),Fs,[4 10]);
-        beta(i,:) = customFilt(LFP.medianLFP(i,:),Fs,[10 30]);
-        gamma(i,:) = customFilt(LFP.medianLFP(i,:),Fs,[30 80]);
+        theta(i,:) = customFilt(temp(i,:),Fs,[4 10]);
+        beta(i,:) = customFilt(temp(i,:),Fs,[10 30]);
+        gamma(i,:) = customFilt(temp(i,:),Fs,[30 80]);
     end
 end
 %% Compute Band Power
@@ -37,4 +39,5 @@ LFP.gamma_temppow  = 10*log10(abs(hilbert(gamma)).^2);
 LFP.theta_band = theta;
 LFP.beta_band = beta;
 LFP.gamma_band = gamma;
+toc
 
