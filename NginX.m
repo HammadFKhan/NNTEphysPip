@@ -65,12 +65,13 @@ Spikes = spikeDepthPlot(Spikes,templateDepths);
 [TimeFreq,LFP,betaGroup] = tfAnalysis(Spikes,LFP);
 plotTF(TimeFreq,LFP)
 % TF stats of depth
-stats = tfStats(TimeFreq)
+stats = tfStats(TimeFreq);
 tfDepth = TimeFreq.tf.depth;
 %% Beta Analysis for each electrode
 for i = 1:size(LFP.medianLFP,1) % Checks electrode size for median
     disp(['Electrode: ' num2str(i)])
-    [peakAlign{i},csd{i},betaNorm{i},f,stats(i)] = betaAnalysis(betaGroup(i).electrode);
+    %if 
+    [peakAlign{i},csd{i},betaNorm{i},f,stats(i)] = betaAnalysis(betaGroup(i).electrode,LFP.LFP);
 end 
 %%
 set(0,'DefaultFigureWindowStyle','normal')
