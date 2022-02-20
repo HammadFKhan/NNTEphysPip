@@ -1,5 +1,8 @@
 % Beta analysis
-function [peakAlign,csd,norm,f,stats] = betaAnalysis(LFP)
+function [peakAlign,csd,norm,f,stats] = betaAnalysis(LFP,allLFP)
+if nargin<2
+    allLFP = [];
+end
 detectedBeta = LFP.betaBurst.detectedBeta;
 window = LFP.betaBurst.window;
 Fs = LFP.downSampleFreq;
@@ -53,7 +56,7 @@ if plt ==1
         if trialFlag == 1
             peak = detectedBeta(i,2)*Fs;
             peakAlign(i,:) = LFP.beta_band(peak-peakWin:peak+peakWin);
-            csdPeakAlign = LFP.LFP(:,peak-peakWin:peak+peakWin); %reference to all electrodes
+            csdPeakAlign = allLFP(:,peak-peakWin:peak+peakWin); %reference to all electrodes
             CSDoutput(:,:,i) = zscore(CSD(csdPeakAlign'/1E6,1024,2E-5));
         else
             peakAlign(i,:) = LFP.beta_band(peak-peakWin:peak+peakWin);
