@@ -100,17 +100,21 @@ phaseSync = itpc(LFP,timestamps,10);
 %% Oscillators Analysis using Chronux
 % Phase to Phase of Theta and Beta
 disp('Calculating LFP Phase Coupling')
-if useGPU
-    theta = gpuArray(theta);beta = gpuArray(beta);gamma = gpuArray(gamma);
-params.Fs = 1024;
-params.fpass = [4 30];
-[tf.oscillators.tb.C,tf.oscillators.tb.phi,S12,S1,S2,tf.oscillators.t,tf.oscillators.tb.f]=cohgramc(theta,beta,movingwin,params);
-params.fpass = [4 80];
-[tf.oscillators.tg.C,tf.oscillators.tg.phi,S12,S1,S2,t,tf.oscillators.tg.f]=cohgramc(theta,gamma,movingwin,params);
-params.fpass = [30 80];
-[tf.oscillators.bg.C,tf.oscillators.bg.phi,S12,S1,S2,t,tf.oscillators.bg.f]=cohgramc(beta,gamma,movingwin,params);
+% if useGPU
+%     theta = gpuArray(theta);beta = gpuArray(beta);gamma = gpuArray(gamma);
+% end
+% params.Fs = 1024;
+% params.fpass = [4 30];
+% [tf.oscillators.tb.C,tf.oscillators.tb.phi,S12,S1,S2,tf.oscillators.t,tf.oscillators.tb.f]=cohgramc(theta,beta,movingwin,params);
+% params.fpass = [4 80];
+% [tf.oscillators.tg.C,tf.oscillators.tg.phi,S12,S1,S2,t,tf.oscillators.tg.f]=cohgramc(theta,gamma,movingwin,params);
+% params.fpass = [30 80];
+% [tf.oscillators.bg.C,tf.oscillators.bg.phi,S12,S1,S2,t,tf.oscillators.bg.f]=cohgramc(beta,gamma,movingwin,params);
 
 params.Fs = 8192;
+if useGPU
+    LFPTrig = gpuArray(LFPTrig);
+end
 % Theta Band Analysis
 disp('Analyzing Theta Band...')
 params.fpass = [4 10];
