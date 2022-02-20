@@ -20,13 +20,8 @@ noise = [];
 windowLength = round(11);
 H = waitbar(0,'Detecting Beta Events...');
 for idx = 1:size(beta_signal,2)
-    betaGroup.downSampleFreq = 0;
-    betaGroup.beta_band = 0;
-    betaGroup.betaBurst.detectedBeta{idx} = 0;
+    betaGroup.betaBurst.detectedBeta{idx} = [];
     betaGroup.betaBurst.NumDetectedBeta(idx,1) =0;
-    betaGroup.betaBurst.lowThresholdFactor = 0;
-    betaGroup.betaBurst.highThresholdFactor = 0;
-    betaGroup.betaBurst.window = 0;
     waitbar(idx/size(beta_signal,1),H)
     data = struct();
     stats = struct();
@@ -45,6 +40,7 @@ for idx = 1:size(beta_signal,2)
     stop = find(diff(thresholded)<0);
     % Check to see if there are any signals thersholded
     if isempty(start) || isempty(stop)
+        disp('No candidates detected')
         return
     end
     % Exclude last beta if it is incomplete
@@ -101,11 +97,9 @@ for idx = 1:size(beta_signal,2)
     end
     if isempty(thirdPass),
         disp('Peak thresholding failed.');
-        return
+        continue
     else
-        disp(['After peak thresholding: ' num2str(length(thirdPass)) ' events.']);
-    end
-    
+        disp(['After peak thresholding: ' num2str(length(thirdPass)) ' events.'])
     % Detect negative peak position for each beta event
     peakPosition = zeros(size(thirdPass,1),1);
     for i=1:size(thirdPass,1),
