@@ -20,13 +20,8 @@ noise = [];
 windowLength = round(11);
 H = waitbar(0,'Detecting Beta Events...');
 for idx = 1:size(beta_signal,2)
-    betaGroup.downSampleFreq = 0;
-    betaGroup.beta_band = 0;
-    betaGroup.betaBurst.detectedBeta{idx} = 0;
+    betaGroup.betaBurst.detectedBeta{idx} = [];
     betaGroup.betaBurst.NumDetectedBeta(idx,1) =0;
-    betaGroup.betaBurst.lowThresholdFactor = 0;
-    betaGroup.betaBurst.highThresholdFactor = 0;
-    betaGroup.betaBurst.window = 0;
     waitbar(idx/size(beta_signal,1),H)
     data = struct();
     stats = struct();
@@ -36,7 +31,7 @@ for idx = 1:size(beta_signal,2)
         timestamps = timestamps';
     end
     signal = beta_signal(:,idx);
-    squaredSignal = signal.^2;    
+    squaredSignal = signal.^2;
     normalizedSquaredSignal = squaredSignal - mean(squaredSignal)/std(squaredSignal);
     % Detect beta periods by thresholding normalized squared signal
     thresholded = normalizedSquaredSignal > (lowThresholdFactor*std(squaredSignal));
@@ -102,41 +97,42 @@ for idx = 1:size(beta_signal,2)
     end
     if isempty(thirdPass),
         disp('Peak thresholding failed.');
-        return
-    else
-        disp(['After peak thresholding: ' num2str(length(thirdPass)) ' events.']);
-    end
-    
-    % Detect negative peak position for each beta event
-    peakPosition = zeros(size(thirdPass,1),1);
-    for i=1:size(thirdPass,1),
-        [minValue,minIndex] = min(signal(thirdPass(i,1):thirdPass(i,2)));
-        peakPosition(i) = minIndex + thirdPass(i,1) - 1;
-    end
-    % Discard beta events that are way too long
-    betaBurst = [timestamps(thirdPass(:,1))  timestamps(peakPosition)  timestamps(thirdPass(:,2)) peakNormalizedPower];
-    duration = betaBurst(:,3)-betaBurst(:,1);
-    betaBurst(duration>maxBetaDuration/1000,:) = NaN;
-    disp(['After max duration test: ' num2str(size(betaBurst,1)) ' events.']);
-    
-    % Discard beta events that are way too short
-    duration = betaBurst(:,3)-betaBurst(:,1);
-    betaBurst(duration<minBetaDuration/1000,:) = NaN;
-    betaBurst = betaBurst((all((~isnan(betaBurst)),2)),:);
-    disp(['After min duration test: ' num2str(size(betaBurst,1)) ' events.']);
-    
-    if isempty(betaBurst) || size(betaBurst,1) < 2
-        disp(['No events detected on channel ' num2str(idx)]);
-        betaGroup.betaBurst.detectedBeta{idx} = [];
         continue
+    else
+        disp(['After peak thresholding: ' num2str(length(thirdPass)) ' events.'])
+        
+        % Detect negative peak position for each beta event
+        peakPosition = zeros(size(thirdPass,1),1);
+        for i=1:size(thirdPass,1),
+            [minValue,minIndex] = min(signal(thirdPass(i,1):thirdPass(i,2)));
+            peakPosition(i) = minIndex + thirdPass(i,1) - 1;
+        end
+        % Discard beta events that are way too long
+        betaBurst = [timestamps(thirdPass(:,1))  timestamps(peakPosition)  timestamps(thirdPass(:,2)) peakNormalizedPower];
+        duration = betaBurst(:,3)-betaBurst(:,1);
+        betaBurst(duration>maxBetaDuration/1000,:) = NaN;
+        disp(['After max duration test: ' num2str(size(betaBurst,1)) ' events.']);
+        
+        % Discard beta events that are way too short
+        duration = betaBurst(:,3)-betaBurst(:,1);
+        betaBurst(duration<minBetaDuration/1000,:) = NaN;
+        betaBurst = betaBurst((all((~isnan(betaBurst)),2)),:);
+        disp(['After min duration test: ' num2str(size(betaBurst,1)) ' events.']);
+        
+        if isempty(betaBurst) || size(betaBurst,1) < 2
+            disp(['No events detected on channel ' num2str(idx)]);
+            betaGroup.betaBurst.detectedBeta{idx} = [];
+            continue
+        end
+        
+        %     betaGroup.LFP = LFP.LFP;
+        betaGroup.betaBurst.detectedBeta{idx} = betaBurst;
+        betaGroup.betaBurst.NumDetectedBeta(idx,1) = size(betaBurst,1);
     end
-%     betaGroup.LFP = LFP.LFP;
-    betaGroup.downSampleFreq = Fs;
-    betaGroup.beta_band = LFP;
-    betaGroup.betaBurst.detectedBeta{idx} = betaBurst;
-    betaGroup.betaBurst.NumDetectedBeta(idx,1) = size(betaBurst,1);
     betaGroup.betaBurst.lowThresholdFactor = lowThresholdFactor;
     betaGroup.betaBurst.highThresholdFactor = highThresholdFactor;
     betaGroup.betaBurst.window = window;
+    betaGroup.downSampleFreq = Fs;
+    betaGroup.beta_band = LFP;
 end
 close(H)
