@@ -73,7 +73,7 @@ for i = 1:size(LFP.medianLFP,1) % Checks electrode size for median
     [peakAlign{i},csd{i},betaNorm{i},f,stats(i)] = betaAnalysis(betaGroup(i).electrode,LFP.LFP);
 end 
 
-%%
+%% Beta stats
 set(0,'DefaultFigureWindowStyle','normal')
 norm = vertcat(betaNorm{:});
 for i = 1:length(betaNorm)
@@ -88,6 +88,9 @@ bstats = squeeze(bstats)';
 figure,bar(LFPdepth,bstats(:,1),'BarWidth',1),set(gcf, 'Position',  [100, 100, 500, 500])
 figure,bar(LFPdepth,bstats(:,2),LFPdepth,'BarWidth',1),set(gcf, 'Position',  [100, 100, 500, 500])
 figure,bar(LFPdepth,bstats(:,3),'BarWidth',1),set(gcf, 'Position',  [100, 100, 500, 500])
+% Bar plot for each layer
+betaStats(bstats,LFPdepth)
+
 %% Plot beta traces for each electrode
 for i = 1:size(LFP.medianLFP,1) % Checks electrode size for median
     mPeakAlign(:,i) = mean(peakAlign{i},1);
