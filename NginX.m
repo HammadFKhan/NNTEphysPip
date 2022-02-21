@@ -70,9 +70,9 @@ tfDepth = TimeFreq.tf.depth;
 %% Beta Analysis for each electrode
 for i = 1:size(LFP.medianLFP,1) % Checks electrode size for median
     disp(['Electrode: ' num2str(i)])
-    %if 
     [peakAlign{i},csd{i},betaNorm{i},f,stats(i)] = betaAnalysis(betaGroup(i).electrode,LFP.LFP);
 end 
+
 %%
 set(0,'DefaultFigureWindowStyle','normal')
 norm = vertcat(betaNorm{:});
@@ -82,17 +82,18 @@ end
 figure,imagesc(f,1:64,interp2(peakNorm)),colormap(jet),axis xy,set(gcf, 'Position',  [100, 100,300, 500])
 figure,imagesc(-100:100,-100:100,norm),colormap(jet),colorbar,axis xy,set(gcf, 'Position',  [100, 100, 300, 500])
 % Plot stats across electrodes
+LFPdepth = linspace(1,round(Spikes.Depth.depth(end),-2),64); %Round to nearest 100th micron
 bstats = cell2mat(struct2cell(stats));
 bstats = squeeze(bstats)';
-figure,bar(bstats(:,1),'BarWidth',1),set(gcf, 'Position',  [100, 100, 500, 500])
-figure,bar(bstats(:,2),'BarWidth',1),set(gcf, 'Position',  [100, 100, 500, 500])
-figure,bar(bstats(:,3),'BarWidth',1),set(gcf, 'Position',  [100, 100, 500, 500])
+figure,bar(LFPdepth,bstats(:,1),'BarWidth',1),set(gcf, 'Position',  [100, 100, 500, 500])
+figure,bar(LFPdepth,bstats(:,2),LFPdepth,'BarWidth',1),set(gcf, 'Position',  [100, 100, 500, 500])
+figure,bar(LFPdepth,bstats(:,3),'BarWidth',1),set(gcf, 'Position',  [100, 100, 500, 500])
 %% Plot beta traces for each electrode
 for i = 1:size(LFP.medianLFP,1) % Checks electrode size for median
     mPeakAlign(:,i) = mean(peakAlign{i},1);
 end
 figure,stack_plot(flip(mPeakAlign'),0.2,1.5)
-figure,imagesc(mPeakAlign')
+figure,imagesc(0:250,LFPdepth,mPeakAlign')
 %% Plot beta CSD for each electrode
 for i = 1:size(LFP.medianLFP,1) % Checks electrode size for median
     mcsd(:,:,i) = mean(csd{i},3);
