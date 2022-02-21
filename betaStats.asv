@@ -1,0 +1,6 @@
+function stats = betaStats(bstats,LFPdepth)
+[~,l23Idx] = find(LFPdepth<250);
+[~,l4Idx] = find(LFPdepth>250 & LFPdepth<400);
+[~,l5Idx] = find(LFPdepth>400);
+
+lfpLayers = [repmat({'L23'},length(l23Idx),1),repmat({'L4'},length(l4Idx),1),repmat({'L5'},length(l5Idx),1)];
