@@ -167,7 +167,7 @@ function [CSDoutput]  = CSD(data,SR,spacing,varargin);
 
     % Obtains the CSD
     if CSDtype == 1; % obtains the CSD using the standard CSD method
-    CSD = repmat(NaN,size(data,1),size(data,2)); % matrix of NaNs
+    CSD = NaN(size(data,1),size(data,2)); % matrix of NaNs
     for ii = 1:size(data,1); % obtaines the CSD
         for i = 2:size(data,2)-1; % 2nd to 2nd last electode
             % traditional CSD equation
