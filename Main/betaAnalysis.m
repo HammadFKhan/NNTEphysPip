@@ -6,6 +6,7 @@ end
 detectedBeta = LFP.betaBurst.detectedBeta;
 window = LFP.betaBurst.window;
 Fs = LFP.downSampleFreq;
+
 if length(detectedBeta)>1
     detectedBeta = vertcat(detectedBeta{:});
     trialFlag = 1;
