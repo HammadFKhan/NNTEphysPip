@@ -1,5 +1,7 @@
 % Time-Frequency Analysis
 function [TimeFreq,LFP,betaGroup] = tfAnalysis(Spikes,LFP)
+global useGPU
+tic
 % Initialize Data
 params.tapers = [5 9];
 movingwin = [0.5 0.05];
@@ -19,13 +21,13 @@ L5 = find(Spikes.Depth.depth>400);
 clusterID = Spikes.Depth.clusterID;
 l23 = {};l4 = {};l5 = {};
 for i = 1:length(L23)
-    l23{i} = Spikes.Clusters(clusterID(L23(i))).spikeTime'; %match electrode ID and layer location
+    l23{i} = Spikes.Clusters(clusterID(L23(i))).spikeTime'; %match cluster ID and layer location
 end
 for i = 1:length(L4)
-    l4{i} = Spikes.Clusters(clusterID(L4(i))).spikeTime'; %match electrode ID and layer location
+    l4{i} = Spikes.Clusters(clusterID(L4(i))).spikeTime'; %match cluster ID and layer location
 end
 for i = 1:length(L5)
-    l5{i} = Spikes.Clusters(clusterID(L5(i))).spikeTime'; %match electrode ID and layer location
+    l5{i} = Spikes.Clusters(clusterID(L5(i))).spikeTime'; %match cluster ID and layer location
 end
 L23spikeTime = sort(vertcat(l23{:}));
 L4spikeTime = sort(vertcat(l4{:}));
@@ -81,11 +83,9 @@ end
 if size(thetaLFP,2)>1
     temp = LFP.medianLFP;
     temp1 = LFP.beta_band;
-tic
     parfor electrode = 1:size(temp,1) % Checks electrode size for median
         betaGroup(electrode).electrode = groupBetaBurstDetection(temp1(electrode,:),beta(:,electrode,:),timestamps,1024); % Detect beta burst during window
     end
-    toc
 else
     LFP = betaBurstDetection(LFP,beta,timestamps);
 end
@@ -100,17 +100,21 @@ phaseSync = itpc(LFP,timestamps,10);
 %% Oscillators Analysis using Chronux
 % Phase to Phase of Theta and Beta
 disp('Calculating LFP Phase Coupling')
-if useGPU
-    theta = gpuArray(theta);beta = gpuArray(beta);gamma = gpuArray(gamma);
-params.Fs = 1024;
-params.fpass = [4 30];
-[tf.oscillators.tb.C,tf.oscillators.tb.phi,S12,S1,S2,tf.oscillators.t,tf.oscillators.tb.f]=cohgramc(theta,beta,movingwin,params);
-params.fpass = [4 80];
-[tf.oscillators.tg.C,tf.oscillators.tg.phi,S12,S1,S2,t,tf.oscillators.tg.f]=cohgramc(theta),gpuArray(gamma),movingwin,params);
-params.fpass = [30 80];
-[tf.oscillators.bg.C,tf.oscillators.bg.phi,S12,S1,S2,t,tf.oscillators.bg.f]=cohgramc(gpuArray(beta),gpuArray(gamma),movingwin,params);
+% if useGPU
+%     theta = gpuArray(theta);beta = gpuArray(beta);gamma = gpuArray(gamma);
+% end
+% params.Fs = 1024;
+% params.fpass = [4 30];
+% [tf.oscillators.tb.C,tf.oscillators.tb.phi,S12,S1,S2,tf.oscillators.t,tf.oscillators.tb.f]=cohgramc(theta,beta,movingwin,params);
+% params.fpass = [4 80];
+% [tf.oscillators.tg.C,tf.oscillators.tg.phi,S12,S1,S2,t,tf.oscillators.tg.f]=cohgramc(theta,gamma,movingwin,params);
+% params.fpass = [30 80];
+% [tf.oscillators.bg.C,tf.oscillators.bg.phi,S12,S1,S2,t,tf.oscillators.bg.f]=cohgramc(beta,gamma,movingwin,params);
 
 params.Fs = 8192;
+if useGPU
+    LFPTrig = gpuArray(LFPTrig);
+end
 % Theta Band Analysis
 disp('Analyzing Theta Band...')
 params.fpass = [4 10];
@@ -195,4 +199,5 @@ disp('ITPC for layer 5')
 % 
 % end
 TimeFreq.tf = tf;
+toc
 end
