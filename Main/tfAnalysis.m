@@ -21,13 +21,13 @@ L5 = find(Spikes.Depth.depth>400);
 clusterID = Spikes.Depth.clusterID;
 l23 = {};l4 = {};l5 = {};
 for i = 1:length(L23)
-    l23{i} = Spikes.Clusters(clusterID(L23(i))).spikeTime'; %match electrode ID and layer location
+    l23{i} = Spikes.Clusters(clusterID(L23(i))).spikeTime'; %match cluster ID and layer location
 end
 for i = 1:length(L4)
-    l4{i} = Spikes.Clusters(clusterID(L4(i))).spikeTime'; %match electrode ID and layer location
+    l4{i} = Spikes.Clusters(clusterID(L4(i))).spikeTime'; %match cluster ID and layer location
 end
 for i = 1:length(L5)
-    l5{i} = Spikes.Clusters(clusterID(L5(i))).spikeTime'; %match electrode ID and layer location
+    l5{i} = Spikes.Clusters(clusterID(L5(i))).spikeTime'; %match cluster ID and layer location
 end
 L23spikeTime = sort(vertcat(l23{:}));
 L4spikeTime = sort(vertcat(l4{:}));
