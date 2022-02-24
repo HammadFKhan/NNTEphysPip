@@ -1,13 +1,12 @@
 % Beta analysis
 function [peakAlign,csd,norm,f,stats] = betaAnalysis(LFP,allLFP)
-global useGPU 
 if nargin<2
     allLFP = [];
 end
 detectedBeta = LFP.betaBurst.detectedBeta;
 window = LFP.betaBurst.window;
 Fs = LFP.downSampleFreq;
-betaBand = LFP.beta_band;
+
 if length(detectedBeta)>1
     detectedBeta = vertcat(detectedBeta{:});
     trialFlag = 1;
@@ -15,12 +14,6 @@ else
     detectedBeta = cell2mat(detectedBeta);
 end
 
-if useGPU
-    detectedBeta = gpuArray(detectedBeta);
-    window = gpuArray(LFP.betaBurst.window);
-    allLFP = gpuArray(allLFP);
-    betaBand = gpuArray(betaBand);
-end
 stats.betaDuration = mean((detectedBeta(:,3)-detectedBeta(:,1)).*1000);
 stats.betaAmplitude = mean(detectedBeta(:,4));
 stats.betaER = mean(LFP.betaBurst.NumDetectedBeta);  
@@ -60,15 +53,14 @@ if plt ==1
     % betaEvents = zeros(size(detectedBeta{1},1),maxdiff);
     
     % Plot beta events
-    CSDoutput = gpuArray.zeros((peakWin*2)+1,size(allLFP,1),size(detectedBeta,1));
      for i = 1:size(detectedBeta,1)
         if trialFlag == 1
             peak = detectedBeta(i,2)*Fs;
-            peakAlign(i,:) = betaBand(peak-peakWin:peak+peakWin);
+            peakAlign(i,:) = LFP.beta_band(peak-peakWin:peak+peakWin);
             csdPeakAlign = allLFP(:,peak-peakWin:peak+peakWin); %reference to all electrodes
-            CSDoutput(:,:,i) = CSD(csdPeakAlign'/1E6,1024,2E-5);
+            CSDoutput(:,:,i) = zscore(CSD(csdPeakAlign'/1E6,1024,2E-5));
         else
-            peakAlign(i,:) = betaBand(peak-peakWin:peak+peakWin);
+            peakAlign(i,:) = LFP.beta_band(peak-peakWin:peak+peakWin);
         end
         %     originalSignal = LFP.beta_band(1,pos1:pos2);
         %     padding = maxdiff-size(originalSignal,2);
