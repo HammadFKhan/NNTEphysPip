@@ -44,9 +44,14 @@ downsample_LFPTime = LFP.times';
 
 % Set up state triggered analysis
 Velocity = Spikes.VR.Velocity(:,2);
-velocityTrig = 4; %Triggered Velocity
+velocityTrig = 2; %Triggered Velocity
 loc = Spikes.VR.binWinTime*find(abs(Velocity)>velocityTrig); %multiply by the cause of bin value
-
+% Check if threshold was too high
+if isempty(loc)
+    disp(['Velcity trigger value insufficient. Trying ' num2str(velocityTrig/2)])
+    velocityTrig = velocityTrig/2; %Triggered Velocity
+    loc = Spikes.VR.binWinTime*find(abs(Velocity)>velocityTrig); %multiply by the cause of bin value
+end
 % Check and adjust data structure for depth or single electrode analysis
 disp('Constructing Spike Windows...')
 if size(thetaLFP,1)>1
@@ -199,5 +204,48 @@ disp('ITPC for layer 5')
 % 
 % end
 TimeFreq.tf = tf;
+% Gather GPU arrays
+if useGPU
+    TimeFreq.tf.theta.C = gather(TimeFreq.tf.theta.C);
+    TimeFreq.tf.theta.phi = gather(TimeFreq.tf.theta.phi);
+    TimeFreq.tf.theta.itpc = gather(TimeFreq.tf.theta.itpc);
+    TimeFreq.tf.beta.C = gather(TimeFreq.tf.beta.C);
+    TimeFreq.tf.beta.phi = gather(TimeFreq.tf.beta.phi);
+    TimeFreq.tf.beta.itpc = gather(TimeFreq.tf.beta.itpc);
+    TimeFreq.tf.gamma.C = gather(TimeFreq.tf.gamma.C);
+    TimeFreq.tf.gamma.phi = gather(TimeFreq.tf.gamma.phi);
+    TimeFreq.tf.gamma.itpc = gather(TimeFreq.tf.gamma.itpc);
+    
+    TimeFreq.tf.depth.L23.theta.C = gather(TimeFreq.tf.depth.L23.theta.C);
+    TimeFreq.tf.depth.L23.theta.phi = gather(TimeFreq.tf.depth.L23.theta.phi);
+    TimeFreq.tf.depth.L23.theta.itpc = gather(TimeFreq.tf.depth.L23.theta.itpc);
+    TimeFreq.tf.depth.L23.beta.C = gather(TimeFreq.tf.depth.L23.beta.C);
+    TimeFreq.tf.depth.L23.beta.phi = gather(TimeFreq.tf.depth.L23.beta.phi);
+    TimeFreq.tf.depth.L23.beta.itpc = gather(TimeFreq.tf.depth.L23.beta.itpc);
+    TimeFreq.tf.depth.L23.gamma.C = gather(TimeFreq.tf.depth.L23.gamma.C);
+    TimeFreq.tf.depth.L23.gamma.phi = gather(TimeFreq.tf.depth.L23.gamma.phi);
+    TimeFreq.tf.depth.L23.gamma.itpc = gather(TimeFreq.tf.depth.L23.gamma.itpc);
+    
+    TimeFreq.tf.depth.L4.theta.C = gather(TimeFreq.tf.depth.L4.theta.C);
+    TimeFreq.tf.depth.L4.theta.phi = gather(TimeFreq.tf.depth.L4.theta.phi);
+    TimeFreq.tf.depth.L4.theta.itpc = gather(TimeFreq.tf.depth.L4.theta.itpc);
+    TimeFreq.tf.depth.L4.beta.C = gather(TimeFreq.tf.depth.L4.beta.C);
+    TimeFreq.tf.depth.L4.beta.phi = gather(TimeFreq.tf.depth.L4.beta.phi);
+    TimeFreq.tf.depth.L4.beta.itpc = gather(TimeFreq.tf.depth.L4.beta.itpc);
+    TimeFreq.tf.depth.L4.gamma.C = gather(TimeFreq.tf.depth.L4.gamma.C);
+    TimeFreq.tf.depth.L4.gamma.phi = gather(TimeFreq.tf.depth.L4.gamma.phi);
+    TimeFreq.tf.depth.L4.gamma.itpc = gather(TimeFreq.tf.depth.L4.gamma.itpc);
+    
+    TimeFreq.tf.depth.L5.theta.C = gather(TimeFreq.tf.depth.L5.theta.C);
+    TimeFreq.tf.depth.L5.theta.phi = gather(TimeFreq.tf.depth.L5.theta.phi);
+    TimeFreq.tf.depth.L5.theta.itpc = gather(TimeFreq.tf.depth.L5.theta.itpc);
+    TimeFreq.tf.depth.L5.beta.C = gather(TimeFreq.tf.depth.L5.beta.C);
+    TimeFreq.tf.depth.L5.beta.phi = gather(TimeFreq.tf.depth.L5.beta.phi);
+    TimeFreq.tf.depth.L5.beta.itpc = gather(TimeFreq.tf.depth.L5.beta.itpc);
+    TimeFreq.tf.depth.L5.gamma.C = gather(TimeFreq.tf.depth.L5.gamma.C);
+    TimeFreq.tf.depth.L5.gamma.phi = gather(TimeFreq.tf.depth.L5.gamma.phi);
+    TimeFreq.tf.depth.L5.gamma.itpc = gather(TimeFreq.tf.depth.L5.gamma.itpc);
+end
+    
 toc
 end
