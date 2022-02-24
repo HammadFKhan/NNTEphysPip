@@ -63,19 +63,24 @@ load chanMap
 Spikes = spikeDepthPlot(Spikes,templateDepths);
 % Time-Frequency Analysis
 [TimeFreq,LFP,betaGroup] = tfAnalysis(Spikes,LFP);
-plotTF(TimeFreq,LFP)
+% plotTF(TimeFreq,LFP)
 % TF stats of depth
 stats = tfStats(TimeFreq);
 tfDepth = TimeFreq.tf.depth;
 %% Beta Analysis for each electrode
+
 for i = 1:size(LFP.medianLFP,1) % Checks electrode size for median
     disp(['Electrode: ' num2str(i)])
-    [peakAlign{i},csd{i},betaNorm{i},f,stats(i)] = betaAnalysis(betaGroup(i).electrode,LFP.LFP);
+    [peakAlign{i},csd{i},betaNorm{i},f,bstats(i)] = betaAnalysis(betaGroup(i).electrode,LFP.LFP);
 end 
-
+% Take out non-existant cell fields
+betaNorm = betaNorm(~cellfun('isempty',betaNorm));
+peakAlign = peakAlign(~cellfun('isempty',peakAlign));
+csd = csd(~cellfun('isempty',csd));
 %% Beta stats
 set(0,'DefaultFigureWindowStyle','normal')
 norm = vertcat(betaNorm{:});
+
 for i = 1:length(betaNorm)
     peakNorm(i,:) = max(betaNorm{i},[],2);
 end
@@ -83,23 +88,29 @@ figure,imagesc(f,1:64,interp2(peakNorm)),colormap(jet),axis xy,set(gcf, 'Positio
 figure,imagesc(-100:100,-100:100,norm),colormap(jet),colorbar,axis xy,set(gcf, 'Position',  [100, 100, 300, 500])
 % Plot stats across electrodes
 LFPdepth = linspace(1,round(Spikes.Depth.depth(end),-2),64); %Round to nearest 100th micron
-bstats = cell2mat(struct2cell(stats));
-bstats = squeeze(bstats)';
-figure,bar(LFPdepth,bstats(:,1),'BarWidth',1),set(gcf, 'Position',  [100, 100, 500, 500])
-figure,bar(LFPdepth,bstats(:,2),LFPdepth,'BarWidth',1),set(gcf, 'Position',  [100, 100, 500, 500])
-figure,bar(LFPdepth,bstats(:,3),'BarWidth',1),set(gcf, 'Position',  [100, 100, 500, 500])
+if isstruct(bstats)
+    bstats = cell2mat(struct2cell(bstats));
+    bstats = squeeze(bstats)';
+end
+figure('Name','Beta Duration'),bar(LFPdepth,bstats(:,1),'BarWidth',1),set(gcf, 'Position',  [100, 100, 500, 500])
+figure('Name','Beta Amplitude'),bar(LFPdepth,bstats(:,2),'BarWidth',1),set(gcf, 'Position',  [100, 100, 500, 500])
+figure('Name','Beta Event Rate'),bar(LFPdepth,bstats(:,3),'BarWidth',1),set(gcf, 'Position',  [100, 100, 500, 500])
 % Bar plot for each layer
 betaStats(bstats,LFPdepth)
 
 %% Plot beta traces for each electrode
-for i = 1:size(LFP.medianLFP,1) % Checks electrode size for median
+for i = 1:size(peakAlign,2) % Checks electrode size for median
     mPeakAlign(:,i) = mean(peakAlign{i},1);
 end
 figure,stack_plot(flip(mPeakAlign'),0.2,1.5)
 figure,imagesc(0:250,LFPdepth,mPeakAlign')
 %% Plot beta CSD for each electrode
-for i = 1:size(LFP.medianLFP,1) % Checks electrode size for median
+for i = 1:size(csd,2) % Checks electrode size for median
     mcsd(:,:,i) = mean(csd{i},3);
 end
 mcsd = mean(mcsd,3);
-figure,imagesc(interp2(smoothdata((mcsd')),2)),colormap(jet)
+figure,imagesc(0:250,LFPdepth,interp2(smoothdata((mcsd')),2)),colormap(jet),caxis([-0.6 0.6])
+%%
+%% histogram stats
+figure,histogram(bstats(1:64,1),50),title('Event Duration')
+figure,histogram(bstats(1:64,3),50),title('Event Rate')
