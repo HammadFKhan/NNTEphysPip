@@ -4,7 +4,7 @@ if nargin<2
     allLFP = [];
 end
 detectedBeta = LFP.betaBurst.detectedBeta;
-window = LFP.betaBurst.window;
+% window = LFP.betaBurst.window;
 Fs = LFP.downSampleFreq;
 
 if length(detectedBeta)>1
@@ -13,7 +13,18 @@ if length(detectedBeta)>1
 else
     detectedBeta = cell2mat(detectedBeta);
 end
-
+% Check data validity
+if sum(LFP.betaBurst.NumDetectedBeta)==0
+    peakAlign = [];
+    csd = [];
+    norm =[];
+    f = [];
+    stats.betaDuration = 0;
+    stats.betaAmplitude = 0;
+    stats.betaER = 0;
+    disp('No statistics to analyze')
+    return
+end
 stats.betaDuration = mean((detectedBeta(:,3)-detectedBeta(:,1)).*1000);
 stats.betaAmplitude = mean(detectedBeta(:,4));
 stats.betaER = mean(LFP.betaBurst.NumDetectedBeta);  
