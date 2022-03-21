@@ -1,7 +1,11 @@
 % Time-Frequency Analysis
-function [TimeFreq,LFP,betaGroup] = tfAnalysis(Spikes,LFP)
+function [TimeFreq,LFP,betaGroup,Spikes] = tfAnalysis(Spikes,LFP,behaviorState)
 global useGPU
 tic
+if nargin<3
+    disp('Behavior state not chosen. Setting to running.')
+    behaviorState = 1; %running if 1 resting if 0
+end
 % Initialize Data
 params.tapers = [5 9];
 movingwin = [0.5 0.05];
@@ -45,7 +49,14 @@ downsample_LFPTime = LFP.times';
 % Set up state triggered analysis
 Velocity = Spikes.VR.Velocity(:,2);
 velocityTrig = 2; %Triggered Velocity
-loc = Spikes.VR.binWinTime*find(abs(Velocity)>velocityTrig); %multiply by the cause of bin value
+if behaviorState
+    loc = Spikes.VR.binWinTime*find(abs(Velocity)>velocityTrig); %multiply by the cause of bin value
+    disp(['Analyzing data during running!'])
+else
+    loc = Spikes.VR.binWinTime*find(abs(Velocity)<velocityTrig); %multiply by the cause of bin value
+    disp(['Analyzing data during rest!'])
+end
+
 % Check if threshold was too high
 if isempty(loc)
     disp(['Velcity trigger value insufficient. Trying ' num2str(velocityTrig/2)])
@@ -73,7 +84,7 @@ if size(thetaLFP,1)>1
 else
     for trial = 1:length(loc)-1
         window = [loc(trial)-1.50,loc(trial)+.500];
-        %triggered spike time with offset of the intial spike
+        %Triggered spike time with offset of the intial spike
         %this way, each spike time is translated to a window within 1 second
         timestamps(trial,:) = window; % Global timestamps for signal reference
         spike(trial).spikeTrig = spikeTime(window(1)<=spikeTime & spikeTime<=window(2))-window(1);
@@ -82,6 +93,74 @@ else
         beta(:,trial)= betaLFP(window(1)<=downsample_LFPTime & downsample_LFPTime<=window(2));
         gamma(:,trial)= gammaLFP(window(1)<=downsample_LFPTime & downsample_LFPTime<=window(2));
     end
+end
+
+% Layer-specific spike rate based on spikes per velocity window
+for trial = 1:length(loc)-1
+        window = [loc(trial)-1,loc(trial)+1];
+        %triggered spike time with offset of the intial spike
+        %this way, each spike time is translated to a window within 1 second
+        timestamps(trial,:) = window; % Global timestamps for signal reference
+        spike(trial).spikeTrig = spikeTime(window(1)<=spikeTime & spikeTime<=window(2))-window(1);
+        % Create spike window for each layer
+        %We want the firing rate of each neuron individually (instead of
+        %chaining all activity which would yield inaccurate results
+        for neuron = 1:length(l23)
+            L23spikeCell(trial).Cell{neuron} = l23{neuron}(window(1)<=l23{neuron} & l23{neuron}<=window(2))-window(1);
+        end
+        for neuron = 1:length(l4)
+            L4spikeCell(trial).Cell{neuron} = l4{neuron}(window(1)<=l4{neuron} & l4{neuron}<=window(2))-window(1);
+        end
+        for neuron = 1:length(l5)
+            L5spikeCell(trial).Cell{neuron} = l5{neuron}(window(1)<=l5{neuron} & l5{neuron}<=window(2))-window(1);
+        end
+end    
+
+for trial = 1:length(loc)-1
+    spikeTemp = squeeze(struct2cell(L23spikeCell)); % Spike temp for layer 23 of cell cell array
+    spikeTemp = vertcat(spikeTemp{:});
+    for i = 1:size(spikeTemp,2) %cell is arranged as trialxcell
+        nSpikes = length(spikeTemp{trial,i}); %count how many spikes in the window
+        if nSpikes == 0 %No spike detected handle
+            L23VelSR(i,trial) = 0;
+        else
+            L23VelSR(i,trial) = nSpikes/2; %divide by last value of time window
+        end
+    end
+    spikeTemp = [];
+    spikeTemp = squeeze(struct2cell(L4spikeCell)); % Spike temp for layer 4
+    spikeTemp = vertcat(spikeTemp{:});
+    for i = 1:size(spikeTemp,2)
+        nSpikes = length(spikeTemp{trial,i}); %count how many spikes in the window
+        if nSpikes == 0 %No spike detected handle
+            L4VelSR(i,trial) = 0; %Output as cell x trial (I know its coutnerintuitive to the previous data structure but bluh)
+        else
+            L4VelSR(i,trial) = nSpikes/2; %divide by window time
+        end
+    end
+    spikeTemp = [];
+    spikeTemp = squeeze(struct2cell(L5spikeCell)); % Spike temp for layer 5
+    spikeTemp = vertcat(spikeTemp{:});
+    for i = 1:size(spikeTemp,2)
+        nSpikes = length(spikeTemp{trial,i}); %count how many spikes in the window
+        if nSpikes == 0 %No spike detected handle
+            L5VelSR(i,trial) = 0;
+        else
+            L5VelSR(i,trial) = nSpikes/2; %divide by window time
+        end
+    end
+end
+
+
+%Output to spikes structure
+if behaviorState 
+    Spikes.spikeRate.L23RunSR = L23VelSR;
+    Spikes.spikeRate.L4RunSR = L4VelSR;
+    Spikes.spikeRate.L5RunSR = L5VelSR;
+else
+    Spikes.spikeRate.L23RestSR = L23VelSR;
+    Spikes.spikeRate.L4RestSR = L4VelSR;
+    Spikes.spikeRate.L5RestSR = L5VelSR;
 end
 
 % Beta Analysis
