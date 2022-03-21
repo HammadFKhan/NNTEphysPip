@@ -61,8 +61,10 @@ load chanMap
 % test
 
 Spikes = spikeDepthPlot(Spikes,templateDepths);
+
+
 % Time-Frequency Analysis
-[TimeFreq,LFP,betaGroup] = tfAnalysis(Spikes,LFP);
+[TimeFreq,LFP,betaGroup,Spikes] = tfAnalysis(Spikes,LFP,1); %Behavior state running 1 (0 rest)
 % plotTF(TimeFreq,LFP)
 % TF stats of depth
 stats = tfStats(TimeFreq);
@@ -110,7 +112,81 @@ for i = 1:size(csd,2) % Checks electrode size for median
 end
 mcsd = mean(mcsd,3);
 figure,imagesc(0:250,LFPdepth,interp2(smoothdata((mcsd')),2)),colormap(jet),caxis([-0.6 0.6])
+%% Layer specific spike rate
+% Convert cell x trial to single array (cos we don't care what trial this
+% all happens on
+L23RunSR = Spikes.spikeRate.L23RunSR;
+L23RunSR = L23RunSR(:); %Reshape to 1d
+L23RunSR(L23RunSR<1) = []; %Remove zeros
+
+L4RunSR = Spikes.spikeRate.L4RunSR;
+L4RunSR = L4RunSR(:); %Reshape to 1d
+L4RunSR(L4RunSR<1) = []; %Remove zeros
+
+L5RunSR = Spikes.spikeRate.L5RunSR;
+L5RunSR = L5RunSR(:); %Reshape to 1d
+L5RunSR(L5RunSR<1) = []; %Remove zeros
+
+L23RestSR = Spikes.spikeRate.L23RestSR;
+L23RestSR = L23RestSR(:); %Reshape to 1d
+L23RestSR(L23RestSR<1) = [];
+
+L4RestSR = Spikes.spikeRate.L4RestSR;
+L4RestSR = L4RestSR(:); %Reshape to 1d
+L4RestSR(L4RestSR<1) = [];
+
+L5RestSR = Spikes.spikeRate.L5RestSR;
+L5RestSR = L5RestSR(:); %Reshape to 1d
+L5RestSR(L5RestSR<1) = [];
+
+%Avg SR
+avgSR = vertcat(Spikes.spikeRate.L23avgSR,Spikes.spikeRate.L4avgSR,Spikes.spikeRate.L5avgSR);
+xAvgSR = [repmat({'L23'},length(Spikes.spikeRate.L23avgSR),1);repmat({'L4'},length(Spikes.spikeRate.L4avgSR),1);repmat({'L5'},length(Spikes.spikeRate.L5avgSR),1)];
+figure,boxplot(avgSR,xAvgSR,'plotstyle','compact'),title('Average SR'), hold on
+set(gca, 'YScale', 'log')
+ylim([00.1 100])
+x = [1.1*ones(length(Spikes.spikeRate.L23avgSR),1);2.1*ones(length(Spikes.spikeRate.L4avgSR),1);3.1*ones(length(Spikes.spikeRate.L5avgSR),1)];
+scatter(x,avgSR,'filled','k')
+
+%Rest SR
+restSR = vertcat(L23RestSR,L4RestSR,L5RestSR);
+xRestSR = [repmat({'L23'},length(L23RestSR),1);repmat({'L4'},length(L4RestSR),1);repmat({'L5'},length(L5RestSR),1)];
+figure,boxplot(restSR,xRestSR,'plotstyle','compact'),title('Resting SR'),hold on
+ax = gca;
+ax.YAxis.Scale ='log';
+ylim([00.1 100])
+x = [1.1*ones(length(L23RestSR),1);2.1*ones(length(L4RestSR),1);3.1*ones(length(L5RestSR),1)];
+scatter(x,restSR,'filled','k')
+
+% Run SR
+runSR = vertcat(L23RunSR,L4RunSR,L5RunSR);
+xRunSR = [repmat({'L23'},length(L23RunSR),1);repmat({'L4'},length(L4RunSR),1);repmat({'L5'},length(L5RunSR),1)];
+figure,boxplot(runSR,xRunSR,'plotstyle','compact'),title('Running SR'),hold on
+ax = gca;
+ax.YAxis.Scale ='log';
+ylim([00.1 100])
+x = [1.1*ones(length(L23RunSR),1);2.1*ones(length(L4RunSR),1);3.1*ones(length(L5RunSR),1)];
+scatter(x,runSR,'filled','k')
 %%
+%Histogram for each layer by brain state
+[~,edges] = histcounts(log10(L23RunSR));
+figure, histogram(L23RunSR,10.^edges),title('Layer 2/3'), hold on
+histogram(L23RestSR(1:length(L23RunSR),1),25.^edges);
+set(gca, 'xscale','log')
+xlim([00.1 100])                 
+
+[~,edges] = histcounts(log10(L4RunSR));
+figure, histogram(L4RunSR,10.^edges),title('Layer 4'), hold on
+histogram(L4RestSR(1:length(L4RunSR),1),25.^edges);
+set(gca, 'xscale','log')
+xlim([00.1 100])
+
+[~,edges] = histcounts(log10(L5RunSR));
+figure, histogram(L5RunSR,10.^edges),title('Layer 5'), hold on
+histogram(L5RestSR(1:length(L5RunSR),1),25.^edges);
+set(gca, 'xscale','log')
+xlim([00.1 100])
+
 %% histogram stats
-figure,histogram(bstats(1:64,1),50),title('Event Duration')
-figure,histogram(bstats(1:64,3),50),title('Event Rate')
+figure,histogram(bstats(1:64,1),50:100),title('Event Duration')
+figure,histogram(bstats(1:64,3),1:0.25:10),title('Event Rate')
