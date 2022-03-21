@@ -38,7 +38,7 @@ for idx = 1:size(beta_signal,2)
     end
     signal = beta_signal(:,idx);
     squaredSignal = signal.^2;
-    normalizedSquaredSignal = squaredSignal - mean(squaredSignal)/std(squaredSignal);
+    normalizedSquaredSignal = (squaredSignal - mean(squaredSignal))/std(squaredSignal);
     % Detect beta periods by thresholding normalized squared signal
     thresholded = normalizedSquaredSignal > (lowThresholdFactor*std(squaredSignal));
     
