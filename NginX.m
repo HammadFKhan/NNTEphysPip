@@ -8,7 +8,7 @@ addpath(genpath('spikes-master'));
 IntanConcatenate
 % Intan = read_Intan_RHD2000_file(); %load intan data
 global useGPU 
-useGPU = 1;
+useGPU = 0;
 ParpoolConfig
 fpath    = Intan.path; % where on disk do you want the analysis? ideally and SSD...
 pathToYourConfigFile = strcat(pwd,'/main/'); % for this example it's ok to leave this path inside the repo, but for your own config file you *must* put it somewhere else!  
@@ -64,16 +64,21 @@ Spikes = spikeDepthPlot(Spikes,templateDepths);
 
 
 % Time-Frequency Analysis
-[TimeFreq,LFP,betaGroup,Spikes] = tfAnalysis(Spikes,LFP,1); %Behavior state running 1 (0 rest)
+[TimeFreq,LFP,betaGroupRest,Spikes] = tfAnalysis(Spikes,LFP,0); %Behavior state running 1 (0 rest)
+[TimeFreq,LFP,betaGroupRun,Spikes] = tfAnalysis(Spikes,LFP,1,TimeFreq); %Behavior state running 1 (0 rest)
+
 % plotTF(TimeFreq,LFP)
 % TF stats of depth
-stats = tfStats(TimeFreq);
-tfDepth = TimeFreq.tf.depth;
+% TimeFreqRun.tf = TimeFreq.tfRun;
+% stats = tfStats(TimeFreqRun);
+% tfDepth = TimeFreq.tf.depth;
+%%
+spikeRaster(Spikes)
 %% Beta Analysis for each electrode
 
 for i = 1:size(LFP.medianLFP,1) % Checks electrode size for median
     disp(['Electrode: ' num2str(i)])
-    [peakAlign{i},csd{i},betaNorm{i},f,bstats(i)] = betaAnalysis(betaGroup(i).electrode,LFP.LFP);
+    [peakAlign{i},csd{i},betaNorm{i},f,bstats(i)] = betaAnalysis(betaGroupRun(i).electrode,LFP.LFP);
 end 
 % Take out non-existant cell fields
 betaNorm = betaNorm(~cellfun('isempty',betaNorm));
