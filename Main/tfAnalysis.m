@@ -1,26 +1,30 @@
 % Time-Frequency Analysis
-function [TimeFreq,LFP,betaGroup,Spikes] = tfAnalysis(Spikes,LFP,behaviorState)
+function [TimeFreq,LFP,betaGroup,Spikes] = tfAnalysis(Spikes,LFP,behaviorState,TimeFreq)
 global useGPU
 tic
 if nargin<3
     disp('Behavior state not chosen. Setting to running.')
     behaviorState = 1; %running if 1 resting if 0
 end
+if nargin<4
+    TimeFreq = [];
+end
+
 % Initialize Data
 params.tapers = [5 9];
 movingwin = [0.5 0.05];
 params.pad = 2;
 params.Fs = 8192;
-TimeFreq = [];
+% TimeFreq = [];
 % Set up Spike data
 for trial = 1:size(Spikes.Clusters,2)
     fixSpiketime{trial} = Spikes.Clusters(trial).spikeTime';
 end
 spikeTime = sort(vertcat(fixSpiketime{:})); %% All spike times of neurons
 % Set up depth specific spike data
-L23 = find(Spikes.Depth.depth<250);
-L4 = find(Spikes.Depth.depth>250 & Spikes.Depth.depth<400);
-L5 = find(Spikes.Depth.depth>400);
+L23 = find(Spikes.Depth.depth<300);
+L4 = find(Spikes.Depth.depth>300 & Spikes.Depth.depth<301);
+L5 = find(Spikes.Depth.depth>301);
 % Now build spike rasters and time for each layer
 clusterID = Spikes.Depth.clusterID;
 l23 = {};l4 = {};l5 = {};
@@ -114,10 +118,11 @@ for trial = 1:length(loc)-1
         for neuron = 1:length(l5)
             L5spikeCell(trial).Cell{neuron} = l5{neuron}(window(1)<=l5{neuron} & l5{neuron}<=window(2))-window(1);
         end
-end    
+end  
+
 
 for trial = 1:length(loc)-1
-    spikeTemp = squeeze(struct2cell(L23spikeCell)); % Spike temp for layer 23 of cell cell array
+    spikeTemp = squeeze(struct2cell(L4spikeCell)); % Spike temp for layer 23 of cell cell array
     spikeTemp = vertcat(spikeTemp{:});
     for i = 1:size(spikeTemp,2) %cell is arranged as trialxcell
         nSpikes = length(spikeTemp{trial,i}); %count how many spikes in the window
@@ -153,14 +158,21 @@ end
 
 
 %Output to spikes structure
-if behaviorState 
+if behaviorState  %Mouse is running
     Spikes.spikeRate.L23RunSR = L23VelSR;
     Spikes.spikeRate.L4RunSR = L4VelSR;
     Spikes.spikeRate.L5RunSR = L5VelSR;
-else
+    Spikes.spikes.L23Run = L23spikeCell;
+    Spikes.spikes.L4Run = L4spikeCell;
+    Spikes.spikes.L5Run = L5spikeCell;
+
+else % Mouse is resting
     Spikes.spikeRate.L23RestSR = L23VelSR;
     Spikes.spikeRate.L4RestSR = L4VelSR;
     Spikes.spikeRate.L5RestSR = L5VelSR;
+    Spikes.spikes.L23Rest = L23spikeCell;
+    Spikes.spikes.L4Rest = L4spikeCell;
+    Spikes.spikes.L5Rest = L5spikeCell;
 end
 
 % Beta Analysis
@@ -282,49 +294,95 @@ disp('ITPC for layer 5')
 %     [tf.wavelet.gamma_cfs(:,:,trial),tf.wavelet.gamma_f] = cwt(gamma(:,trial),1024,'FrequencyLimits',[30 80]);
 % 
 % end
-TimeFreq.tf = tf;
-% Gather GPU arrays
-if useGPU
-    TimeFreq.tf.theta.C = gather(TimeFreq.tf.theta.C);
-    TimeFreq.tf.theta.phi = gather(TimeFreq.tf.theta.phi);
-    TimeFreq.tf.theta.itpc = gather(TimeFreq.tf.theta.itpc);
-    TimeFreq.tf.beta.C = gather(TimeFreq.tf.beta.C);
-    TimeFreq.tf.beta.phi = gather(TimeFreq.tf.beta.phi);
-    TimeFreq.tf.beta.itpc = gather(TimeFreq.tf.beta.itpc);
-    TimeFreq.tf.gamma.C = gather(TimeFreq.tf.gamma.C);
-    TimeFreq.tf.gamma.phi = gather(TimeFreq.tf.gamma.phi);
-    TimeFreq.tf.gamma.itpc = gather(TimeFreq.tf.gamma.itpc);
-    
-    TimeFreq.tf.depth.L23.theta.C = gather(TimeFreq.tf.depth.L23.theta.C);
-    TimeFreq.tf.depth.L23.theta.phi = gather(TimeFreq.tf.depth.L23.theta.phi);
-    TimeFreq.tf.depth.L23.theta.itpc = gather(TimeFreq.tf.depth.L23.theta.itpc);
-    TimeFreq.tf.depth.L23.beta.C = gather(TimeFreq.tf.depth.L23.beta.C);
-    TimeFreq.tf.depth.L23.beta.phi = gather(TimeFreq.tf.depth.L23.beta.phi);
-    TimeFreq.tf.depth.L23.beta.itpc = gather(TimeFreq.tf.depth.L23.beta.itpc);
-    TimeFreq.tf.depth.L23.gamma.C = gather(TimeFreq.tf.depth.L23.gamma.C);
-    TimeFreq.tf.depth.L23.gamma.phi = gather(TimeFreq.tf.depth.L23.gamma.phi);
-    TimeFreq.tf.depth.L23.gamma.itpc = gather(TimeFreq.tf.depth.L23.gamma.itpc);
-    
-    TimeFreq.tf.depth.L4.theta.C = gather(TimeFreq.tf.depth.L4.theta.C);
-    TimeFreq.tf.depth.L4.theta.phi = gather(TimeFreq.tf.depth.L4.theta.phi);
-    TimeFreq.tf.depth.L4.theta.itpc = gather(TimeFreq.tf.depth.L4.theta.itpc);
-    TimeFreq.tf.depth.L4.beta.C = gather(TimeFreq.tf.depth.L4.beta.C);
-    TimeFreq.tf.depth.L4.beta.phi = gather(TimeFreq.tf.depth.L4.beta.phi);
-    TimeFreq.tf.depth.L4.beta.itpc = gather(TimeFreq.tf.depth.L4.beta.itpc);
-    TimeFreq.tf.depth.L4.gamma.C = gather(TimeFreq.tf.depth.L4.gamma.C);
-    TimeFreq.tf.depth.L4.gamma.phi = gather(TimeFreq.tf.depth.L4.gamma.phi);
-    TimeFreq.tf.depth.L4.gamma.itpc = gather(TimeFreq.tf.depth.L4.gamma.itpc);
-    
-    TimeFreq.tf.depth.L5.theta.C = gather(TimeFreq.tf.depth.L5.theta.C);
-    TimeFreq.tf.depth.L5.theta.phi = gather(TimeFreq.tf.depth.L5.theta.phi);
-    TimeFreq.tf.depth.L5.theta.itpc = gather(TimeFreq.tf.depth.L5.theta.itpc);
-    TimeFreq.tf.depth.L5.beta.C = gather(TimeFreq.tf.depth.L5.beta.C);
-    TimeFreq.tf.depth.L5.beta.phi = gather(TimeFreq.tf.depth.L5.beta.phi);
-    TimeFreq.tf.depth.L5.beta.itpc = gather(TimeFreq.tf.depth.L5.beta.itpc);
-    TimeFreq.tf.depth.L5.gamma.C = gather(TimeFreq.tf.depth.L5.gamma.C);
-    TimeFreq.tf.depth.L5.gamma.phi = gather(TimeFreq.tf.depth.L5.gamma.phi);
-    TimeFreq.tf.depth.L5.gamma.itpc = gather(TimeFreq.tf.depth.L5.gamma.itpc);
+if behaviorState
+    TimeFreq.tfRun = tf;
+    % Gather GPU arrays
+    if useGPU
+        TimeFreq.tfRun.theta.C = gather(TimeFreq.tf.theta.C);
+        TimeFreq.tfRun.theta.phi = gather(TimeFreq.tf.theta.phi);
+        TimeFreq.tfRun.theta.itpc = gather(TimeFreq.tf.theta.itpc);
+        TimeFreq.tfRun.beta.C = gather(TimeFreq.tf.beta.C);
+        TimeFreq.tfRun.beta.phi = gather(TimeFreq.tf.beta.phi);
+        TimeFreq.tfRun.beta.itpc = gather(TimeFreq.tf.beta.itpc);
+        TimeFreq.tfRun.gamma.C = gather(TimeFreq.tf.gamma.C);
+        TimeFreq.tfRun.gamma.phi = gather(TimeFreq.tf.gamma.phi);
+        TimeFreq.tfRun.gamma.itpc = gather(TimeFreq.tf.gamma.itpc);
+        
+        TimeFreq.tfRun.depth.L23.theta.C = gather(TimeFreq.tf.depth.L23.theta.C);
+        TimeFreq.tfRun.depth.L23.theta.phi = gather(TimeFreq.tf.depth.L23.theta.phi);
+        TimeFreq.tfRun.depth.L23.theta.itpc = gather(TimeFreq.tf.depth.L23.theta.itpc);
+        TimeFreq.tfRun.depth.L23.beta.C = gather(TimeFreq.tf.depth.L23.beta.C);
+        TimeFreq.tfRun.depth.L23.beta.phi = gather(TimeFreq.tf.depth.L23.beta.phi);
+        TimeFreq.tfRun.depth.L23.beta.itpc = gather(TimeFreq.tf.depth.L23.beta.itpc);
+        TimeFreq.tfRun.depth.L23.gamma.C = gather(TimeFreq.tf.depth.L23.gamma.C);
+        TimeFreq.tfRun.depth.L23.gamma.phi = gather(TimeFreq.tf.depth.L23.gamma.phi);
+        TimeFreq.tfRun.depth.L23.gamma.itpc = gather(TimeFreq.tf.depth.L23.gamma.itpc);
+        
+        TimeFreq.tfRun.depth.L4.theta.C = gather(TimeFreq.tf.depth.L4.theta.C);
+        TimeFreq.tfRun.depth.L4.theta.phi = gather(TimeFreq.tf.depth.L4.theta.phi);
+        TimeFreq.tfRun.depth.L4.theta.itpc = gather(TimeFreq.tf.depth.L4.theta.itpc);
+        TimeFreq.tfRun.depth.L4.beta.C = gather(TimeFreq.tf.depth.L4.beta.C);
+        TimeFreq.tfRun.depth.L4.beta.phi = gather(TimeFreq.tf.depth.L4.beta.phi);
+        TimeFreq.tfRun.depth.L4.beta.itpc = gather(TimeFreq.tf.depth.L4.beta.itpc);
+        TimeFreq.tfRun.depth.L4.gamma.C = gather(TimeFreq.tf.depth.L4.gamma.C);
+        TimeFreq.tfRun.depth.L4.gamma.phi = gather(TimeFreq.tf.depth.L4.gamma.phi);
+        TimeFreq.tfRun.depth.L4.gamma.itpc = gather(TimeFreq.tf.depth.L4.gamma.itpc);
+        
+        TimeFreq.tfRun.depth.L5.theta.C = gather(TimeFreq.tf.depth.L5.theta.C);
+        TimeFreq.tfRun.depth.L5.theta.phi = gather(TimeFreq.tf.depth.L5.theta.phi);
+        TimeFreq.tfRun.depth.L5.theta.itpc = gather(TimeFreq.tf.depth.L5.theta.itpc);
+        TimeFreq.tfRun.depth.L5.beta.C = gather(TimeFreq.tf.depth.L5.beta.C);
+        TimeFreq.tfRun.depth.L5.beta.phi = gather(TimeFreq.tf.depth.L5.beta.phi);
+        TimeFreq.tfRun.depth.L5.beta.itpc = gather(TimeFreq.tf.depth.L5.beta.itpc);
+        TimeFreq.tfRun.depth.L5.gamma.C = gather(TimeFreq.tf.depth.L5.gamma.C);
+        TimeFreq.tfRun.depth.L5.gamma.phi = gather(TimeFreq.tf.depth.L5.gamma.phi);
+        TimeFreq.tfRun.depth.L5.gamma.itpc = gather(TimeFreq.tf.depth.L5.gamma.itpc);
+    end
+else
+    TimeFreq.tfRest = tf;
+    % Gather GPU arrays
+    if useGPU
+        TimeFreq.tfRest.theta.C = gather(tf.theta.C);
+        TimeFreq.tfRest.theta.phi = gather(tf.theta.phi);
+        TimeFreq.tfRest.theta.itpc = gather(tf.theta.itpc);
+        TimeFreq.tfRest.beta.C = gather(tf.beta.C);
+        TimeFreq.tfRest.beta.phi = gather(tf.beta.phi);
+        TimeFreq.tfRest.beta.itpc = gather(tf.beta.itpc);
+        TimeFreq.tfRest.gamma.C = gather(tf.gamma.C);
+        TimeFreq.tfRest.gamma.phi = gather(tf.gamma.phi);
+        TimeFreq.tfRest.gamma.itpc = gather(tf.gamma.itpc);
+        
+        TimeFreq.tfRest.depth.L23.theta.C = gather(TimeFreq.tf.depth.L23.theta.C);
+        TimeFreq.tfRest.depth.L23.theta.phi = gather(TimeFreq.tf.depth.L23.theta.phi);
+        TimeFreq.tfRest.depth.L23.theta.itpc = gather(TimeFreq.tf.depth.L23.theta.itpc);
+        TimeFreq.tfRest.depth.L23.beta.C = gather(TimeFreq.tf.depth.L23.beta.C);
+        TimeFreq.tfRest.depth.L23.beta.phi = gather(TimeFreq.tf.depth.L23.beta.phi);
+        TimeFreq.tfRest.depth.L23.beta.itpc = gather(TimeFreq.tf.depth.L23.beta.itpc);
+        TimeFreq.tfRest.depth.L23.gamma.C = gather(TimeFreq.tf.depth.L23.gamma.C);
+        TimeFreq.tfRest.depth.L23.gamma.phi = gather(TimeFreq.tf.depth.L23.gamma.phi);
+        TimeFreq.tfRest.depth.L23.gamma.itpc = gather(TimeFreq.tf.depth.L23.gamma.itpc);
+        
+        TimeFreq.tfRest.depth.L4.theta.C = gather(TimeFreq.tf.depth.L4.theta.C);
+        TimeFreq.tfRest.depth.L4.theta.phi = gather(TimeFreq.tf.depth.L4.theta.phi);
+        TimeFreq.tfRest.depth.L4.theta.itpc = gather(TimeFreq.tf.depth.L4.theta.itpc);
+        TimeFreq.tfRest.depth.L4.beta.C = gather(TimeFreq.tf.depth.L4.beta.C);
+        TimeFreq.tfRest.depth.L4.beta.phi = gather(TimeFreq.tf.depth.L4.beta.phi);
+        TimeFreq.tfRest.depth.L4.beta.itpc = gather(TimeFreq.tf.depth.L4.beta.itpc);
+        TimeFreq.tfRest.depth.L4.gamma.C = gather(TimeFreq.tf.depth.L4.gamma.C);
+        TimeFreq.tfRest.depth.L4.gamma.phi = gather(TimeFreq.tf.depth.L4.gamma.phi);
+        TimeFreq.tfRest.depth.L4.gamma.itpc = gather(TimeFreq.tf.depth.L4.gamma.itpc);
+        
+        TimeFreq.tfRest.depth.L5.theta.C = gather(TimeFreq.tf.depth.L5.theta.C);
+        TimeFreq.tfRest.depth.L5.theta.phi = gather(TimeFreq.tf.depth.L5.theta.phi);
+        TimeFreq.tfRest.depth.L5.theta.itpc = gather(TimeFreq.tf.depth.L5.theta.itpc);
+        TimeFreq.tfRest.depth.L5.beta.C = gather(TimeFreq.tf.depth.L5.beta.C);
+        TimeFreq.tfRest.depth.L5.beta.phi = gather(TimeFreq.tf.depth.L5.beta.phi);
+        TimeFreq.tfRest.depth.L5.beta.itpc = gather(TimeFreq.tf.depth.L5.beta.itpc);
+        TimeFreq.tfRest.depth.L5.gamma.C = gather(TimeFreq.tf.depth.L5.gamma.C);
+        TimeFreq.tfRest.depth.L5.gamma.phi = gather(TimeFreq.tf.depth.L5.gamma.phi);
+        TimeFreq.tfRest.depth.L5.gamma.itpc = gather(TimeFreq.tf.depth.L5.gamma.itpc);
+    end
 end
-    
+
 toc
 end
