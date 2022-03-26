@@ -13,7 +13,13 @@ xGamma = [repmat({'L2/3-gamma'},length(L23.gamma.itpc), 1); repmat({'L4-gamma'},
 layers = [layersTheta; layersBeta; layersGamma];
 x = [xTheta; xBeta; xGamma];
 
-figure,boxplot(layers,x,'PlotStyle','compact')
+figure,boxplot(layers,x,'PlotStyle','compact'),hold on
+
+x = [1.2*ones(length(L23.theta.itpc),1);2.2*ones(length(L4.theta.itpc),1);3.2*ones(length(L5.theta.itpc),1);...
+    4.2*ones(length(L23.beta.itpc),1);5.2*ones(length(L4.beta.itpc),1);6.2*ones(length(L5.beta.itpc),1);...
+    7.2*ones(length(L23.gamma.itpc),1);8.2*ones(length(L4.gamma.itpc),1);9.2*ones(length(L5.gamma.itpc),1)];
+scatter(x,layers,'filled','k')
+
 
 layers23 = [L23.theta.itpc;L23.beta.itpc;L23.gamma.itpc];
 x23 = [repmat({'L2/3-theta'},length(L23.theta.itpc), 1); repmat({'L23-beta'},length(L23.beta.itpc), 1); repmat({'L23-gamma'},length(L23.gamma.itpc), 1)];
@@ -26,7 +32,6 @@ freq = [layers23; layers4; layers5];
 xl = [x23; x4; x5];
 
 figure,boxplot(freq,xl,'PlotStyle','compact')
-
 % Export stat structure
 stats.layersTheta = layersTheta;
 stats.xTheta = xTheta;
