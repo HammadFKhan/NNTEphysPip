@@ -32,8 +32,7 @@ for i = 1:length(Spikes.Clusters)
     spikeRaster(i,:) = [spikeCell zeros(1,pad)];
 end
 spikeRaster(spikeRaster==0) = nan;
-figure,plot(spikeRaster,'.','color','k'),view([90 -90]); 
-ylim([5 10])
+figure,plot(spikeRaster(:,1000:4000),'.','color','k'); 
 % Save output
 Spikes.Depth.depth = depth;
 Spikes.Depth.clusterID = idx;
