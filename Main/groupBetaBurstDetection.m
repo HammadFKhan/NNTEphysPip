@@ -13,7 +13,7 @@ end
 lowThresholdFactor = 1; % Beta envolope must exceed lowThresholdFactor*stdev
 highThresholdFactor = 2.5; % Beta peak must exceed highThresholdFactor*stdev
 minInterRippleInterval = 25; % 30ms
-minBetaDuration = 50; % 50ms
+minBetaDuration = 25; % 50ms
 maxBetaDuration = 250; % 200ms
 noise = [];
 
@@ -40,7 +40,7 @@ for idx = 1:size(beta_signal,2)
     squaredSignal = signal.^2;
     normalizedSquaredSignal = (squaredSignal - mean(squaredSignal))/std(squaredSignal);
     % Detect beta periods by thresholding normalized squared signal
-    thresholded = normalizedSquaredSignal > (lowThresholdFactor*std(squaredSignal));
+    thresholded = normalizedSquaredSignal > lowThresholdFactor;
     
     start = find(diff(thresholded)>0);
     stop = find(diff(thresholded)<0);
