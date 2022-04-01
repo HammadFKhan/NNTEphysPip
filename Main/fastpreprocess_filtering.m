@@ -12,16 +12,16 @@ downSampleFreq = 1024;
 % Notch Filtering
 channel_num = size(intanData,1);
 Fc = 60;
-Wn = Fc./(Fs/2);
+Wn = Fc./(downSampleFreq/2);
 QF = Wn/35;
 [d,c] = iirnotch(Wn,QF);
 Fc = 120;
-Wn = Fc./(Fs/2);
+Wn = Fc./(downSampleFreq/2);
 QF = Wn/35;
 [d1,c1] = iirnotch(Wn,QF);
 
 Fc = [1 254];
-Wn = Fc./(Fs/2);
+Wn = Fc./(downSampleFreq/2);
 b = fir1(10,Wn,'bandpass');
 
 % Design butterworth filters for LFP
