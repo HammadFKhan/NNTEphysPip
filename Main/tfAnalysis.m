@@ -22,9 +22,9 @@ for trial = 1:size(Spikes.Clusters,2)
 end
 spikeTime = sort(vertcat(fixSpiketime{:})); %% All spike times of neurons
 % Set up depth specific spike data
-L23 = find(Spikes.Depth.depth<300);
-L4 = find(Spikes.Depth.depth>300 & Spikes.Depth.depth<301);
-L5 = find(Spikes.Depth.depth>301);
+L23 = find(Spikes.Depth.depth<250);
+L4 = find(Spikes.Depth.depth>250 & Spikes.Depth.depth<400);
+L5 = find(Spikes.Depth.depth>400);
 % Now build spike rasters and time for each layer
 clusterID = Spikes.Depth.clusterID;
 l23 = {};l4 = {};l5 = {};
@@ -383,6 +383,5 @@ else
         TimeFreq.tfRest.depth.L5.gamma.itpc = gather(TimeFreq.tf.depth.L5.gamma.itpc);
     end
 end
-
 toc
 end
