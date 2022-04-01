@@ -64,13 +64,13 @@ Spikes = spikeDepthPlot(Spikes,templateDepths);
 
 
 % Time-Frequency Analysis
-[TimeFreq,LFP,betaGroupRest,Spikes] = tfAnalysis(Spikes,LFP,0); %Behavior state running 1 (0 rest)
-[TimeFreq,LFP,betaGroupRun,Spikes] = tfAnalysis(Spikes,LFP,1,TimeFreq); %Behavior state running 1 (0 rest)
+[TimeFreq,LFP,betaGroup,Spikes] = tfAnalysis(Spikes,LFP); %Behavior state running 1 (0 rest)
+[TimeFreq,LFP,betaGroupRest,Spikes] = tfAnalysis(Spikes,LFP,0,TimeFreq); %Behavior state running 1 (0 rest)
 
 % plotTF(TimeFreq,LFP)
 % TF stats of depth
-% TimeFreqRun.tf = TimeFreq.tfRun;
-% stats = tfStats(TimeFreqRun);
+% TimeFreq.tf = TimeFreq.tfRun;
+% stats = tfStats(TimeFreq);
 % tfDepth = TimeFreq.tf.depth;
 %%
 spikeRaster(Spikes)
@@ -78,7 +78,7 @@ spikeRaster(Spikes)
 
 for i = 1:size(LFP.medianLFP,1) % Checks electrode size for median
     disp(['Electrode: ' num2str(i)])
-    [peakAlign{i},csd{i},betaNorm{i},f,bstats(i)] = betaAnalysis(betaGroupRun(i).electrode,LFP.LFP);
+    [peakAlign{i},csd{i},betaNorm{i},f,bstats(i)] = betaAnalysis(betaGroup(i).electrode,LFP.LFP);
 end 
 % Take out non-existant cell fields
 betaNorm = betaNorm(~cellfun('isempty',betaNorm));
@@ -110,13 +110,14 @@ for i = 1:size(peakAlign,2) % Checks electrode size for median
     mPeakAlign(:,i) = mean(peakAlign{i},1);
 end
 figure,stack_plot(flip(mPeakAlign'),0.2,1.5)
-figure,imagesc(0:250,LFPdepth,mPeakAlign')
+normPeakAlign = (mPeakAlign-min(mPeakAlign,[],'all'))/(max(mPeakAlign,[],'all')-min(mPeakAlign,[],'all'));
+figure,imagesc(0:250,LFPdepth,smoothdata(normPeakAlign')),caxis([0 1])
 %% Plot beta CSD for each electrode
 for i = 1:size(csd,2) % Checks electrode size for median
     mcsd(:,:,i) = mean(csd{i},3);
 end
 mcsd = mean(mcsd,3);
-figure,imagesc(0:250,LFPdepth,interp2(smoothdata((mcsd')),2)),colormap(jet),caxis([-0.6 0.6])
+figure,imagesc(0:250,LFPdepth,interp2(smoothdata((mcsd')),2)),colormap(jet),caxis([-0.2 0.2])
 %% Layer specific spike rate
 % Convert cell x trial to single array (cos we don't care what trial this
 % all happens on
