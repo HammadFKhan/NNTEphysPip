@@ -9,7 +9,7 @@ else
 end
 
 if errorType == 0
-    y = mean(y,1);
+    y = smoothdata(mean(y,1));
     error = std(y);
     curve1 = y + error;
     curve2 = y - error;
