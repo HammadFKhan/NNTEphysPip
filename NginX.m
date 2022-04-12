@@ -64,14 +64,22 @@ Spikes = spikeDepthPlot(Spikes,templateDepths);
 
 
 % Time-Frequency Analysis
-[TimeFreq,LFP,betaGroup,Spikes] = tfAnalysis(Spikes,LFP); %Behavior state running 1 (0 rest)
-[TimeFreq,LFP,betaGroupRest,Spikes] = tfAnalysis(Spikes,LFP,0,TimeFreq); %Behavior state running 1 (0 rest)
+[TimeFreq,LFP,betaGroup,Spikes] = tfAnalysis(Spikes,LFP,1); %Behavior state running 1 (0 rest)
+[TimeFreq,LFP,betaGroupRest,Spikes] = tfAnalysis(Spikes,LFP,0); %Behavior state running 1 (0 rest)
+
+% [TimeFreq,LFP,betaGroupRest,Spikes] = tfAnalysis(Spikes,LFP,0,TimeFreq); %Behavior state running 1 (0 rest)
 
 % plotTF(TimeFreq,LFP)
 % TF stats of depth
 % TimeFreq.tf = TimeFreq.tfRun;
 % stats = tfStats(TimeFreq);
 % tfDepth = TimeFreq.tf.depth;
+betaGammaCoupling = gammaBetaCoupling(TimeFreq.gamma,TimeFreq.beta);
+betaGammam = mean(betaGammaCoupling,3);
+figure,imagesc(betaGammam'),colormap(jet)
+% figure,imagesc(betaGammam(:,1:40)'),colormap(jet)
+% figure,imagesc(betaGammam(:,41:64)'),colormap(jet)
+
 %%
 spikeRaster(Spikes)
 %% Beta Analysis for each electrode
@@ -196,3 +204,75 @@ xlim([00.1 100])
 %% histogram stats
 figure,histogram(bstats(1:64,1),50:100),title('Event Duration')
 figure,histogram(bstats(1:64,3),1:0.25:10),title('Event Rate')
+%% Beta states
+% Number of beta per electrode
+for i = 1:size(betaGroup,2)
+    runBetaNum(i) = mean(betaGroup(i).electrode.betaBurst.NumDetectedBeta);
+end
+% Number of beta per trial per electrode
+for i = 1:size(betaGroup,2)
+    runBetaDepth(i,:) = betaGroup(i).electrode.betaBurst.NumDetectedBeta;
+end
+
+%Number of beta per electrode during rest
+for i = 1:size(betaGroupRest,2)
+    restBetaNum(i) = mean(betaGroupRest(i).electrode.betaBurst.NumDetectedBeta);
+end
+
+% Number of beta per trial per electrode
+for i = 1:size(betaGroupRest,2)
+    restBetaDepth(i,:) = betaGroupRest(i).electrode.betaBurst.NumDetectedBeta;
+end
+
+%% Construct ERD/ERS metric
+figure,hold on
+for i = 1:11
+t = betaGroup(1).electrode.betaBurst.detectedBeta{i}(:,2);
+t1 = betaGroup(1).electrode.betaBurst.window(i,2);
+win = t1-t;
+plot(win,i*ones(1,length(t)),'.')
+% ERD (Event Rate Desynchonization)
+A = win(win<=1);
+B = win(win>1);
+ERD(i) = (length(A)-length(B))/(length(A)+length(B));
+end
+figure,bar(sort(ERD)),ylim([-1 1])
+
+%%
+figure,hold on
+for i = 1:11
+    if isempty(betaGroupRest(1).electrode.betaBurst.detectedBeta{i})
+        t = 0;t1 = 0;
+    else
+        t = betaGroupRest(1).electrode.betaBurst.detectedBeta{i}(:,2);
+        t1 = betaGroupRest(1).electrode.betaBurst.window(i,2);
+        win = t1-t;
+        plot(win,i*ones(1,length(t)),'.')
+        A = win(win<=1);
+        B = win(win>1);
+        ERDrest(i) = (length(A)-length(B))/(length(A)+length(B));
+    end
+end
+figure,bar(sort(ERDrest)),ylim([-1 1])
+figure, histogram(ERDrest,-1:0.5:1),hold on
+histogram(ERD,-1:0.5:1)
+% ERD probability
+ERDprop = length(ERD(abs(ERD)>=0.6))/length(ERD);
+ERDpropRest = length(ERDrest(abs(ERDrest)>=0.6))/length(ERDrest);
+figure,bar([ERDpropRest;ERDprop]),hold on
+% er = errorbar([ERDpropRest;ERDprop],std([ERDpropRest;ERDprop]'));    
+% er.Color = [0 0 0];                            
+% er.LineStyle = 'none';  
+% 
+%%
+figure,histogram(restBetaNum,1:0.25:10),hold on
+histogram(runBetaNum,1:0.25:10)
+figure,lineError(1:64,restBetaDepth')
+figure,lineError(1:64,runBetaDepth')
+%%
+bothBeta = [restBetaNum;runBetaNum];
+figure,bar(mean(bothBeta,2))
+hold on
+er = errorbar(mean(bothBeta,2),std(bothBeta'));    
+er.Color = [0 0 0];                            
+er.LineStyle = 'none';  
