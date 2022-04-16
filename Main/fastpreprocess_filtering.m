@@ -17,7 +17,7 @@ QF = Wn/35;
 [d,c] = iirnotch(Wn,QF);
 Fc = 120;
 Wn = Fc./(downSampleFreq/2);
-QF = Wn/35;
+QF = Wn/10;
 [d1,c1] = iirnotch(Wn,QF);
 
 Fc = [1 254];
