@@ -45,7 +45,7 @@ coherencyLFP =LFP.coherenceLFP'; % Reference LFP for spiking data (matched Fs)
 thetaLFP = LFP.theta_band'; %Downsampled LFP for P:P analysis
 betaLFP = LFP.beta_band';
 gammaLFP = LFP.gamma_band';
-
+fullLFP = LFP.LFP';
 LFPTime = (0:length(coherencyLFP)-1)';
 LFPTime = LFPTime/params.Fs;
 downsample_LFPTime = LFP.times';
@@ -84,6 +84,8 @@ if size(thetaLFP,1)>1
         theta(:,:,trial)= thetaLFP(window(1)<=downsample_LFPTime & downsample_LFPTime<=window(2),:);
         beta(:,:,trial)= betaLFP(window(1)<=downsample_LFPTime & downsample_LFPTime<=window(2),:);
         gamma(:,:,trial)= gammaLFP(window(1)<=downsample_LFPTime & downsample_LFPTime<=window(2),:);
+        bandpass(:,:,trial)= fullLFP(window(1)<=downsample_LFPTime & downsample_LFPTime<=window(2),:);
+
     end
 else
     for trial = 1:length(loc)-1
