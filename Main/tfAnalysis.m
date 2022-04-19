@@ -22,18 +22,18 @@ for trial = 1:size(Spikes.Clusters,2)
 end
 spikeTime = sort(vertcat(fixSpiketime{:})); %% All spike times of neurons
 % Set up depth specific spike data
-L23 = find(Spikes.Depth.depth<250);
-L4 = find(Spikes.Depth.depth>250 & Spikes.Depth.depth<400);
-L5 = find(Spikes.Depth.depth>400);
+L23 = find(Spikes.Depth.depth<300);
+% L4 = find(Spikes.Depth.depth>250 & Spikes.Depth.depth<400);
+L5 = find(Spikes.Depth.depth>=300);
 % Now build spike rasters and time for each layer
 clusterID = Spikes.Depth.clusterID;
 l23 = {};l4 = {};l5 = {};
 for i = 1:length(L23)
     l23{i} = Spikes.Clusters(clusterID(L23(i))).spikeTime'; %match cluster ID and layer location
 end
-for i = 1:length(L4)
-    l4{i} = Spikes.Clusters(clusterID(L4(i))).spikeTime'; %match cluster ID and layer location
-end
+% for i = 1:length(L4)
+%     l4{i} = Spikes.Clusters(clusterID(L4(i))).spikeTime'; %match cluster ID and layer location
+% end
 for i = 1:length(L5)
     l5{i} = Spikes.Clusters(clusterID(L5(i))).spikeTime'; %match cluster ID and layer location
 end
@@ -78,7 +78,7 @@ if size(thetaLFP,1)>1
         spike(trial).spikeTrig = spikeTime(window(1)<=spikeTime & spikeTime<=window(2))-window(1);
         % Create spike window for each layer
         L23spike(trial).spikeTrig = L23spikeTime(window(1)<=L23spikeTime & L23spikeTime<=window(2))-window(1);
-        L4spike(trial).spikeTrig = L4spikeTime(window(1)<=L4spikeTime & L4spikeTime<=window(2))-window(1);
+%         L4spike(trial).spikeTrig = L4spikeTime(window(1)<=L4spikeTime & L4spikeTime<=window(2))-window(1);
         L5spike(trial).spikeTrig = L5spikeTime(window(1)<=L5spikeTime & L5spikeTime<=window(2))-window(1);
         LFPTrig(:,:,trial) = coherencyLFP(window(1)<=LFPTime & LFPTime<=window(2));
         theta(:,:,trial)= thetaLFP(window(1)<=downsample_LFPTime & downsample_LFPTime<=window(2),:);
@@ -114,9 +114,9 @@ for trial = 1:length(loc)-1
         for neuron = 1:length(l23)
             L23spikeCell(trial).Cell{neuron} = l23{neuron}(window(1)<=l23{neuron} & l23{neuron}<=window(2))-window(1);
         end
-        for neuron = 1:length(l4)
-            L4spikeCell(trial).Cell{neuron} = l4{neuron}(window(1)<=l4{neuron} & l4{neuron}<=window(2))-window(1);
-        end
+%         for neuron = 1:length(l4)
+%             L4spikeCell(trial).Cell{neuron} = l4{neuron}(window(1)<=l4{neuron} & l4{neuron}<=window(2))-window(1);
+%         end
         for neuron = 1:length(l5)
             L5spikeCell(trial).Cell{neuron} = l5{neuron}(window(1)<=l5{neuron} & l5{neuron}<=window(2))-window(1);
         end
@@ -124,7 +124,7 @@ end
 
 
 for trial = 1:length(loc)-1
-    spikeTemp = squeeze(struct2cell(L4spikeCell)); % Spike temp for layer 23 of cell cell array
+    spikeTemp = squeeze(struct2cell(L23spikeCell)); % Spike temp for layer 23 of cell cell array
     spikeTemp = vertcat(spikeTemp{:});
     for i = 1:size(spikeTemp,2) %cell is arranged as trialxcell
         nSpikes = length(spikeTemp{trial,i}); %count how many spikes in the window
@@ -134,17 +134,17 @@ for trial = 1:length(loc)-1
             L23VelSR(i,trial) = nSpikes/2; %divide by last value of time window
         end
     end
-    spikeTemp = [];
-    spikeTemp = squeeze(struct2cell(L4spikeCell)); % Spike temp for layer 4
-    spikeTemp = vertcat(spikeTemp{:});
-    for i = 1:size(spikeTemp,2)
-        nSpikes = length(spikeTemp{trial,i}); %count how many spikes in the window
-        if nSpikes == 0 %No spike detected handle
-            L4VelSR(i,trial) = 0; %Output as cell x trial (I know its coutnerintuitive to the previous data structure but bluh)
-        else
-            L4VelSR(i,trial) = nSpikes/2; %divide by window time
-        end
-    end
+%     spikeTemp = [];
+%     spikeTemp = squeeze(struct2cell(L4spikeCell)); % Spike temp for layer 4
+%     spikeTemp = vertcat(spikeTemp{:});
+%     for i = 1:size(spikeTemp,2)
+%         nSpikes = length(spikeTemp{trial,i}); %count how many spikes in the window
+%         if nSpikes == 0 %No spike detected handle
+%             L4VelSR(i,trial) = 0; %Output as cell x trial (I know its coutnerintuitive to the previous data structure but bluh)
+%         else
+%             L4VelSR(i,trial) = nSpikes/2; %divide by window time
+%         end
+%     end
     spikeTemp = [];
     spikeTemp = squeeze(struct2cell(L5spikeCell)); % Spike temp for layer 5
     spikeTemp = vertcat(spikeTemp{:});
@@ -162,18 +162,18 @@ end
 %Output to spikes structure
 if behaviorState  %Mouse is running
     Spikes.spikeRate.L23RunSR = L23VelSR;
-    Spikes.spikeRate.L4RunSR = L4VelSR;
+%     Spikes.spikeRate.L4RunSR = L4VelSR;
     Spikes.spikeRate.L5RunSR = L5VelSR;
     Spikes.spikes.L23Run = L23spikeCell;
-    Spikes.spikes.L4Run = L4spikeCell;
+%     Spikes.spikes.L4Run = L4spikeCell;
     Spikes.spikes.L5Run = L5spikeCell;
 
 else % Mouse is resting
     Spikes.spikeRate.L23RestSR = L23VelSR;
-    Spikes.spikeRate.L4RestSR = L4VelSR;
+%     Spikes.spikeRate.L4RestSR = L4VelSR;
     Spikes.spikeRate.L5RestSR = L5VelSR;
     Spikes.spikes.L23Rest = L23spikeCell;
-    Spikes.spikes.L4Rest = L4spikeCell;
+%     Spikes.spikes.L4Rest = L4spikeCell;
     Spikes.spikes.L5Rest = L5spikeCell;
 end
 
@@ -248,8 +248,8 @@ disp('Analyzing Gamma Band...')
 disp('Analyzing Theta Band for Layer 2/3...')
 params.fpass = [4 10];
 [tf.depth.L23.theta.C,tf.depth.L23.theta.phi,S12,S1,S2,t2,tf.theta.f,zerosp]=cohgramcpt(LFPTrig,L23spike,movingwin,params);
-disp('Analyzing Theta Band for Layer 4...')
-[tf.depth.L4.theta.C,tf.depth.L4.theta.phi,S12,S1,S2,t2,tf.theta.f,zerosp]=cohgramcpt(LFPTrig,L4spike,movingwin,params);
+% disp('Analyzing Theta Band for Layer 4...')
+% [tf.depth.L4.theta.C,tf.depth.L4.theta.phi,S12,S1,S2,t2,tf.theta.f,zerosp]=cohgramcpt(LFPTrig,L4spike,movingwin,params);
 disp('Analyzing Theta Band for Layer 5...')
 [tf.depth.L5.theta.C,tf.depth.L5.theta.phi,S12,S1,S2,t2,tf.theta.f,zerosp]=cohgramcpt(LFPTrig,L5spike,movingwin,params);
 
@@ -257,8 +257,8 @@ disp('Analyzing Theta Band for Layer 5...')
 params.fpass = [10 30];
 disp('Analyzing Beta Band for Layer 2/3...')
 [tf.depth.L23.beta.C,tf.depth.L23.beta.phi,S12,S1,S2,t2,tf.beta.f,zerosp]=cohgramcpt(LFPTrig,L23spike,movingwin,params);
-disp('Analyzing Beta Band for Layer 4...')
-[tf.depth.L4.beta.C,tf.depth.L4.beta.phi,S12,S1,S2,t2,tf.beta.f,zerosp]=cohgramcpt(LFPTrig,L4spike,movingwin,params);
+% disp('Analyzing Beta Band for Layer 4...')
+% [tf.depth.L4.beta.C,tf.depth.L4.beta.phi,S12,S1,S2,t2,tf.beta.f,zerosp]=cohgramcpt(LFPTrig,L4spike,movingwin,params);
 disp('Analyzing Beta Band for Layer 5...')
 [tf.depth.L5.beta.C,tf.depth.L5.beta.phi,S12,S1,S2,t2,tf.beta.f,zerosp]=cohgramcpt(LFPTrig,L5spike,movingwin,params);
 
@@ -266,8 +266,8 @@ disp('Analyzing Beta Band for Layer 5...')
 params.fpass = [30 80];
 disp('Analyzing Gamma Band for Layer 2/3...')
 [tf.depth.L23.gamma.C,tf.depth.L23.gamma.phi,S12,S1,S2,t2,tf.gamma.f,zerosp]=cohgramcpt(LFPTrig,L23spike,movingwin,params);
-disp('Analyzing Gamma Band for Layer 4...')
-[tf.depth.L4.gamma.C,tf.depth.L4.gamma.phi,S12,S1,S2,t2,tf.gamma.f,zerosp]=cohgramcpt(LFPTrig,L4spike,movingwin,params);
+% disp('Analyzing Gamma Band for Layer 4...')
+% [tf.depth.L4.gamma.C,tf.depth.L4.gamma.phi,S12,S1,S2,t2,tf.gamma.f,zerosp]=cohgramcpt(LFPTrig,L4spike,movingwin,params);
 disp('Analyzing Gamma Band for Layer 5...')
 [tf.depth.L5.gamma.C,tf.depth.L5.gamma.phi,S12,S1,S2,t2,tf.gamma.f,zerosp]=cohgramcpt(LFPTrig,L5spike,movingwin,params);
 
@@ -278,9 +278,9 @@ disp('Analyzing Gamma Band for Layer 5...')
 disp('ITPC for layer 2/3')
 [tf.depth.L23.theta.theta,tf.depth.L23.theta.itpc,tf.depth.L23.beta.beta,tf.depth.L23.beta.itpc,tf.depth.L23.gamma.gamma,tf.depth.L23.gamma.itpc]...
     = chronuxITPC(tf.depth.L23.theta.phi,tf.depth.L23.beta.phi,tf.depth.L23.gamma.phi);
-disp('ITPC for layer 4')
-[tf.depth.L4.theta.theta,tf.depth.L4.theta.itpc,tf.depth.L4.beta.beta,tf.depth.L4.beta.itpc,tf.depth.L4.gamma.gamma,tf.depth.L4.gamma.itpc]...
-    = chronuxITPC(tf.depth.L4.theta.phi,tf.depth.L4.beta.phi,tf.depth.L4.gamma.phi);
+% disp('ITPC for layer 4')
+% [tf.depth.L4.theta.theta,tf.depth.L4.theta.itpc,tf.depth.L4.beta.beta,tf.depth.L4.beta.itpc,tf.depth.L4.gamma.gamma,tf.depth.L4.gamma.itpc]...
+%     = chronuxITPC(tf.depth.L4.theta.phi,tf.depth.L4.beta.phi,tf.depth.L4.gamma.phi);
 disp('ITPC for layer 5')
 [tf.depth.L5.theta.theta,tf.depth.L5.theta.itpc,tf.depth.L5.beta.beta,tf.depth.L5.beta.itpc,tf.depth.L5.gamma.gamma,tf.depth.L5.gamma.itpc]...
     = chronuxITPC(tf.depth.L5.theta.phi,tf.depth.L5.beta.phi,tf.depth.L5.gamma.phi);
@@ -320,15 +320,15 @@ if behaviorState
         TimeFreq.tfRun.depth.L23.gamma.phi = gather(TimeFreq.tf.depth.L23.gamma.phi);
         TimeFreq.tfRun.depth.L23.gamma.itpc = gather(TimeFreq.tf.depth.L23.gamma.itpc);
         
-        TimeFreq.tfRun.depth.L4.theta.C = gather(TimeFreq.tf.depth.L4.theta.C);
-        TimeFreq.tfRun.depth.L4.theta.phi = gather(TimeFreq.tf.depth.L4.theta.phi);
-        TimeFreq.tfRun.depth.L4.theta.itpc = gather(TimeFreq.tf.depth.L4.theta.itpc);
-        TimeFreq.tfRun.depth.L4.beta.C = gather(TimeFreq.tf.depth.L4.beta.C);
-        TimeFreq.tfRun.depth.L4.beta.phi = gather(TimeFreq.tf.depth.L4.beta.phi);
-        TimeFreq.tfRun.depth.L4.beta.itpc = gather(TimeFreq.tf.depth.L4.beta.itpc);
-        TimeFreq.tfRun.depth.L4.gamma.C = gather(TimeFreq.tf.depth.L4.gamma.C);
-        TimeFreq.tfRun.depth.L4.gamma.phi = gather(TimeFreq.tf.depth.L4.gamma.phi);
-        TimeFreq.tfRun.depth.L4.gamma.itpc = gather(TimeFreq.tf.depth.L4.gamma.itpc);
+%         TimeFreq.tfRun.depth.L4.theta.C = gather(TimeFreq.tf.depth.L4.theta.C);
+%         TimeFreq.tfRun.depth.L4.theta.phi = gather(TimeFreq.tf.depth.L4.theta.phi);
+%         TimeFreq.tfRun.depth.L4.theta.itpc = gather(TimeFreq.tf.depth.L4.theta.itpc);
+%         TimeFreq.tfRun.depth.L4.beta.C = gather(TimeFreq.tf.depth.L4.beta.C);
+%         TimeFreq.tfRun.depth.L4.beta.phi = gather(TimeFreq.tf.depth.L4.beta.phi);
+%         TimeFreq.tfRun.depth.L4.beta.itpc = gather(TimeFreq.tf.depth.L4.beta.itpc);
+%         TimeFreq.tfRun.depth.L4.gamma.C = gather(TimeFreq.tf.depth.L4.gamma.C);
+%         TimeFreq.tfRun.depth.L4.gamma.phi = gather(TimeFreq.tf.depth.L4.gamma.phi);
+%         TimeFreq.tfRun.depth.L4.gamma.itpc = gather(TimeFreq.tf.depth.L4.gamma.itpc);
         
         TimeFreq.tfRun.depth.L5.theta.C = gather(TimeFreq.tf.depth.L5.theta.C);
         TimeFreq.tfRun.depth.L5.theta.phi = gather(TimeFreq.tf.depth.L5.theta.phi);
@@ -364,16 +364,16 @@ else
         TimeFreq.tfRest.depth.L23.gamma.phi = gather(TimeFreq.tf.depth.L23.gamma.phi);
         TimeFreq.tfRest.depth.L23.gamma.itpc = gather(TimeFreq.tf.depth.L23.gamma.itpc);
         
-        TimeFreq.tfRest.depth.L4.theta.C = gather(TimeFreq.tf.depth.L4.theta.C);
-        TimeFreq.tfRest.depth.L4.theta.phi = gather(TimeFreq.tf.depth.L4.theta.phi);
-        TimeFreq.tfRest.depth.L4.theta.itpc = gather(TimeFreq.tf.depth.L4.theta.itpc);
-        TimeFreq.tfRest.depth.L4.beta.C = gather(TimeFreq.tf.depth.L4.beta.C);
-        TimeFreq.tfRest.depth.L4.beta.phi = gather(TimeFreq.tf.depth.L4.beta.phi);
-        TimeFreq.tfRest.depth.L4.beta.itpc = gather(TimeFreq.tf.depth.L4.beta.itpc);
-        TimeFreq.tfRest.depth.L4.gamma.C = gather(TimeFreq.tf.depth.L4.gamma.C);
-        TimeFreq.tfRest.depth.L4.gamma.phi = gather(TimeFreq.tf.depth.L4.gamma.phi);
-        TimeFreq.tfRest.depth.L4.gamma.itpc = gather(TimeFreq.tf.depth.L4.gamma.itpc);
-        
+%         TimeFreq.tfRest.depth.L4.theta.C = gather(TimeFreq.tf.depth.L4.theta.C);
+%         TimeFreq.tfRest.depth.L4.theta.phi = gather(TimeFreq.tf.depth.L4.theta.phi);
+%         TimeFreq.tfRest.depth.L4.theta.itpc = gather(TimeFreq.tf.depth.L4.theta.itpc);
+%         TimeFreq.tfRest.depth.L4.beta.C = gather(TimeFreq.tf.depth.L4.beta.C);
+%         TimeFreq.tfRest.depth.L4.beta.phi = gather(TimeFreq.tf.depth.L4.beta.phi);
+%         TimeFreq.tfRest.depth.L4.beta.itpc = gather(TimeFreq.tf.depth.L4.beta.itpc);
+%         TimeFreq.tfRest.depth.L4.gamma.C = gather(TimeFreq.tf.depth.L4.gamma.C);
+%         TimeFreq.tfRest.depth.L4.gamma.phi = gather(TimeFreq.tf.depth.L4.gamma.phi);
+%         TimeFreq.tfRest.depth.L4.gamma.itpc = gather(TimeFreq.tf.depth.L4.gamma.itpc);
+%         
         TimeFreq.tfRest.depth.L5.theta.C = gather(TimeFreq.tf.depth.L5.theta.C);
         TimeFreq.tfRest.depth.L5.theta.phi = gather(TimeFreq.tf.depth.L5.theta.phi);
         TimeFreq.tfRest.depth.L5.theta.itpc = gather(TimeFreq.tf.depth.L5.theta.itpc);
