@@ -1,9 +1,18 @@
-function betaEventPSH(betaGroup,Spikes)
+function spikeTriggeredBeta = betaEventPSH(betaGroup,Spikes,behaviorflag)
 % variable parser for rest and running
-runSpikeL23 = Spikes.spikes.L23Run;
-runSpikeL5 = Spikes.spikes.L5Run;
-restSpikeL23 = Spikes.spikes.L23Rest;
-restSpikeL5 = Spikes.spikes.L5Rest;
+if nargin<3
+    error('Please indicate running state and pass the corresponding beta group')
+    return
+end
+if behaviorflag
+    disp('Calculating Beta Event PSTH @ Run!')
+    spikeL23 = Spikes.spikes.L23Run;
+    spikeL5 = Spikes.spikes.L5Run;
+else
+    disp('Calculating Beta Event PSTH @ Rest!')
+    spikeL23 = Spikes.spikes.L23Rest;
+    spikeL5 = Spikes.spikes.L5Rest;
+end
 
 %% L2/3
 % Fs set at 1024 for beta LFP
@@ -13,7 +22,7 @@ for i = 1:size(betaGroup(1).electrode.betaBurst.window,1)   % trials
         betaEventTemp = cell2mat(betaGroup(ii).electrode.betaBurst.detectedBeta(i)); % beta event series based on electrode and trial
         for j = 1:size(betaEventTemp,1) % interate over all detected beta events across the single window
             betaEventTempadjusted = betaEventTemp(j,(1:3))-betaGroup(ii).electrode.betaBurst.window(i,1);
-            spikeTemp = sort(vertcat(runSpikeL23(i).Cell{:})); % Combine L2/3 population
+            spikeTemp = sort(vertcat(spikeL23(i).Cell{:})); % Combine L2/3 population
             % Find neurons that fire during beta event
             spikeInBetaTemp = spikeTemp((spikeTemp>=(betaEventTempadjusted(:,2)-.075) & spikeTemp<=betaEventTempadjusted(:,2)+.075)); 
             spikeTriggeredBeta(i).L23.spike{ii,j} = spikeInBetaTemp; %Spike trigger for each beta event (good electrode x beta number)
@@ -48,12 +57,13 @@ figure,
 count = 1;
 totalSpikes = [];
 scatterx = []; scattery = []; scatterz = [];
-for ii = 1:11%size(betaGroup(1).electrode.betaBurst.window,1) % trials
+for ii = 1:size(betaGroup(1).electrode.betaBurst.window,1) % trials
     for i = 1:size(spikeTriggeredBeta(ii).L23.betaLFP,2) %interate through electrodes
         temp = spikeTriggeredBeta(ii).L23.betaLFP{i};
 %         subplot(2,1,1),plot((1:size(temp,2))/1024,temp),xlim([0 0.16]),hold on
         for j = 1:size(spikeTriggeredBeta(ii).L23.betaEventWin{i},1)  % beta events
         spikeInBetaTemp = spikeTriggeredBeta(ii).L23.spike{i,j}-spikeTriggeredBeta(ii).L23.betaEventWin{i}(j,1);
+        %Seperate into seperate axis
         scatterx = vertcat(scatterx,spikeInBetaTemp);scattery = vertcat(scattery,ii*ones(length(spikeInBetaTemp),1));
         scatterz = vertcat(scatterz,i*ones(length(spikeInBetaTemp),1));
         subplot(2,1,1),plot((1:length(temp))/1024,temp),xlim([0 0.16]),hold on
@@ -63,9 +73,9 @@ for ii = 1:11%size(betaGroup(1).electrode.betaBurst.window,1) % trials
         end
     end
 end
-
+% Calculate total beta mean
 temp1 = [];temp = [];
-for ii = 1:11%size(betaGroup(1).electrode.betaBurst.window,1) % trials
+for ii = 1:size(betaGroup(1).electrode.betaBurst.window,1) % trials
     for i = 1:size(spikeTriggeredBeta(ii).L23.betaLFP,2) %interate through electrodes
         temp = spikeTriggeredBeta(ii).L23.betaLFP{i};
         temp1 = vertcat(temp1,temp);
@@ -73,9 +83,10 @@ for ii = 1:11%size(betaGroup(1).electrode.betaBurst.window,1) % trials
 end
 temp1 = mean(temp1);
 subplot(2,1,1),plot((1:length(temp1))/1024,temp1,'k','LineWidth',3)%,ylim([-500 500])
+
 %Spike Rate per Beta Event
 firingRatePSTH = [];
-for i = 1:11
+for i = 1:size(betaGroup(1).electrode.betaBurst.window,1)
     findTrial = find((scattery==i));
     trialScatterx = scatterx(findTrial);
     trialScatterz = scatterz(findTrial);
@@ -87,6 +98,7 @@ for i = 1:11
         firingRatePSTH(i,ii) = mean(firingRatetemp);
     end
 end
+
 [~,idx] = sort(mean(firingRatePSTH,1));
 firingRatePSTH(isnan(firingRatePSTH)) = 0;
 figure,imagesc(firingRatePSTH'),colormap(jet)
@@ -126,7 +138,7 @@ for i = 1:size(betaGroup(1).electrode.betaBurst.window,1)   % trials
         betaEventTemp = cell2mat(betaGroup(ii).electrode.betaBurst.detectedBeta(i)); % beta event series based on electrode and trial
         for j = 1:size(betaEventTemp,1) % interate over all detected beta events across the single window
             betaEventTempadjusted = betaEventTemp(j,(1:3))-betaGroup(ii).electrode.betaBurst.window(i,1);
-            spikeTemp = sort(vertcat(runSpikeL5(i).Cell{:})); % Combine L2/3 population
+            spikeTemp = sort(vertcat(spikeL5(i).Cell{:})); % Combine L2/3 population
             % Find neurons that fire during beta event
             spikeInBetaTemp = spikeTemp((spikeTemp>=(betaEventTempadjusted(:,2)-.075) & spikeTemp<=betaEventTempadjusted(:,2)+.075)); 
             spikeTriggeredBeta(i).L5.spike{ii,j} = spikeInBetaTemp; %Spike trigger for each beta event (good electrode x beta number)
@@ -150,7 +162,7 @@ end
 count = 1;
 totalSpikes = [];
 scatterx = []; scattery = []; scatterz = [];
-for ii = 1:11%size(betaGroup(1).electrode.betaBurst.window,1) % trials
+for ii = 1:size(betaGroup(1).electrode.betaBurst.window,1) % trials
     for i = 1:size(spikeTriggeredBeta(ii).L5.betaLFP,2) %interate through electrodes
         temp = spikeTriggeredBeta(ii).L5.betaLFP{i};
 %         subplot(2,1,1),plot((1:size(temp,2))/1024,temp),xlim([0 0.16]),hold on
@@ -167,7 +179,7 @@ for ii = 1:11%size(betaGroup(1).electrode.betaBurst.window,1) % trials
 end
 
 temp1 = [];temp = [];
-for ii = 1:11%size(betaGroup(1).electrode.betaBurst.window,1) % trials
+for ii = 1:size(betaGroup(1).electrode.betaBurst.window,1) % trials
     for i = 1:size(spikeTriggeredBeta(ii).L5.betaLFP,2) %interate through electrodes
         temp = spikeTriggeredBeta(ii).L5.betaLFP{i};
         temp1 = vertcat(temp1,temp);
@@ -178,7 +190,7 @@ subplot(2,1,1),plot((1:length(temp1))/1024,temp1,'k','LineWidth',3)%,ylim([-500 
 
 %Spike Rate per Beta Event
 firingRatePSTH = [];idx = [];
-for i = 1:11
+for i = 1:size(betaGroup(1).electrode.betaBurst.window,1)
     findTrial = find((scattery==i));
     trialScatterx = scatterx(findTrial);
     trialScatterz = scatterz(findTrial);
@@ -228,7 +240,7 @@ for i = 1:size(betaGroup(1).electrode.betaBurst.window,1)   % trials
         betaEventTemp = cell2mat(betaGroup(ii).electrode.betaBurst.detectedBeta(i)); % beta event series based on electrode and trial
         for j = 1:size(betaEventTemp,1) % interate over all detected beta events across the single window
             betaEventTempadjusted = betaEventTemp(j,(1:3))-betaGroup(ii).electrode.betaBurst.window(i,1);
-            spikeTemp = sort(vertcat(runSpikeL23(i).Cell{:})); % Combine L2/3 population
+            spikeTemp = sort(vertcat(spikeL23(i).Cell{:})); % Combine L2/3 population
             % Find neurons that fire during beta event
             spikeInBetaTemp = spikeTemp((spikeTemp>=(betaEventTempadjusted(:,2)-.075) & spikeTemp<=betaEventTempadjusted(:,2)+.075)); 
             spikeTriggeredBeta(i).L5_23.spike{ii,j} = spikeInBetaTemp; %Spike trigger for each beta event (good electrode x beta number)
@@ -270,7 +282,7 @@ end
 
 %Spike Rate per Beta Event
 firingRatePSTH = [];idx = [];
-for i = 1:11
+for i = 1:size(betaGroup(1).electrode.betaBurst.window,1)
     findTrial = find((scattery==i));
     trialScatterx = scatterx(findTrial);
     trialScatterz = scatterz(findTrial);
@@ -320,7 +332,7 @@ for i = 1:size(betaGroup(1).electrode.betaBurst.window,1)   % trials
         betaEventTemp = cell2mat(betaGroup(ii).electrode.betaBurst.detectedBeta(i)); % beta event series based on electrode and trial
         for j = 1:size(betaEventTemp,1) % interate over all detected beta events across the single window
             betaEventTempadjusted = betaEventTemp(j,(1:3))-betaGroup(ii).electrode.betaBurst.window(i,1);
-            spikeTemp = sort(vertcat(runSpikeL5(i).Cell{:})); % Combine L2/3 population
+            spikeTemp = sort(vertcat(spikeL5(i).Cell{:})); % Combine L2/3 population
             % Find neurons that fire during beta event
             spikeInBetaTemp = spikeTemp((spikeTemp>=(betaEventTempadjusted(:,2)-.075) & spikeTemp<=betaEventTempadjusted(:,2)+.075)); 
             spikeTriggeredBeta(i).L23_5.spike{ii,j} = spikeInBetaTemp; %Spike trigger for each beta event (good electrode x beta number)
@@ -362,7 +374,7 @@ end
 
 %Spike Rate per Beta Event
 firingRatePSTH = [];idx = [];
-for i = 1:11
+for i = 1:size(betaGroup(1).electrode.betaBurst.window,1)
     findTrial = find((scattery==i));
     trialScatterx = scatterx(findTrial);
     trialScatterz = scatterz(findTrial);
