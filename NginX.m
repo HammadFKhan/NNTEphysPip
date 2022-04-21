@@ -127,64 +127,9 @@ end
 mcsd = mean(mcsd,3);
 figure,imagesc(0:250,LFPdepth,interp2(smoothdata((mcsd')),2)),colormap(jet),caxis([-0.2 0.2])
 
-%% Beta Event Triggered Spike Rate
-% temp window
-for i = 1:11 % trials
-    for ii = 1:30 % L2/3 beta events
-        betaEventTemp = cell2mat(betaGroup(ii).electrode.betaBurst.detectedBeta(i));
-        for j = 1:size(betaEventTemp,1)
-            for jj = 1:size(Spikes.spikes.L23Run(i).Cell,2)
-                spikeInBeta{jj,j,ii,i} = find(Spikes.spikes.L23Run(i).Cell{jj}>=(betaEventTemp(j,2)-.075)...
-                    & Spikes.spikes.L23Run(i).Cell{jj}<=((betaEventTemp(j,2)+.075)));
-            end
-        end
-    end
-end
-%% L2/3
-for i = 1:11 % trials
-    count = 1;
-    for ii = 1:30 % L2/3 beta events
-        betaEventTemp = cell2mat(betaGroup(ii).electrode.betaBurst.detectedBeta(i));
-        for j = 1:size(betaEventTemp,1)
-            spikeTemp = vertcat(Spikes.spikes.L23Run(i).Cell{:});
-            spikeInBetaTemp = find(spikeTemp>=(betaEventTemp(j,1)-betaGroup(ii).electrode.betaBurst.window(i,1))...
-                & spikeTemp<=(betaEventTemp(j,3)-betaGroup(ii).electrode.betaBurst.window(i,1)));
-            spikeTriggeredBeta(i).L23.spike{count} = spikeTemp(spikeInBetaTemp);
-            spikeTriggeredBeta(i).L23.betaEvent(count,:) = betaEventTemp(j,:);
-            
-            start = spikeTriggeredBeta(i).L23.betaEvent(count,1)*1024;
-            stop = spikeTriggeredBeta(i).L23.betaEvent(count,3)*1024;
-            betaLine = betaGroup(ii).electrode.beta_band(start:stop);
-%             plot(spikeTemp(spikeInBetaTemp),i*ones(length(spikeInBetaTemp)),'.'),hold on
-            plot(betaLine),hold on
-            spikeTriggeredBeta(i).L23.betaLFP{count} = betaLine;
-            count = count+1;
-        end
-    end
-end
-%% Layer 5
-for i = 1:11 % trials
-    count = 1;
-    for ii = 30:64 % L5beta events
-        betaEventTemp = cell2mat(betaGroup(ii).electrode.betaBurst.detectedBeta(i));
-        for j = 1:size(betaEventTemp,1)
-            spikeTemp = vertcat(Spikes.spikes.L23Run(i).Cell{:});
-            spikeInBetaTemp = find(spikeTemp>=(betaEventTemp(j,1)-betaGroup(ii).electrode.betaBurst.window(i,1))...
-                & spikeTemp<=(betaEventTemp(j,3)-betaGroup(ii).electrode.betaBurst.window(i,1)));
-            spikeTriggeredBeta(i).L5.spike{count} = spikeTemp(spikeInBetaTemp);
-            spikeTriggeredBeta(i).L5.betaEvent(count,:) = betaEventTemp(j,:);
-            
-            start = spikeTriggeredBeta(i).L5.betaEvent(count,1)*1024;
-            stop = spikeTriggeredBeta(i).L5.betaEvent(count,3)*1024;
-            betaLine = betaGroup(ii).electrode.beta_band(start:stop);
-            plot(betaLine),hold on
-            spikeTriggeredBeta(i).L5.betaLFP{count} = betaLine;
-            count = count+1;
-        end
-    end
-end
 %%
-betaEventPSH(betaGroup,Spikes)
+behaviorflag = 1;
+spikeTriggeredBeta = betaEventPSH(betaGroup,Spikes,behaviorflag); %set behavior flag 0 or 1 for rest/run
 %%
 figure,
 for i = 1:35
