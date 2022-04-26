@@ -130,22 +130,6 @@ figure,imagesc(0:250,LFPdepth,interp2(smoothdata((mcsd')),2)),colormap(jet),caxi
 %%
 behaviorflag = 1;
 spikeTriggeredBeta = betaEventPSH(betaGroup,Spikes,behaviorflag); %set behavior flag 0 or 1 for rest/run
-%%
-figure,
-for i = 1:35
-subplot(2,1,1),plot(spikeTriggeredBeta(1).L23.betaLFP{i}),hold on
-subplot(2,1,2),plot(spikeTriggeredBeta(1).L23.spike{i},i*ones(length(spikeTriggeredBeta(1).L23.spike{i})),'.'),hold on
-
-end
-
-%%
-for i = 1:35
-
-end
-%%
-    for j = 30:64 %L5 beta events
-        betaGroup(j).electrode.betaBurst.detectedBeta(i);
-    end
 %% Layer specific spike rate
 % Convert cell x trial to single array (cos we don't care what trial this
 % all happens on
