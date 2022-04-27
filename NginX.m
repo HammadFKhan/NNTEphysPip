@@ -63,7 +63,7 @@ load chanMap
 Spikes = spikeDepthPlot(Spikes,templateDepths);
 % Time-Frequency Analysis
 [TimeFreq,LFP,betaGroup,Spikes] = tfAnalysis(Spikes,LFP,1); %Behavior state running 1 (0 rest)
-[TimeFreq,LFP,betaGroupRest,Spikes] = tfAnalysis(Spikes,LFP,0); %Behavior state running 1 (0 rest)
+% [TimeFreq,LFP,betaGroupRest,Spikes] = tfAnalysis(Spikes,LFP,0,TimeFreq); %Behavior state running 1 (0 rest)
 %%
 % [TimeFreq,LFP,betaGroupRest,Spikes] = tfAnalysis(Spikes,LFP,0,TimeFreq); %Behavior state running 1 (0 rest)
 
@@ -72,13 +72,14 @@ Spikes = spikeDepthPlot(Spikes,templateDepths);
 % TimeFreq.tf = TimeFreq.tfRun;
 % stats = tfStats(TimeFreq);
 % tfDepth = TimeFreq.tf.depth;
-betaGammaCoupling = gammaBetaCoupling(TimeFreq.gamma,TimeFreq.beta);
+betaGammaCoupling = gammaBetaCoupling(TimeFreq.tfRun.gammaLFP,TimeFreq.tfRun.betaLFP);
 betaGammam = mean(betaGammaCoupling,3);
 figure,imagesc(-179:20:180,1:64,interp2(betaGammam')),colormap(jet)
 figure,plot(mean(betaGammam))
-% figure,imagesc(betaGammam(:,1:40)'),colormap(jet)
+% figure,imagesc(betaGammam(:,1:40)'),colormagithup(jet)
 % figure,imagesc(betaGammam(:,41:64)'),colormap(jet)
-
+%% Broadband Spectrograms per behavior state
+pxSpecs = statePowerSpec(TimeFreq,LFP);
 %% 
 spikeRaster(Spikes)
 %% Beta Analysis for each electrode
