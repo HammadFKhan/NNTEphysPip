@@ -187,10 +187,11 @@ if size(thetaLFP,2)>1
 else
     LFP = betaBurstDetection(LFP,beta,timestamps);
 end
-TimeFreq.theta = theta;
-TimeFreq.beta = beta;
-LFP.betaTrials = beta;
-TimeFreq.gamma = gamma;
+
+tf.thetaLFP = theta;
+tf.betaLFP = beta;
+tf.gammaLFP = gamma;
+tf.fullLFP = bandpass;
 
 %% ITPC of velocity triggered Frequency
 disp('Calculating Electrode ITPC')
