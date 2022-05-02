@@ -10,8 +10,8 @@ end
 
 if errorType == 0
     error = std(y);
-    yM = smoothdata(mean(y,1));
-    x = x';
+    yM = mean(y,1);
+%     x = x';
     curve1 = yM + error;
     curve2 = yM - error;
     x2 = [x, fliplr(x)];
@@ -20,15 +20,16 @@ if errorType == 0
     hold on;
     plot(x, yM, 'k', 'LineWidth', 2);
 else
-    y = mean(y,1);
+    yM = mean(y,1);
+    x = x';
     error = std(y);
-    error = error/sqrt(length(y));
-    curve1 = y + error;
-    curve2 = y - error;
+    error = 6*error/sqrt(length(yM));
+    curve1 = yM + error;
+    curve2 = yM - error;
     x2 = [x, fliplr(x)];
     inBetween = [curve1, fliplr(curve2)];
     fill(x2, inBetween, [0.75 0.75 0.75]);
     hold on;
-    plot(x, y, 'k', 'LineWidth', 2);
+    plot(x, yM, 'k', 'LineWidth', 2);
 end
 end
