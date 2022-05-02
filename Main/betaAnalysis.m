@@ -26,8 +26,17 @@ if sum(LFP.betaBurst.NumDetectedBeta)==0
     return
 end
 stats.betaDuration = mean((detectedBeta(:,3)-detectedBeta(:,1)).*1000);
-stats.betaAmplitude = mean(detectedBeta(:,4));
+stats.betaAmplitudee = mean(detectedBeta(:,4));
 stats.betaER = mean(LFP.betaBurst.NumDetectedBeta);  
+duration = (detectedBeta(:,3)-detectedBeta(:,1)).*1000;
+amplitude = detectedBeta(:,4);
+
+%FanoFactor calculation
+DurationFanoF = std(duration)^2/mean(duration);
+DurationCVsquared = (std(duration)/mean(duration))^2;
+AmplitudeFanoF = std(amplitude)^2/mean(amplitude);
+AmplitudeCVsquared = (std(amplitude)/mean(amplitude))^2;
+
 CSDoutput = [];
 %CSD during velocity window
 % for i = 1:size(window,1)
@@ -53,7 +62,7 @@ if plt ==1
     end
     
 %     figure('Name', 'Residuals')
-%     scatterhist(betaDuration,betaAmplitude,'kernel','on','Location','SouthWest',...
+%     scatterhist(stats.betaDuration,stats.betaAmplitude,'kernel','on','Location','SouthWest',...
 %         'Direction','out','Color','kbr','LineStyle',{'-','-.',':'},...
 %         'LineWidth',[2,2,2],'Nbins',[20 100], 'marker','.','markersize',10)
 %     box off
@@ -89,7 +98,7 @@ if plt ==1
     
 %Beta event profile
     
-%     figure,lineError(1:size(peakAlign,2),peakAlign,'std') % Pass std or ste for error plotting
+    figure,lineError(1:size(peakAlign,2),peakAlign,'std') % Pass std or ste for error plotting
     [wavelet,f] = cwt(mean(peakAlign,1),1024,'FrequencyLimits',[1 30]);
     blah = abs(wavelet);
     norm = (blah-min(blah,[],'all'))/(max(blah,[],'all')-min(blah,[],'all'));
