@@ -4,7 +4,7 @@ if nargin<2
     allLFP = [];
 end
 detectedBeta = LFP.betaBurst.detectedBeta;
-window = LFP.betaBurst.window;
+% window = LFP.betaBurst.window;
 Fs = LFP.downSampleFreq;
 
 if length(detectedBeta)>1
@@ -13,9 +13,20 @@ if length(detectedBeta)>1
 else
     detectedBeta = cell2mat(detectedBeta);
 end
-
-stats.betaDuration = mean((detectedBeta(:,3)-detectedBeta(:,1)).*1000);
-stats.betaAmplitude = mean(detectedBeta(:,4));
+% Check data validity
+if sum(LFP.betaBurst.NumDetectedBeta)==0
+    peakAlign = [];
+    csd = [];
+    norm =[];
+    f = [];
+    stats.betaDuration = 0;
+    stats.betaAmplitude = 0;
+    stats.betaER = 0;
+    disp('No statistics to analyze')
+    return
+end
+stats.betaDuration = (detectedBeta(:,3)-detectedBeta(:,1)).*1000;
+stats.betaAmplitude = detectedBeta(:,4);
 stats.betaER = mean(LFP.betaBurst.NumDetectedBeta);  
 CSDoutput = [];
 %CSD during velocity window
@@ -41,11 +52,11 @@ if plt ==1
         eventdiff(i) = detectedBeta(i,3)-detectedBeta(i,1);
     end
     
-%     figure('Name', 'Residuals')
-%     scatterhist(betaDuration,betaAmplitude,'kernel','on','Location','SouthWest',...
-%         'Direction','out','Color','kbr','LineStyle',{'-','-.',':'},...
-%         'LineWidth',[2,2,2],'Nbins',[20 100], 'marker','.','markersize',10)
-%     box off
+    figure('Name', 'Residuals')
+    scatterhist(stats.betaDuration,stats.betaAmplitude,'kernel','on','Location','SouthWest',...
+        'Direction','out','Color','kbr','LineStyle',{'-','-.',':'},...
+        'LineWidth',[2,2,2],'Nbins',[20 100], 'marker','.','markersize',10)
+    box off
 
     % Create array for beta events
     maxdiff = 257;
@@ -78,7 +89,7 @@ if plt ==1
     
 %Beta event profile
     
-%     figure,lineError(1:size(peakAlign,2),peakAlign,'std') % Pass std or ste for error plotting
+    figure,lineError(1:size(peakAlign,2),peakAlign,'std') % Pass std or ste for error plotting
     [wavelet,f] = cwt(mean(peakAlign,1),1024,'FrequencyLimits',[1 30]);
     blah = abs(wavelet);
     norm = (blah-min(blah,[],'all'))/(max(blah,[],'all')-min(blah,[],'all'));
