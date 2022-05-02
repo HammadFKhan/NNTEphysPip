@@ -39,12 +39,29 @@ for i = 1:size(fullM,1)
 % [waveletT,fT] = cwt(mean(thetaM,1),1024,'FrequencyLimit',[4 10]);
 % [waveletB,fB] = cwt(mean(betaM,1),1024,'FrequencyLimit',[10 30]);
 % [waveletG,fG] = cwt(mean(gammaM,1),1024,'FrequencyLimit',[30 80]);
-[wavelet(:,:,i),fwav] = cwt(fullM(i,:),1024,'FrequencyLimit',[4 80]);
+[wavelet(:,:,i),fwav] = cwt(fullM(i,:),1024,'FrequencyLimit',[10 32]);
 end
+
 z = abs(mean(wavelet,3));
 z = (z-mean(z,2))./(max(z,[],2)-min(z,[],2));
-figure,imagesc(-1000:1000,fwav,z),colormap(jet),axis xy,colorbar, hold on
-figure,imagesc(-1000:1000,TimeFreq.tfRun.beta.f,TimeFreq.tfRun.beta.C(:,:,1)'),colormap(jet),axis xy,colorbar,hold on
+figure,imagesc(-1000:1000,fwav,abs(wavelet(:,:,7))),colormap(jet),axis xy,colorbar, hold on
+figure,imagesc(-1000:1000,TimeFreq.tfRun.beta.f,TimeFreq.tfRun.depth.L23.beta.C(:,:,3)'),colormap(jet),axis xy,colorbar,hold on
+L23Coherence = squeeze(mean(TimeFreq.tfRun.depth.L23.beta.C(15:end,:,:),1));
+L23Coherence = squeeze(mean(L23Coherence,1));
+
+L23Phi = squeeze(mean(TimeFreq.tfRun.depth.L23.beta.phi(15:end,:,1:10),1));
+L23Phi = squeeze(mean(L23Phi,1));
+
+L5Coherence = squeeze(mean(TimeFreq.tfRun.depth.L5.beta.C(15:end,:,:),1));
+L5Coherence = squeeze(mean(L5Coherence,1));
+
+L5Phi = squeeze(mean(TimeFreq.tfRun.depth.L5.beta.phi(15:end,:,1:10),1));
+L5Phi = squeeze(mean(L5Phi,1));
+
+figure,boxplot(L23Coherence,'Plotstyle','compact'),ylim([0 .7]),box off
+figure,boxplot(L5Coherence,'Plotstyle','compact'),ylim([0 .7]),box off
+figure,boxplot((180/pi)*L23Phi,'Plotstyle','compact'),ylim([-180 180]),box off
+figure,boxplot((180/pi)*L5Phi,'Plotstyle','compact'),ylim([-180 180]),box off
 
 %% Output 
 pxSpecs.broadband = broadband;
