@@ -80,6 +80,25 @@ figure,plot(mean(betaGammam))
 % figure,imagesc(betaGammam(:,41:64)'),colormap(jet)
 %% Broadband Spectrograms per behavior state
 pxSpecs = statePowerSpec(TimeFreq,LFP);
+%% Plot Power Spectrum
+f = pxSpecs.f;
+broadband = pxSpecs.broadband;
+mbroadband = mean(pxSpecs.broadband,2);
+figure, hold on,semilogx(pxSpecs.f(2:end),pxSpecs.broadband(2:end,:)),semilogx(pxSpecs.f,mbroadband,'k','LineWidth',3),xlim([0 100]),set(gca, 'XScale', 'log')
+figure,lineError(pxSpecs.f(2:end),pxSpecs.broadband(2:end,:)','ste'),set(gca, 'XScale', 'log'),xlim([0 100]),ylim([-100 40]),box off
+figure,imagesc(-1000:1000,pxSpecs.fwav,pxSpecs.waveletNorm),colormap(jet),axis xy,colorbar,caxis([-.65 .65])
+%Segment theta,beta,gamma from power spectrum
+thetaP = pxSpecs.broadband((pxSpecs.f>4 & pxSpecs.f<12),:);
+betaP = pxSpecs.broadband((pxSpecs.f>12 & pxSpecs.f<32),:);
+gammaP1 = pxSpecs.broadband((pxSpecs.f>32 & pxSpecs.f<58),:); % Cutout 60 Hz
+gammaP2 =  pxSpecs.broadband((pxSpecs.f>62 & pxSpecs.f<100),:);
+gammaP = [gammaP1;gammaP2];
+idx1 = mean(thetaP,1);idx2 = mean(betaP,1);idx3 = mean(gammaP,1);
+total = [mean(idx1) mean(idx2) mean(idx3)];
+err = [std(idx1)/sqrt(length(idx1)) std(idx2)/sqrt(length(idx2)) std(idx3)/sqrt(length(idx3))];
+figure,bar(total),hold on
+errorbar(1:3,total,err)
+idx1 = idx1';idx2 = idx2';idx3 = idx3';
 %% 
 spikeRaster(Spikes)
 %% Beta Analysis for each electrode
