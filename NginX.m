@@ -106,6 +106,7 @@ for i = 1:size(betaGroup,2) % Checks electrode size for median
     disp(['Electrode: ' num2str(i)])
     [peakAlign{i},csd{i},betaNorm{i},f,bstats(i)] = betaAnalysis(betaGroup(i).electrode);
 end 
+
 % Beta Event Rate
 betaEventRate = [];
 betaEventDuration = [];
