@@ -11,9 +11,9 @@ else
 end
 
 lowThresholdFactor = 1; % Beta envolope must exceed lowThresholdFactor*stdev
-highThresholdFactor = 2.5; % Beta peak must exceed highThresholdFactor*stdev
-minInterRippleInterval = 30; % 30ms
-minBetaDuration = 50; % 50ms
+highThresholdFactor = 2; % Beta peak must exceed highThresholdFactor*stdev
+minInterRippleInterval = 15; % 30ms
+minBetaDuration = 30; % 50ms
 maxBetaDuration = 250; % 200ms
 noise = [];
 
