@@ -2,6 +2,7 @@
 function [peakAlign,csd,norm,f,stats] = betaAnalysis(LFP,allLFP)
 if nargin<2
     allLFP = [];
+    csd = [];
 end
 detectedBeta = LFP.betaBurst.detectedBeta;
 % window = LFP.betaBurst.window;
@@ -25,17 +26,21 @@ if sum(LFP.betaBurst.NumDetectedBeta)==0
     disp('No statistics to analyze')
     return
 end
-stats.betaDuration = mean((detectedBeta(:,3)-detectedBeta(:,1)).*1000);
-stats.betaAmplitudee = mean(detectedBeta(:,4));
-stats.betaER = mean(LFP.betaBurst.NumDetectedBeta);  
+stats.betaDuration = (detectedBeta(:,3)-detectedBeta(:,1)).*1000;
+stats.betaAmplitudeNorm = mean(detectedBeta(:,4));
+stats.betaAmplitudeErrorNorm = std(detectedBeta(:,4));
+stats.betaAmplitude = mean(detectedBeta(:,5));
+stats.betaAmplitudeError = std(detectedBeta(:,5));
+stats.betaAmplitudeNum = length(detectedBeta);
+stats.betaER = LFP.betaBurst.NumDetectedBeta(LFP.betaBurst.NumDetectedBeta~=0);  
 duration = (detectedBeta(:,3)-detectedBeta(:,1)).*1000;
 amplitude = detectedBeta(:,4);
 
 %FanoFactor calculation
-DurationFanoF = std(duration)^2/mean(duration);
-DurationCVsquared = (std(duration)/mean(duration))^2;
-AmplitudeFanoF = std(amplitude)^2/mean(amplitude);
-AmplitudeCVsquared = (std(amplitude)/mean(amplitude))^2;
+stats.DurationFanoF = std(duration)^2/mean(duration);
+stats.DurationCVsquared = (std(duration)/mean(duration))^2;
+stats.AmplitudeFanoF = std(amplitude)^2/mean(amplitude);
+stats.AmplitudeCVsquared = (std(amplitude)/mean(amplitude))^2;
 
 CSDoutput = [];
 %CSD during velocity window
@@ -61,11 +66,11 @@ if plt ==1
         eventdiff(i) = detectedBeta(i,3)-detectedBeta(i,1);
     end
     
-%     figure('Name', 'Residuals')
-%     scatterhist(stats.betaDuration,stats.betaAmplitude,'kernel','on','Location','SouthWest',...
-%         'Direction','out','Color','kbr','LineStyle',{'-','-.',':'},...
-%         'LineWidth',[2,2,2],'Nbins',[20 100], 'marker','.','markersize',10)
-%     box off
+    figure('Name', 'Residuals')
+    scatterhist(duration,amplitude,'kernel','on','Location','SouthWest',...
+        'Direction','out','Color','kbr','LineStyle',{'-','-.',':'},...
+        'LineWidth',[2,2,2],'Nbins',[20 100], 'marker','.','markersize',10)
+    box off
 
     % Create array for beta events
     maxdiff = 257;
@@ -77,8 +82,8 @@ if plt ==1
         if trialFlag == 1
             peak = detectedBeta(i,2)*Fs;
             peakAlign(i,:) = LFP.beta_band(peak-peakWin:peak+peakWin);
-            csdPeakAlign = allLFP(:,peak-peakWin:peak+peakWin); %reference to all electrodes
-            CSDoutput(:,:,i) = zscore(CSD(csdPeakAlign'/1E6,1024,2E-5));
+%             csdPeakAlign = allLFP(:,peak-peakWin:peak+peakWin); %reference to all electrodes
+%             CSDoutput(:,:,i) = zscore(CSD(csdPeakAlign'/1E6,1024,2E-5));
         else
             peakAlign(i,:) = LFP.beta_band(peak-peakWin:peak+peakWin);
         end
@@ -90,7 +95,7 @@ if plt ==1
         %         betaEvents(i,:) = horzcat(originalSignal,zeros(1,padding));
         %     end
      end
-     csd = CSDoutput;
+%      csd = CSDoutput;
 %     figure,
 %     plot(peakAlign','Color',[0.5 0.5 0.5 0.5]); hold on
 %     plot(mean(peakAlign,1),'k','lineWidth',2)
@@ -98,7 +103,7 @@ if plt ==1
     
 %Beta event profile
     
-    figure,lineError(1:size(peakAlign,2),peakAlign,'std') % Pass std or ste for error plotting
+%     figure,lineError(1:size(peakAlign,2),peakAlign,'std') % Pass std or ste for error plotting
     [wavelet,f] = cwt(mean(peakAlign,1),1024,'FrequencyLimits',[1 30]);
     blah = abs(wavelet);
     norm = (blah-min(blah,[],'all'))/(max(blah,[],'all')-min(blah,[],'all'));
