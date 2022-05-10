@@ -22,7 +22,7 @@ QF = Wn/10;
 
 Fc = [1 256];
 Wn = Fc./(downSampleFreq/2);
-b = fir1(500,Wn,'bandpass');
+b = fir1(10,Wn,'bandpass');
 
 % Design butterworth filters for LFP
 % Fc = [128];
