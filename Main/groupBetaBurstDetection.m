@@ -94,11 +94,14 @@ for idx = 1:size(beta_signal,2)
         % Discard beta events with a peak power < highThresholdFactor
         thirdPass = [];
         peakNormalizedPower = [];
+        peakPower = [];
         for i = 1:size(secondPass,1)
             [maxValue,maxIndex] = max(normalizedSquaredSignal([secondPass(i,1):secondPass(i,2)]));
+            [maxValue1,maxIndex2] = max(squaredSignal([secondPass(i,1):secondPass(i,2)]));
             if maxValue > highThresholdFactor,
                 thirdPass = [thirdPass ; secondPass(i,:)];
                 peakNormalizedPower = [peakNormalizedPower ; maxValue];
+                peakPower = [peakPower ; maxValue1];
             end
         end
         if isempty(thirdPass),
@@ -114,7 +117,7 @@ for idx = 1:size(beta_signal,2)
                 peakPosition(i) = minIndex + thirdPass(i,1) - 1;
             end
             % Discard beta events that are way too long
-            betaBurst = [timestamps(thirdPass(:,1))  timestamps(peakPosition)  timestamps(thirdPass(:,2)) peakNormalizedPower];
+            betaBurst = [timestamps(thirdPass(:,1))  timestamps(peakPosition)  timestamps(thirdPass(:,2)) peakNormalizedPower peakPower];
             duration = betaBurst(:,3)-betaBurst(:,1);
             betaBurst(duration>maxBetaDuration/1000,:) = NaN;
             disp(['After max duration test: ' num2str(size(betaBurst,1)) ' events.']);
