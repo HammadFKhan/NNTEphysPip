@@ -1,4 +1,5 @@
 %% Beta event intervals 
+function BetaIEI(betaGroup,betaGroupRest)
 figure,hold on
 L23EventISI = [];
 L23RunEventISI = [];
@@ -12,7 +13,7 @@ for ii = 1:30
             t = betaGroup(ii).electrode.betaBurst.detectedBeta{i}(:,2);
             t1 = betaGroup(ii).electrode.betaBurst.window(i,1);
             win = t-t1;
-            plot(win,i*ones(1,length(t)),'.')
+%             plot(win,i*ones(1,length(t)),'.')
             % ERD (Event Rate Desynchonization)
             %         A = win(win<=1);
             %         B = win(win>1);
@@ -57,7 +58,7 @@ for ii = 30:64
             t = betaGroup(ii).electrode.betaBurst.detectedBeta{i}(:,2);
             t1 = betaGroup(ii).electrode.betaBurst.window(i,1);
             win = t-t1;
-            plot(win,i*ones(1,length(t)),'.')
+%             plot(win,i*ones(1,length(t)),'.')
             % ERD (Event Rate Desynchonization)
             %         A = win(win<=1);
             %         B = win(win>1);
@@ -98,7 +99,7 @@ for ii = 30:64
             t1 = betaGroupRest(ii).electrode.betaBurst.window(i,1);
             win = t-t1;
             win = win(win<1); %% split in half to make the inwdow the same for run and intitate
-            plot(win,i*ones(1,length(win)),'.')
+%             plot(win,i*ones(1,length(win)),'.')
             %Beta Event Interval
             L23RestEventISI{i} = abs(diff(win));
             if isempty(L23RestEventISI{i})
@@ -122,7 +123,7 @@ for ii = 1:30
             t1 = betaGroupRest(ii).electrode.betaBurst.window(i,1);
             win = t-t1;
             win = win(win<1); %% split in half to make the inwdow the same for run and intitate
-            plot(win,i*ones(1,length(win)),'.')
+%             plot(win,i*ones(1,length(win)),'.')
             L5RestEventISI{i} = abs(diff(win));
             if isempty(L5RestEventISI{i})
                 L5RestEventISI{i} = -.5;
@@ -163,20 +164,20 @@ l5rest = [length(L5RestEventISI(L5RestEventISI>0));length(L5RestEventISI(L5RestE
 figure,pie(l5rest),title('L5 Rest')
 legend('Burst','Single')
 %%
-%%
-figure,boxplot(L23EventISI,'PlotStyle','compact'),ylim([0 2]),title('L23')
-figure,boxplot(L5EventISI,'PlotStyle','compact'),ylim([0 2]),title('L5')
-figure,boxplot(L23RestEventISI,'PlotStyle','compact'),ylim([0 2]),title('L23 Rest')
-figure,boxplot(L5RestEventISI,'PlotStyle','compact'),ylim([0 2]),title('L5 Rest')
-%%
-figure,bar(sort(ERD)),ylim([-1 1])
-figure,bar(sort(ERDrest)),ylim([-1 1])
-figure, histogram(ERDrest,-1:0.5:1),hold on
-histogram(ERD,-1:0.5:1)
-% ERD probability
-ERDprop = length(ERD(abs(ERD)>=0.6))/length(ERD);
-ERDpropRest = length(ERDrest(abs(ERDrest)>=0.6))/length(ERDrest);
-figure,bar([ERDpropRest;ERDprop]),hold on
-% er = errorbar([ERDpropRest;ERDprop],std([ERDpropRest;ERDprop]'));    
-% er.Color = [0 0 0];                            
-% er.LineStyle = 'none';  
+% %%
+% figure,boxplot(L23EventISI,'PlotStyle','compact'),ylim([0 2]),title('L23')
+% figure,boxplot(L5EventISI,'PlotStyle','compact'),ylim([0 2]),title('L5')
+% figure,boxplot(L23RestEventISI,'PlotStyle','compact'),ylim([0 2]),title('L23 Rest')
+% figure,boxplot(L5RestEventISI,'PlotStyle','compact'),ylim([0 2]),title('L5 Rest')
+% %%
+% figure,bar(sort(ERD)),ylim([-1 1])
+% figure,bar(sort(ERDrest)),ylim([-1 1])
+% figure, histogram(ERDrest,-1:0.5:1),hold on
+% histogram(ERD,-1:0.5:1)
+% % ERD probability
+% ERDprop = length(ERD(abs(ERD)>=0.6))/length(ERD);
+% ERDpropRest = length(ERDrest(abs(ERDrest)>=0.6))/length(ERDrest);
+% figure,bar([ERDpropRest;ERDprop]),hold on
+% % er = errorbar([ERDpropRest;ERDprop],std([ERDpropRest;ERDprop]'));    
+% % er.Color = [0 0 0];                            
+% % er.LineStyle = 'none';  
