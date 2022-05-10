@@ -44,7 +44,7 @@ figure('Name','Run Layer 2/3'),yyaxis left,histogram(L23RunEventISI,0:.1:2),titl
 yyaxis right,histogram(L23RunEventISI(L23RunEventISI==-0.5),-1:0.1:0),ylim([0 100])
 
 
-%% L5
+% L5
 figure,hold on
 L5EventISI = [];
 L5InitiateEventISI = [];
