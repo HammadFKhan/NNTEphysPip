@@ -5,6 +5,7 @@ L23EventISI = [];
 L23RunEventISI = [];
 L23InitiateEventISI = [];
 %L2/3
+count = 1;
 for ii = 1:30
     for i = 1:size(betaGroup(ii).electrode.betaBurst.NumDetectedBeta,1)
         if isempty(betaGroup(ii).electrode.betaBurst.detectedBeta{i})
