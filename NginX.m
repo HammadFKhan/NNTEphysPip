@@ -46,7 +46,7 @@ LFP = bandFilter(LFP,'depth'); % Extract LFPs based on 'depth' or 'single'
 % %% Beta Band Analysis
 % LFP = betaBurstDetection(LFP);
 % %% CSD
-% [CSDoutput]  = CSD(flip(LFP.LFP(:,1:1024)'/1E6,1),1024,2E-5);
+[CSDoutput]  = CSD(LFPavg'/1E6,8192,2E-5);
 % Looking at single units
 % set(0,'DefaultFigureWindowStyle','docked')
 Spikes = singleUnitAnalysis(fpath,VR_data);
