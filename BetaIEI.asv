@@ -41,10 +41,10 @@ L23InitiateEventISI = vertcat(L23InitiateEventISI{:});
 L23RunEventISI = vertcat(L23RunEventISI{:});
 
 figure('Name','Layer 2/3'),histogram(L23EventISI,0:.1:2)
-figure('Name','Initiate Layer 2/3'),yyaxis left,histogram(L23InitiateEventISI,0:.1:2),title('Initiate Layer2/3')%,ylim([0 45])
-yyaxis right,histogram(L23InitiateEventISI(L23InitiateEventISI==-0.5),-1:0.1:0)%,ylim([0 100])
-figure('Name','Run Layer 2/3'),yyaxis left,histogram(L23RunEventISI,0:.1:2),title('Run Layer 2/3')
-yyaxis right,histogram(L23RunEventISI(L23RunEventISI==-0.5),-1:0.1:0)%,ylim([0 100])
+figure('Name','Initiate Layer 2/3'),yyaxis left,histogram(L23InitiateEventISI,0:.1:1),title('Initiate Layer2/3'),ylim([0 80])
+yyaxis right,histogram(L23InitiateEventISI(L23InitiateEventISI==-0.5),-1:0.1:0),ylim([0 200])
+figure('Name','Run Layer 2/3'),yyaxis left,histogram(L23RunEventISI,0:.1:1),title('Run Layer 2/3'),ylim([0 80])
+yyaxis right,histogram(L23RunEventISI(L23RunEventISI==-0.5),-1:0.1:0),ylim([0 200])
 
 
 % L5
@@ -86,10 +86,10 @@ L5InitiateEventISI = vertcat(L5InitiateEventISI{:});
 L5RunEventISI = vertcat(L5RunEventISI{:});
 
 figure('Name','Layer 5'),histogram(L5EventISI,0:.1:2)
-figure('Name','Initiate Layer 5'),yyaxis left,histogram(L5InitiateEventISI,0:.1:2),title('Initiate Layer 5')%,ylim([0 45])
-yyaxis right,histogram(L5InitiateEventISI(L5InitiateEventISI==-0.5),-1:0.1:0)%,ylim([0 100])
-figure('Name','Run Layer 5'),yyaxis left,histogram(L5RunEventISI,0:.1:2),title('Run Layer 5')
-yyaxis right,histogram(L5RunEventISI(L5RunEventISI==-0.5),-1:0.1:0)%,ylim([0 100])
+figure('Name','Initiate Layer 5'),yyaxis left,histogram(L5InitiateEventISI,0:.1:1),title('Initiate Layer 5')%,ylim([0 45])
+yyaxis right,histogram(L5InitiateEventISI(L5InitiateEventISI==-0.5),-1:0.1:0),ylim([0 200])
+figure('Name','Run Layer 5'),yyaxis left,histogram(L5RunEventISI,0:.1:1),title('Run Layer 5')
+yyaxis right,histogram(L5RunEventISI(L5RunEventISI==-0.5),-1:0.1:0),ylim([0 200])
 % Rest State
 count = 1;
 figure,hold on
@@ -115,7 +115,8 @@ for ii = 30:64
     end
 end
 L23RestEventISI = vertcat(L23RestEventISI{:});
-figure('Name','Rest Layer 2/3'),yyaxis left,histogram(L23RestEventISI,0:.1:2),title('Rest Layer 2/3')
+
+figure('Name','Rest Layer 2/3'),yyaxis left,histogram(L23RestEventISI,0:.1:1),title('Rest Layer 2/3')
 yyaxis right,histogram(L23RestEventISI(L23RestEventISI==-0.5),-1:0.1:0)%,ylim([0 350])
 % L5
 count = 1;
@@ -140,8 +141,8 @@ for ii = 1:30
     end
 end
 L5RestEventISI = vertcat(L5RestEventISI{:});
-figure('Name','Rest Layer 5'),yyaxis left,histogram(L5RestEventISI,0:.1:2),title('Rest Layer 5')
-yyaxis right,histogram(L5RestEventISI(L5RestEventISI==-0.5),-1:0.1:0)%,ylim([0 350])
+figure('Name','Rest Layer 5'),yyaxis left,histogram(L5RestEventISI,0:.1:1),title('Rest Layer 5'),ylim([0 3000])
+yyaxis right,histogram(L5RestEventISI(L5RestEventISI==-0.5),-1:0.1:0),ylim([0 12000])
 %%
 figure,boxplot(L23InitiateEventISI(L23InitiateEventISI>0),'PlotStyle','compact'),ylim([0 1]),title('L23 Initiate')
 figure,boxplot(L23RunEventISI(L23RunEventISI>0),'PlotStyle','compact'),ylim([0 1]),title('L23 Run')
