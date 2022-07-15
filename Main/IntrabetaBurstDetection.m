@@ -6,9 +6,9 @@ timestamps(:,1) = (1:length(beta_signal))/Fs;
 LFP.betaBurst = [];
 lowThresholdFactor = 1.5; % Beta envolope must exceed lowThresholdFactor*stdev
 highThresholdFactor = 2.5; % Beta peak must exceed highThresholdFactor*stdev
-minInterRippleInterval = 40; % 30ms
-minBetaDuration = 50; % 50ms
-maxBetaDuration = 250; % 200ms
+minInterRippleInterval = 30; % 30ms
+minBetaDuration = 30; % 50ms
+maxBetaDuration = 200; % 200ms
 noise = [];
 
 windowLength = round(11);
@@ -109,7 +109,8 @@ for i = 1:size(betaBurst,1)
     betaTrace{i} = beta_signal(ceil(Fs*betaBurst(i,1)):ceil((Fs*betaBurst(i,3))));
 end
 
-LFP.betaBurst.beta = beta_signal;
+LFP.Fs = Fs;
+LFP.betaBurst.beta = beta_signal';
 LFP.betaBurst.detectedBeta = betaBurst;
 LFP.betaBurst.NumDetectedBeta = size(betaBurst,1);
 LFP.betaBurst.lowThresholdFactor = lowThresholdFactor;
