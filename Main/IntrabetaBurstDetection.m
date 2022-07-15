@@ -7,7 +7,7 @@ LFP.betaBurst = [];
 lowThresholdFactor = 1.5; % Beta envolope must exceed lowThresholdFactor*stdev
 highThresholdFactor = 2.5; % Beta peak must exceed highThresholdFactor*stdev
 minInterRippleInterval = 30; % 30ms
-minBetaDuration = 30; % 50ms
+minBetaDuration = 50; % 50ms
 maxBetaDuration = 200; % 200ms
 noise = [];
 
