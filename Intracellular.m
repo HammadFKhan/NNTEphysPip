@@ -7,6 +7,11 @@ Fs = 1/dt;
 %% Vm
 % Fix DC offset
 VmTotal = [];
+<<<<<<< Updated upstream
+=======
+% Vm = Vm-min(Vm,[],'all');
+% Vm = Vm-65;
+>>>>>>> Stashed changes
 for i = 1:size(Vm,2)
     VmTotal = [VmTotal;Vm(:,i)];
 end
@@ -14,6 +19,7 @@ end
 VmTotal = VmTotal-min(VmTotal,[],'all');
 VmTotal = VmTotal-65;
 figure,plot(0:dt:(length(VmTotal)-1)/Fs,VmTotal);xlim([0 length(VmTotal)/Fs])
+
 %% Im
 % Fix DC offset
 ImTotal = [];
@@ -23,6 +29,7 @@ for i = 1:size(Im,2)
 end
 
 figure,plot(0:dt:(length(ImTotal)-1)/Fs,ImTotal);xlim([0 length(ImTotal)/Fs])
+
 %% STA
 thresh = find(VmTotal>0);
 tri = diff(thresh);
@@ -50,12 +57,12 @@ plot(mean(upWin(:,1:20),2),'k','LineWidth',3),axis off
 %% Subthreshold Dynamics
 subthresh = VmTotal<30;
 subthresh = VmTotal(subthresh);
-Fc = [1 15];
+Fc = [1 100];
 Wn = Fc./(Fs/2);
 b = fir1(50,Wn,'bandpass');
-subThreshold = filtfilt(b,1,subthresh);
+Vmfilt = filtfilt(b,1,VmTrigAlign);
 %% Filter
-filtered_data = customFilt(subThreshold',Fs,[10 30]);
+filtered_data = customFilt(VmTrigAlign',Fs,[10 30]);
 %%
 LFP = IntrabetaBurstDetection(filtered_data',Fs);
 %%
