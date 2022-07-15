@@ -7,12 +7,12 @@ Fs = 1/dt;
 %% Vm
 % Fix DC offset
 VmTotal = [];
-Vm = Vm-min(Vm,[],'all');
-Vm = Vm-65;
 for i = 1:size(Vm,2)
     VmTotal = [VmTotal;Vm(:,i)];
 end
 
+VmTotal = VmTotal-min(VmTotal,[],'all');
+VmTotal = VmTotal-65;
 figure,plot(0:dt:(length(VmTotal)-1)/Fs,VmTotal);xlim([0 length(VmTotal)/Fs])
 %% Im
 % Fix DC offset
@@ -24,23 +24,26 @@ end
 
 figure,plot(0:dt:(length(ImTotal)-1)/Fs,ImTotal);xlim([0 length(ImTotal)/Fs])
 %% STA
-thresh = find(VmTotal>10);
+thresh = find(VmTotal>0);
 tri = diff(thresh);
 trig = find(tri~=1);
 COM = thresh(trig+1,1);
 for i = 1:length(trig)
-    win(:,i) = VmTotal(COM(i)-6:COM(i)+15,1);
+    win(:,i) = VmTotal(COM(i)-(0.001*Fs):COM(i)+(0.002*Fs),1);
 end
 upWin = interp1(1:size(win,1),win,1:0.05:size(win,1),'spline');
 %% Delete action potentials for subthreshold
 subThreshold = VmTotal;
-for i = 1:20
+for i = 1:size(win,2)
     thresh = find(subThreshold>0);
     tri = diff(thresh);
     trig = find(tri~=1);
     COM = thresh(trig,1);
-    subThreshold(COM(1)-6:COM(1)+15) = [];
+    subThreshold(COM(1)-(0.001*Fs):COM(1)+(0.002*Fs)) = [];
 end
+
+figure,plot(0:dt:(length(subThreshold)-1)/Fs,subThreshold);xlim([0 length(subThreshold)/Fs])
+
 %%
 figure,plot(upWin(:,1:20)),hold on
 plot(mean(upWin(:,1:20),2),'k','LineWidth',3),axis off
@@ -57,12 +60,19 @@ filtered_data = customFilt(subThreshold',Fs,[10 30]);
 LFP = IntrabetaBurstDetection(filtered_data',Fs);
 %%
 figure
-for i = 1
-    subplot(1,1,i),plot(LFP.betaTrace{i}),axis off
+for i = 1:81
+    subplot(9,9,i),plot(LFP.betaTrace{i}),axis off
 end
 %% Wavelet 
 [wavelet, f] = cwt(filtered_data,Fs,'FrequencyLimit',[10 30]);
-
+figure,imagesc(0:dt:(length(subThreshold)-1)/Fs,f,abs(wavelet));colormap(jet);axis xy
+%%
+[peakAlign,csd,norm,f,stats] = IntrabetaAnalysis(LFP);
+%%
+figure,plot(filtered_data),hold on
+for i = 1:87
+    xline(LFP.betaBurst.detectedBeta(i,2)*Fs,'r--','LineWidth',1)
+end
 %%
 figure,
 subplot(2,1,1),plot(0:dt:(length(VmTotal)-1)/Fs,VmTotal);xlim([0 length(VmTotal)/Fs])
