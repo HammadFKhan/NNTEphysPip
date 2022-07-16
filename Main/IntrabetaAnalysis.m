@@ -1,9 +1,6 @@
 % Beta analysis
-function [peakAlign,csd,norm,f,stats] = IntrabetaAnalysis(LFP)
-if nargin<2
-    allLFP = [];
-    csd = [];
-end
+function [peakAlign,norm,f,stats] = IntrabetaAnalysis(LFP)
+
 detectedBeta = LFP.betaBurst.detectedBeta;
 % window = LFP.betaBurst.window;
 Fs = LFP.Fs;
