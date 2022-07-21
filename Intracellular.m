@@ -7,11 +7,8 @@ Fs = 1/dt;
 %% Vm
 % Fix DC offset
 VmTotal = [];
-<<<<<<< Updated upstream
-=======
 % Vm = Vm-min(Vm,[],'all');
 % Vm = Vm-65;
->>>>>>> Stashed changes
 for i = 1:size(Vm,2)
     VmTotal = [VmTotal;Vm(:,i)];
 end
