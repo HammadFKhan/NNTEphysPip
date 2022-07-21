@@ -46,7 +46,7 @@ LFP = bandFilter(LFP,'depth'); % Extract LFPs based on 'depth' or 'single'
 % %% Beta Band Analysis
 % LFP = betaBurstDetection(LFP);
 % %% CSD
-[CSDoutput]  = CSD(LFPavg'/1E6,8192,2E-5);
+% [CSDoutput]  = CSD(LFPavg'/1E6,8192,2E-5);
 % Looking at single units
 % set(0,'DefaultFigureWindowStyle','docked')
 Spikes = singleUnitAnalysis(fpath,VR_data);
@@ -102,6 +102,9 @@ idx1 = idx1';idx2 = idx2';idx3 = idx3';
 %% 
 spikeRaster(Spikes)
 %% Beta Analysis for each electrode
+if exist('bstats','var')
+    clear bstats
+end
 for i = 1:size(betaGroup,2) % Checks electrode size for median
     disp(['Electrode: ' num2str(i)])
     [peakAlign{i},csd{i},betaNorm{i},f,bstats(i)] = betaAnalysis(betaGroup(i).electrode);
@@ -134,7 +137,7 @@ figure,imagesc(-100:100,-100:100,norm),colormap(jet),colorbar,axis xy,set(gcf, '
 LFPdepth = linspace(1,round(Spikes.Depth.depth(end),-2),64); %Round to nearest 100th micron
 if isstruct(bstats)
     bstatsOrg = bstats;
-    bstats = cell2mat(struct2cell(bstats));
+    bstats = (struct2cell(bstats));
     bstats = squeeze(bstats)';
 end
 % figure('Name','Beta Duration'),bar(LFPdepth,bstats(:,1),'BarWidth',1),set(gcf, 'Position',  [100, 100, 500, 500])
