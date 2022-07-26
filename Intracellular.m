@@ -13,8 +13,8 @@ for i = 1:size(Vm,2)
     VmTotal = [VmTotal;Vm(:,i)];
 end
 
-VmTotal = VmTotal-min(VmTotal,[],'all');
-VmTotal = VmTotal-65;
+% VmTotal = VmTotal-min(VmTotal,[],'all');
+% VmTotal = VmTotal-65;
 figure,plot(0:dt:(length(VmTotal)-1)/Fs,VmTotal);xlim([0 length(VmTotal)/Fs])
 
 %% Im
@@ -28,14 +28,14 @@ end
 figure,plot(0:dt:(length(ImTotal)-1)/Fs,ImTotal);xlim([0 length(ImTotal)/Fs])
 
 %% STA
-thresh = find(VmTotal>0);
+thresh = find(VmTotal>83);
 tri = diff(thresh);
 trig = find(tri~=1);
 COM = thresh(trig+1,1);
 for i = 1:length(trig)
     win(:,i) = VmTotal(COM(i)-(0.001*Fs):COM(i)+(0.002*Fs),1);
 end
-upWin = interp1(1:size(win,1),win,1:0.05:size(win,1),'spline');
+% upWin = interp1(1:size(win,1),win,1:0.05:size(win,1),'spline');
 %% Delete action potentials for subthreshold
 subThreshold = VmTotal;
 for i = 1:size(win,2)
@@ -49,8 +49,8 @@ end
 figure,plot(0:dt:(length(subThreshold)-1)/Fs,subThreshold);xlim([0 length(subThreshold)/Fs])
 
 %%
-figure,plot(upWin(:,1:20)),hold on
-plot(mean(upWin(:,1:20),2),'k','LineWidth',3),axis off
+figure,plot(upWin(:,1:150)),hold on
+plot(mean(upWin(:,1:150),2),'k','LineWidth',3),axis off
 %% Subthreshold Dynamics
 subthresh = VmTotal<30;
 subthresh = VmTotal(subthresh);
