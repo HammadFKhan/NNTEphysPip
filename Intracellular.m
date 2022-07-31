@@ -46,7 +46,7 @@ for i = 1:size(win,2)
     subThreshold(COM(1)-(0.001*Fs):COM(1)+(0.002*Fs)) = [];
 end
 
-figure,plot(0:dt:(length(subThreshold)-1)/Fs,subThreshold);xlim([0 length(subThreshold)/Fs])
+figure,plot(0:dt:(length(subThreshold)-1)/Fs,subThreshold,'r');xlim([0 length(subThreshold)/Fs]),box off
 
 %%
 figure,plot(upWin(:,1:150)),hold on
@@ -54,31 +54,32 @@ plot(mean(upWin(:,1:150),2),'k','LineWidth',3),axis off
 %% Subthreshold Dynamics
 subthresh = VmTotal<30;
 subthresh = VmTotal(subthresh);
-Fc = [1 100];
+Fc = [8 33];
 Wn = Fc./(Fs/2);
-b = fir1(50,Wn,'bandpass');
-Vmfilt = filtfilt(b,1,VmTrigAlign);
+b = fir1(50000,Wn,'bandpass');
+VmfiltBeta = filtfilt(b,1,Intracellular2);
 %% Filter
-filtered_data = customFilt(VmTrigAlign',Fs,[10 30]);
+filtered_dataIntra = customFilt(Vmfilt',Fs,[10 30]);
 %%
-LFP = IntrabetaBurstDetection(filtered_data',Fs);
+Intra = IntrabetaBurstDetection(filtered_dataIntra',Fs);
 %%
 figure
 for i = 1:81
-    subplot(9,9,i),plot(LFP.betaTrace{i}),axis off
+    subplot(9,9,i),plot(Intra.betaTrace{i}),axis off
 end
 %% Wavelet 
-[wavelet, f] = cwt(filtered_data,Fs,'FrequencyLimit',[10 30]);
+[wavelet, f] = cwt(filtered_dataIntra,Fs,'FrequencyLimit',[10 30]);
 figure,imagesc(0:dt:(length(subThreshold)-1)/Fs,f,abs(wavelet));colormap(jet);axis xy
 %%
 [peakAlign,csd,norm,f,stats] = IntrabetaAnalysis(LFP);
 %%
-figure,plot(filtered_data),hold on
+figure,plot(filtered_dataIntra),hold on
 for i = 1:87
     xline(LFP.betaBurst.detectedBeta(i,2)*Fs,'r--','LineWidth',1)
 end
 %%
 figure,
 subplot(2,1,1),plot(0:dt:(length(VmTotal)-1)/Fs,VmTotal);xlim([0 length(VmTotal)/Fs])
-subplot(2,1,2),plot(0:dt:(length(VmTotal)-1)/Fs,filtered_data);xlim([0 length(VmTotal)/Fs]),linkaxes
+subplot(2,1,2),plot(0:dt:(length(VmTotal)-1)/Fs,filtered_dataIntra);xlim([0 length(VmTotal)/Fs]),linkaxes
 % subplot(2,1,2),plot(subthresh);xlim([0 length(VmTotal)/Fs])
+%%
