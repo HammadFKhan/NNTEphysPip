@@ -265,6 +265,35 @@ for i = 1:size(betaGroupRest,2)
     restBetaDepth(i,:) = betaGroupRest(i).electrode.betaBurst.NumDetectedBeta;
 end
 %% 
+figure,
+colorH = jet(4);
+for i = 1:64
+    if i<=30
+        col = colorH(1,:);
+    else
+        col = colorH(4,:);
+    end
+    plot(bstats(i).freqPks,'.','color',col), hold on
+    freqPks = bstats(i).freqPks;
+    lowBeta{i} = freqPks(freqPks<=21);
+    highBeta{i} = freqPks(freqPks>21);
+end
+L23lowBeta = lowBeta(1:30);
+L23lowBeta = horzcat(L23lowBeta{:});
+L5lowBeta = lowBeta(31:64);
+L5lowBeta = horzcat(L5lowBeta{:});
+
+L23highBeta = highBeta(1:30);
+L23highBeta = horzcat(L23highBeta{:});
+L5highBeta = highBeta(31:64);
+L5highBeta = horzcat(L5highBeta{:});
+
+figure,histogram(L23highBeta,20:1:30),title('L23 High Beta')
+figure,histogram(L23lowBeta,13:1:20),title('L23 Low Beta')
+figure,histogram(L5highBeta,20:1:30),title('L5 High Beta')
+figure,histogram(L5lowBeta,13:1:20),title('L5 Low Beta')
+
+
 %%
 figure,histogram(restBetaNum,1:0.25:10),hold on
 histogram(runBetaNum,1:0.25:10)
