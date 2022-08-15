@@ -61,6 +61,16 @@ load chanMap
 % test
 
 Spikes = spikeDepthPlot(Spikes,templateDepths);
+%%
+figure
+plot(mean(Spikes.spikeRate.L23SR,2)),hold on
+plot(mean(Spikes.spikeRate.L5ABSR,2)),hold on
+figure,
+x = horzcat(Spikes.spikeRate.L23SR(:));
+[~,edges] = histcounts(log10(x));
+histogram(x)
+set(gca, 'xscale','log'),xlim([0.001 100]), hold on
+%%
 % Time-Frequency Analysis
 [TimeFreq,LFP,betaGroup,Spikes] = tfAnalysis(Spikes,LFP,1); %Behavior state running 1 (0 rest)
 [TimeFreq,LFP,betaGroupRest,Spikes] = tfAnalysis(Spikes,LFP,0,TimeFreq); %Behavior state running 1 (0 rest)
