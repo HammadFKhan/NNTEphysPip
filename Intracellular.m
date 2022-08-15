@@ -57,9 +57,9 @@ subthresh = VmTotal(subthresh);
 Fc = [8 33];
 Wn = Fc./(Fs/2);
 b = fir1(50000,Wn,'bandpass');
-VmfiltBeta = filtfilt(b,1,Intracellular2);
+LFPfiltBeta = filtfilt(b,1,LFP2);
 %% Filter
-filtered_dataIntra = customFilt(Vmfilt',Fs,[10 30]);
+filtered_dataIntra = customFilt(VmfiltBeta',Fs,[4 10]);
 %%
 Intra = IntrabetaBurstDetection(filtered_dataIntra',Fs);
 %%
@@ -71,7 +71,7 @@ end
 [wavelet, f] = cwt(filtered_dataIntra,Fs,'FrequencyLimit',[10 30]);
 figure,imagesc(0:dt:(length(subThreshold)-1)/Fs,f,abs(wavelet));colormap(jet);axis xy
 %%
-[peakAlign,csd,norm,f,stats] = IntrabetaAnalysis(LFP);
+[peakAlign,norm,f,stats] = IntrabetaAnalysis(Intra);
 %%
 figure,plot(filtered_dataIntra),hold on
 for i = 1:87
