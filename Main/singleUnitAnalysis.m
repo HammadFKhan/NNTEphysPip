@@ -19,7 +19,7 @@ for i = 1:size(Spikes.Clusters,2)
     end
 end
 % ISI
-Spikes = ISI(Spikes,0.03,8192); %Spikes, Interval, Fs
+Spikes = ISI(Spikes,0.01,8192); %Spikes, Interval, Fs
 Spikes = rateMap(Spikes,VR_data); %Trial number
 
 % Clustered Projection
