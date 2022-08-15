@@ -79,6 +79,17 @@ plot(0:dt:(length(data)-1)/Fs,data,'k');xlim([0 length(data)/Fs]),box off, hold 
 for i = 1:size(LFP.betaBurst.detectedBeta,1)
 xline(LFP.betaBurst.detectedBeta(i,2),'k');
 end
+%% Intra and extra cross-correlation
+[c,lags] = xcorr(Intracellular2,Intra.betaBurst.beta,Fs/2);
+% Normalize c from -1 to 1
+cNorm = 
+figure,plot(lags/Fs,c),box off
+
+[c1,lags1] = xcorr(Intracellular2,LFP.betaBurst.beta,Fs/2,'normalized');
+figure,plot(lags1/Fs,c1),box off
+
+[c2,lags2] = xcorr(Intra.betaBurst.beta,LFP.betaBurst.beta,Fs/2,'normalized');
+figure,plot(lags2/Fs,c2),box off
 %% Intracellular Beta Window
 count = 1;
 ISI = [];
@@ -88,21 +99,20 @@ for i = 1:size(Intra.betaBurst.detectedBeta,1)
     % Calculate Intracellular ISI
     data = betaAP{i};
     data = data-min(data);
-    thresh = find(data>10);
+    thresh = find(data>2);
     tri = diff(thresh);
     trig = find(tri~=1);
     trig = [1;trig]; %pad for first index
     COM = thresh(trig+1,1);
-    ISI = [ISI;diff(COM/Fs)];
+    ISI = [ISI;diff(COM/Fs)*1000]; %ISI in milliseconds
     for ii = 1:length(trig)
-        if (COM(ii)+(0.002*Fs))>length(data)
-            wint(:,count) = data(COM(ii)-(0.001*Fs):end,1);
-        elseif (COM(ii)-(0.002*Fs))<1
-            wint(:,count) = data(1:COM(ii)+(0.002*Fs),1);
+        if (COM(ii)+(0.002*Fs))>length(data) || (COM(ii)-(0.002*Fs))<1
+            count = count+1;
         else
-            wint(:,count) = data(COM(ii)-(0.001*Fs):end,1)
+            wint(:,count) = data(COM(ii)-(0.001*Fs):COM(ii)+(0.002*Fs),1);
+            count = count+1;
         end
-        count = count+1;
+        
     end
     
 end
