@@ -73,12 +73,23 @@ for i = 1:size(Intra.betaBurst.detectedBeta,1)
 xline(Intra.betaBurst.detectedBeta(i,2),'k');
 end
 
-data = LFP2;
+data = Intra.betaBurst.beta.^2;
 figure,
 plot(0:dt:(length(data)-1)/Fs,data,'k');xlim([0 length(data)/Fs]),box off, hold on
 for i = 1:size(LFP.betaBurst.detectedBeta,1)
 xline(LFP.betaBurst.detectedBeta(i,2),'k');
 end
+%% Intra and extra cross-correlation
+[c,lags] = xcorr(Intracellular2,Intra.betaBurst.beta,Fs/2);
+% Normalize c from -1 to 1
+cNorm = 2*((c-min(c))/(max(c)-min(c)))-1;
+figure,plot(lags/Fs,cNorm),box off
+
+[c1,lags1] = xcorr(Intracellular2,LFP.betaBurst.beta,Fs/2);
+figure,plot(lags1/Fs,c1),box off
+
+[c2,lags2] = xcorr(Intra.betaBurst.beta,LFP.betaBurst.beta,Fs/2);
+figure,plot(lags2/Fs,c2),box off
 %% Intracellular Beta Window
 count = 1;
 ISI = [];
@@ -105,4 +116,5 @@ for i = 1:size(Intra.betaBurst.detectedBeta,1)
     end
     
 end
-
+%% Vm amplitude inside/outside beta event window
+for i 
