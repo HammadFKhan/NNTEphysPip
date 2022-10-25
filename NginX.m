@@ -9,11 +9,11 @@ IntanConcatenate
 % Intan = read_Intan_RHD2000_file(); %load intan data
 global useGPU 
 useGPU = 0;
-ParpoolConfig
+% ParpoolConfig
 fpath    = Intan.path; % where on disk do you want the analysis? ideally and SSD...
 pathToYourConfigFile = strcat(pwd,'/main/'); % for this example it's ok to leave this path inside the repo, but for your own config file you *must* put it somewhere else!  
 run(fullfile(pathToYourConfigFile, 'config_eMouse.m'))
-make_UCLAMouseChannelMap(fpath); % Creates channel map for electrode array
+make_UCLAChannelMap2(fpath,s); % Creates channel map for electrode array
 %%
 % filtData = preprocess_filtering(Intan.allIntan(:,1:400000),Intan.t_amplifier);
 %% Ripples
@@ -39,7 +39,9 @@ rez = KilosortAnalysis(fpath,ops);
 
 % LFP
 set(0,'DefaultFigureWindowStyle','normal')
-LFP = fastpreprocess_filtering(flip(Intan.allIntan,1),8192);
+% LFP = fastpreprocess_filtering(flip(Intan.allIntan,1),8192); %Only run for PFF data
+LFP = fastpreprocess_filtering(Intan.allIntan,8192);
+
 LFP = bestLFP(LFP);
 LFP = bandFilter(LFP,'depth'); % Extract LFPs based on 'depth' or 'single'
 % LFPplot(LFP)
@@ -52,7 +54,8 @@ LFP = bandFilter(LFP,'depth'); % Extract LFPs based on 'depth' or 'single'
 Spikes = singleUnitAnalysis(fpath,VR_data);
 % Calculate Depth profile
 set(0,'DefaultFigureWindowStyle','normal')
-load chanMap
+%load chanMap % use for PFF
+load UCLA_chanMap
 [spikeAmps, spikeDepths, templateDepths, tempAmps, tempsUnW, templateDuration, waveforms] =...
     spikeTemplatePosition(fpath,ycoords);
 % figure,
@@ -61,15 +64,7 @@ load chanMap
 % test
 
 Spikes = spikeDepthPlot(Spikes,templateDepths);
-%%
-figure
-plot(mean(Spikes.spikeRate.L23SR,2)),hold on
-plot(mean(Spikes.spikeRate.L5ABSR,2)),hold on
-figure,
-x = horzcat(Spikes.spikeRate.L23SR(:));
-[~,edges] = histcounts(log10(x));
-histogram(x)
-set(gca, 'xscale','log'),xlim([0.001 100]), hold on
+
 %%
 % Time-Frequency Analysis
 [TimeFreq,LFP,betaGroup,Spikes] = tfAnalysis(Spikes,LFP,1); %Behavior state running 1 (0 rest)
@@ -110,7 +105,38 @@ figure,bar(total),hold on
 errorbar(1:3,total,err)
 idx1 = idx1';idx2 = idx2';idx3 = idx3';
 %% 
-spikeRaster(Spikes)
+[L23RunAvg,L5RunAvg] = spikeRaster(Spikes,1,5); %Spikes, flag (0/1) for rest/run, and scatter size (sz)
+[L23RestAvg,L5RestAvg] = spikeRaster(Spikes,0,5); %Spikes, flag (0/1) for rest/run
+%%
+t1 = cellfun('size',L23RestAvg,1)/4;
+t2 = cellfun('size',L5RestAvg,1)/4;
+L23Rest = t1';L5Rest = t2';
+figure,histogram(t1,0:10:100),hold on
+histogram(t2,0:10:100), box off
+
+t = vertcat(t1',t2');
+x = [repmat({'L23'},length(t1),1);];
+x1 = repmat({'L5'},length(t2),1);
+figure,boxplot(t1,x,'plotstyle','compact'), hold on, box off,ylim([0 100]),title('L23 Rest')
+figure,boxplot(t2,x,'plotstyle','compact'), hold on, box off,ylim([0 100]),title('L5 Rest')
+
+
+t1 = cellfun('size',L23RunAvg,1)/4;
+t2 = cellfun('size',L5RunAvg,1)/4;
+L23Run = t1';L5Run = t2';
+close all
+total = [L23Rest; L5Rest; L23Run; L5Run];
+%%
+figure,histogram(t1,0:10:150),hold on
+histogram(t2,0:10:150), box off
+
+t = vertcat(t1',t2');
+%x = [repmat({'L23'},length(t1),1);repmat({'L5'},length(t2),1);];
+x = [repmat({'L23'},length(t1),1);];
+x1 = repmat({'L5'},length(t2),1);
+figure,boxplot(t1,x,'plotstyle','compact'), hold on, box off,ylim([0 100]),title('L23 Run')
+figure,boxplot(t2,x1,'plotstyle','compact'), hold on, box off,ylim([0 100]),title('L5 Run')
+
 %% Beta Analysis for each electrode
 if exist('bstats','var')
     clear bstats
