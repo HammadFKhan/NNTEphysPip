@@ -436,6 +436,8 @@ if (data_present)
 
     % If the software notch filter was selected during the recording, apply the
     % same notch filter to amplifier data here.
+    notch_filter_frequency = 0;
+
     if (notch_filter_frequency > 0)
         fprintf(1, 'Applying notch filter...\n');
 
