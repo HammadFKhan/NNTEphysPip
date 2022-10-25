@@ -55,9 +55,9 @@ if useGPU
     %Output GPU data
     LFP.LFP = gather(lfp);
 else
-    rawData60 = filtfilt(d,c,downsample_Data');
-    rawData120 = filtfilt(d1,c,rawData60);
-    LFP.LFP = filtfilt(b,1,rawData60);
+%     rawData60 = filtfilt(d,c,downsample_Data');
+%     rawData120 = filtfilt(d1,c,rawData60);
+    LFP.LFP = filtfilt(b,1,downsample_Data');
 end
 LFP.LFP = LFP.LFP';
 LFP.channel_num = channel_num;
