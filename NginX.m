@@ -13,7 +13,8 @@ useGPU = 0;
 fpath    = Intan.path; % where on disk do you want the analysis? ideally and SSD...
 pathToYourConfigFile = strcat(pwd,'/main/'); % for this example it's ok to leave this path inside the repo, but for your own config file you *must* put it somewhere else!  
 run(fullfile(pathToYourConfigFile, 'config_eMouse.m'))
-make_UCLAChannelMap2(fpath,s); % Creates channel map for electrode array
+%make_UCLAChannelMap2(fpath,s); % Creates channel map for electrode array
+make_UCLAMouseChannelMap(fpath);
 %%
 % filtData = preprocess_filtering(Intan.allIntan(:,1:400000),Intan.t_amplifier);
 %% Ripples
@@ -22,11 +23,14 @@ make_UCLAChannelMap2(fpath,s); % Creates channel map for electrode array
 
 
 %% Kilosort Analysis
+useGPU = 1;
 kilosortPrep(Intan.allIntan,fpath)
 set(0,'DefaultFigureWindowStyle','normal')
 rez = KilosortAnalysis(fpath,ops);
 % now fire up Phy and check these results. There should still be manual
 % work to be done (mostly merges, some refinements of contaminated clusters). 
+useGPU = 0;
+
 %% AUTO MERGES 
 % after spending quite some time with Phy checking on the results and understanding the merge and split functions, 
 % come back here and run Kilosort's automated merging strategy. This block
@@ -39,8 +43,8 @@ rez = KilosortAnalysis(fpath,ops);
 
 % LFP
 set(0,'DefaultFigureWindowStyle','normal')
-% LFP = fastpreprocess_filtering(flip(Intan.allIntan,1),8192); %Only run for PFF data
-LFP = fastpreprocess_filtering(Intan.allIntan,8192);
+LFP = fastpreprocess_filtering(flip(Intan.allIntan,1),8192); %Only run for PFF data
+% LFP = fastpreprocess_filtering(Intan.allIntan,8192);
 
 LFP = bestLFP(LFP);
 LFP = bandFilter(LFP,'depth'); % Extract LFPs based on 'depth' or 'single'
@@ -51,11 +55,11 @@ LFP = bandFilter(LFP,'depth'); % Extract LFPs based on 'depth' or 'single'
 % [CSDoutput]  = CSD(LFPavg'/1E6,8192,2E-5);
 % Looking at single units
 % set(0,'DefaultFigureWindowStyle','docked')
-Spikes = singleUnitAnalysis(fpath,VR_data);
+Spikes = singleUnitAnalysis(fpath,VR_data); % VR_data.Time{1} = data(:,2); VR_data.Position{1} = data(:,1);
 % Calculate Depth profile
 set(0,'DefaultFigureWindowStyle','normal')
-%load chanMap % use for PFF
-load UCLA_chanMap
+load chanMap % use for PFF
+%load UCLA_chanMap
 [spikeAmps, spikeDepths, templateDepths, tempAmps, tempsUnW, templateDuration, waveforms] =...
     spikeTemplatePosition(fpath,ycoords);
 % figure,
@@ -74,9 +78,10 @@ Spikes = spikeDepthPlot(Spikes,templateDepths);
 
 % plotTF(TimeFreq,LFP)
 % TF stats of depth
-% TimeFreq.tf = TimeFreq.tfRun;
-% stats = tfStats(TimeFreq);
-% tfDepth = TimeFreq.tf.depth;
+TimeFreq.tf = TimeFreq.tfRun;
+stats = tfStats(TimeFreq);ylim([0 0.4])
+%%
+tfDepth = TimeFreq.tf.depth;
 betaGammaCoupling = gammaBetaCoupling(TimeFreq.tfRun.gammaLFP,TimeFreq.tfRun.betaLFP);
 betaGammam = mean(betaGammaCoupling,3);
 figure,imagesc(-179:20:180,1:64,interp2(betaGammam')),colormap(jet)
@@ -124,8 +129,8 @@ figure,boxplot(t2,x,'plotstyle','compact'), hold on, box off,ylim([0 100]),title
 t1 = cellfun('size',L23RunAvg,1)/4;
 t2 = cellfun('size',L5RunAvg,1)/4;
 L23Run = t1';L5Run = t2';
-close all
-total = [L23Rest; L5Rest; L23Run; L5Run];
+Resttotal = [L23Rest,L5Rest];
+Runtotal = [L23Run,L5Run];
 %%
 figure,histogram(t1,0:10:150),hold on
 histogram(t2,0:10:150), box off
@@ -190,7 +195,7 @@ for i = 1:size(peakAlign,2) % Checks electrode size for median
 end
 figure,stack_plot(flip(mPeakAlign'),0.2,1.5)
 normPeakAlign = (mPeakAlign-min(mPeakAlign,[],'all'))/(max(mPeakAlign,[],'all')-min(mPeakAlign,[],'all'));
-figure,imagesc(0:250,LFPdepth,smoothdata(normPeakAlign')),caxis([0 1])
+figure,imagesc(0:250,LFPdepth,interp2(smoothdata(normPeakAlign'))),caxis([0.1 .85])
 %% Plot beta CSD for each electrode
 for i = 1:size(csd,2) % Checks electrode size for median
     mcsd(:,:,i) = mean(csd{i},3);
