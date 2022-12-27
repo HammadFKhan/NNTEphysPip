@@ -18,7 +18,7 @@ else
     spikeTempL5 = vertcat(spikeTempL5{:});
 end
 
-figure,hold on,ylim([0 15])
+figure,hold on,ylim([0 15]),title('L2/3 single units')
 trials = size(spikeTempL23,1);
 rasterAvg = [];
 rasterA = [];
@@ -38,7 +38,7 @@ Y = discretize(rasterAvg,200); % Discretize into 10ms time bins by trial length 
 for i = 1:200
     rasterA(i) = length(rasterAvg(Y==i))/(0.02*(trials)); %Count number of spikes per bin
 end
-figure,plot(smoothdata(rasterA,'rloess',10),'r'),box off,ylim([0 50]),xlim([0 100])
+figure,plot(smoothdata(rasterA,'rloess',10),'r'),box off,ylim([0 50]),xlim([0 100]),title('L2/3 average response');
 % spikeTemp = squeeze(struct2cell(Spikes.dspikes.L4Run)); % Spike temp for layer 23 of cell cell array
 % spikeTemp = vertcat(spikeTemp{:});
 % figure,hold on
@@ -50,7 +50,7 @@ figure,plot(smoothdata(rasterA,'rloess',10),'r'),box off,ylim([0 50]),xlim([0 10
 % spikeTemp = [];
 
 
-figure,hold on,ylim([0 15])
+figure,hold on,ylim([0 15]),title('L5 single units')
 rasterAvg = [];
 raster = [];
 Y = [];
@@ -69,8 +69,8 @@ end
 rasterAvg = vertcat(L5rasterAvg{:});
 rasterAvg(isnan(rasterAvg)) = 1;
 Y = discretize(rasterAvg,200);
-for i = 1:200
+for i = 1:trials
     rasterB(i) = length(rasterAvg(Y==i))/(0.02*(trials));
 end
-figure,plot(smoothdata(rasterB,'rloess',10),'b'),ylim([0 50]),xlim([0 100]), box off
+figure,plot(smoothdata(rasterB,'rloess',10),'b'),ylim([0 50]),xlim([0 100]), box off,title('L5 average response')
 end
