@@ -33,6 +33,7 @@ stats.betaAmplitude = mean(detectedBeta(:,5));
 stats.betaAmplitudeError = std(detectedBeta(:,5));
 stats.betaAmplitudeNum = length(detectedBeta);
 stats.betaER = LFP.betaBurst.NumDetectedBeta(LFP.betaBurst.NumDetectedBeta~=0);  
+stats.betaAmplitudeSingle = detectedBeta(:,4);
 duration = (detectedBeta(:,3)-detectedBeta(:,1)).*1000;
 amplitude = detectedBeta(:,4);
 
