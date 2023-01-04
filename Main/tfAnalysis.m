@@ -202,14 +202,25 @@ disp('Calculating LFP Phase Coupling')
 % if useGPU
 %     theta = gpuArray(theta);beta = gpuArray(beta);gamma = gpuArray(gamma);
 % end
-% params.Fs = 1024;
-% params.fpass = [4 30];
+params.Fs = 1024;
+params.fpass = [4 30];
 % [tf.oscillators.tb.C,tf.oscillators.tb.phi,S12,S1,S2,tf.oscillators.t,tf.oscillators.tb.f]=cohgramc(theta,beta,movingwin,params);
 % params.fpass = [4 80];
 % [tf.oscillators.tg.C,tf.oscillators.tg.phi,S12,S1,S2,t,tf.oscillators.tg.f]=cohgramc(theta,gamma,movingwin,params);
-% params.fpass = [30 80];
-% [tf.oscillators.bg.C,tf.oscillators.bg.phi,S12,S1,S2,t,tf.oscillators.bg.f]=cohgramc(beta,gamma,movingwin,params);
-
+params.fpass = [15 80];
+params.tapers = [15 29];
+movingwin = [0.5 0.1];
+params.pad = 0;
+count = 1;
+for i = [10,20,30,40,50,64]
+[tf.oscillators.bg(count).C,tf.oscillators.bg(count).phi,S12,S1,S2,t,tf.oscillators.bg.f]=...
+    cohgramc(squeeze(beta(:,i,:)),squeeze(gamma(:,i,:)),movingwin,params);
+end
+%%
+params.Fs = 8192;
+params.tapers = [5 9];
+movingwin = [0.5 0.05];
+params.pad = 2;
 params.Fs = 8192;
 if useGPU
     LFPTrig = gpuArray(LFPTrig);
