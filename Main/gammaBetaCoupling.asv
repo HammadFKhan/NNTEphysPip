@@ -1,4 +1,6 @@
-function betaGammaCoupling = gammaBetaCoupling(mGamma,mBeta)
+function betaGammaCoupling = gammaBetaCoupling(LFP,Tf,betaGroup)
+mGamma = Tf.gammaLFP;
+mBeta = Tf.betaLFP;
 %% Gamma amplitude phase coupling by depth and trial
 if size(mGamma) & size(mBeta) > 2 % Beta coupling by depth
     for ii = 1:size(mBeta,2)
@@ -16,7 +18,6 @@ if size(mGamma) & size(mBeta) > 2 % Beta coupling by depth
 %         xlim([-180 180])
         end
     end
-    figure
 else
     for ii = 1:size(mBeta,2)
         mGammaAmplitude = mGamma(:,ii).^2;
@@ -31,42 +32,113 @@ else
     end
     xlim([-180 180])
 end
-%% Random Plots
+%% gamma beta LFP coupling during behavior state
+betaLFP = Tf.betaLFP;
+gammaLFP = Tf.gammaLFP;
+betaLFP = permute(betaLFP,[2 3 1]);
+gammaLFP = permute(gammaLFP,[2 3 1]);
 
-% data = mGamma(:,1);
-% figure,
-% subplot(311)
-% plot(data)
-% xlabel('Time (ms)'), ylabel('Amplitude (\muV)')
-% 
-% % plot power (squared magnitude from origin to dot-product location in
-% % complex space)
-% subplot(312)
-% plot(data.^2)
-% xlabel('Time (ms)'), ylabel('Power \muV^2')
-% 
-% 
-% % plot phase (angle of vector to dot-product, relative to positive real
-% % axis)
-% subplot(313)
-% plot(angle(hilbert(data)))
-% xlabel('Time (ms)'), ylabel('Phase (rad.)')
-% 
-% data = mBeta(:,1);
-% figure,
-% subplot(311)
-% plot(data)
-% xlabel('Time (ms)'), ylabel('Amplitude (\muV)')
-% 
-% % plot power (squared magnitude from origin to dot-product location in
-% % complex space)
-% subplot(312)
-% plot(data.^2)
-% xlabel('Time (ms)'), ylabel('Power \muV^2')
-% 
-% 
-% % plot phase (angle of vector to dot-product, relative to positive real
-% % axis)
-% subplot(313)
-% plot(angle(hilbert(data)))
-% xlabel('Time (ms)'), ylabel('Phase (rad.)')
+betaDepth = mean(betaLFP.^2,3);
+gammaDepth = mean(gammaLFP.^2,3);
+betaDepthAd = std(betaDepth');
+gammaStd = std(gammaDepth');
+
+betaDepth = mean(betaDepth,2);
+gammaDepth = mean(gammaDepth,2);
+
+betaDepthAd = betaDepth-min(betaDepth,[],'all');
+gammaDepthAd = (betaDepth-gammaDepth);gammaDepthAd = gammaDepthAd-min(gammaDepthAd,[],'all');
+buff = betaStd-gammaStd;
+betaDepthNorm = (betaDepthAd-min(betaDepthAd,[],'all'))/(max(betaDepthAd,[],'all')-min(betaDepthAd,[],'all'));
+gammaDepthNorm = (gammaDepthAd-min(gammaDepthAd,[],'all'))/(max(gammaDepthAd,[],'all')-min(gammaDepthAd,[],'all'));
+betaStdNorm = (betaStd-min(betaStd,[],'all'))/(max(betaStd,[],'all')-min(betaStd,[],'all'));
+gammaStdNorm = (buff-min(buff,[],'all'))/(max(buff,[],'all')-min(buff,[],'all'));
+
+figure,
+subplot(2,1,1),errorbar(1:64,smoothdata(betaDepthNorm,'gaussian',10),betaStdNorm),ylim([0.1 .8]),box off,set(gca,'TickDir','out');
+subplot(2,1,2),errorbar(1:64,smoothdata(gammaDepthNorm,'gaussian',10),gammaStdNorm),ylim([0.1 .8]),box off,set(gca,'TickDir','out');
+
+%% beta event/gamma amplitude modulation
+% gamma amplitude during beta events
+betaEvent = betaGroup(10).electrode.betaBurst.detectedBeta; %use global LFP values as beta bursts is recorded with this reference
+beta = LFP.beta_band;
+gamma = LFP.gamma_band;
+
+mBetaBurst = [];mGammaWaveform = [];mGammaEnvelope = [];mBetaPower = [];
+for i = 1:size(mGamma,3)
+    for ii = 1:size(betaEvent{i},1)
+        timestamp = floor([betaEvent{i}(ii,2)-0.075, betaEvent{i}(ii,2)+0.075].*1024);
+        gammaWaveform{i}(:,ii) = gamma(10,timestamp(1):timestamp(2));
+        betaBurst{i}(:,ii) = beta(10,timestamp(1):timestamp(2));
+    end
+    if isempty(ii)
+        mBetaBurst{i} = [];
+        mGammaWaveform{i} = [];
+    else
+        mBetaBurst{i} = mean(betaBurst{i},2);
+        mBetaPower{i} = mean(betaBurst{i}.^2,2);
+        mGammaWaveform{i} = mean(gammaWaveform{i},2);
+        mGammaEnvelope{i} = mean(gammaWaveform{i}.^2,2);
+    end
+end
+mBetaBurst = horzcat(mBetaBurst{:}); % Beta burst
+mBetaPower = horzcat(mBetaPower{:}); % Beta power
+mGammaWaveform = horzcat(mGammaWaveform{:}); %Gamma LFP
+mGammaEnvelope = horzcat(mGammaEnvelope{:}); %Gamma amplitude
+
+
+%% Random Plots
+dplot=1
+if dplot
+    data = mGamma(:,1);
+    figure,
+    subplot(311)
+    plot(data)
+    xlabel('Time (ms)'), ylabel('Amplitude (\muV)')
+    
+    % plot power (squared magnitude from origin to dot-product location in
+    % complex space)
+    subplot(312)
+    plot(data.^2)
+    xlabel('Time (ms)'), ylabel('Power \muV^2')
+    
+    
+    % plot phase (angle of vector to dot-product, relative to positive real
+    % axis)
+    subplot(313)
+    plot(angle(hilbert(data)))
+    xlabel('Time (ms)'), ylabel('Phase (rad.)')
+    
+    data = mBeta(:,1);
+    figure,
+    subplot(311)
+    plot(data)
+    xlabel('Time (ms)'), ylabel('Amplitude (\muV)')
+    
+    % plot power (squared magnitude from origin to dot-product location in
+    % complex space)
+    subplot(312)
+    plot(data.^2)
+    xlabel('Time (ms)'), ylabel('Power \muV^2')
+    
+    
+    % plot phase (angle of vector to dot-product, relative to positive real
+    % axis)
+    subplot(313)
+    plot(angle(hilbert(data)))
+    xlabel('Time (ms)'), ylabel('Phase (rad.)')
+    
+    %depth plot of gamma beta phase amplitude coupling
+    
+    % gamma envelope beta event plot
+    figure,
+    subplot(2,1,1),plot(mean(mBetaPower,2))
+    subplot(2,1,2),plot(mean(mGammaEnvelope,2))
+    
+    % wavelet decomposition of plots
+    [gammaWavelet,gf] = cwt(mean(mGammaWaveform,2),'FrequencyLimit',[30 100],1024);
+    [betaWavelet,bf] = cwt(mean(mBetaBurst,2),'FrequencyLimit',[12 32],1024);
+    figure,
+    subplot(2,1,1),imagesc(-75:75,bf,abs(betaWavelet)),colormap(jet),axis xy
+    subplot(2,1,2),imagesc(-75:75,gf,abs(gammaWavelet)),colormap(jet),axis xy
+end
