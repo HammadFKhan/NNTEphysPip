@@ -1,7 +1,10 @@
-function betaGammaCoupling = gammaBetaCoupling(LFP,Tf,betaGroup)
+function output = gammaBetaCoupling(LFP,Tf,betaGroup)
+% Analyze coupling stats between beta/gamma LFPs and beta/gamma events
+
 mGamma = Tf.gammaLFP;
 mBeta = Tf.betaLFP;
 %% Gamma amplitude phase coupling by depth and trial
+fprintf('Calculating beta-gamma amplitude coupling...')
 if size(mGamma) & size(mBeta) > 2 % Beta coupling by depth
     for ii = 1:size(mBeta,2)
 %         figure,hold on
@@ -28,10 +31,11 @@ else
         for i = 1:max(dBetaPhase)
             betaGammaCoupling(i) = mean(mGammaAmplitude(dBetaPhase==i,1));
         end
-        bar(-179:20:180,betaGammaCoupling)
+%         bar(-179:20:180,betaGammaCoupling)
     end
-    xlim([-180 180])
+%     xlim([-180 180])
 end
+fprintf('done\n')
 %% gamma beta LFP coupling during behavior state
 betaLFP = Tf.betaLFP;
 gammaLFP = Tf.gammaLFP;
@@ -111,6 +115,18 @@ gammaEnvelopeDepthNorm = (gammaEnvelopeDepthAd-min(gammaEnvelopeDepthAd,[],'all'
     /(max(gammaEnvelopeDepthAd,[],'all')-min(gammaEnvelopeDepthAd,[],'all'));
 betaEventStdNorm = (betaPowerStd-min(betaStd,[],'all'))/(max(betaPowerStd,[],'all')-min(betaPowerStd,[],'all'));
 gammaEnvelopeStdNorm = (buff-min(buff,[],'all'))/(max(buff,[],'all')-min(buff,[],'all'));
+%% Output
+output.betaDepthNorm = betaDepthNorm; 
+output.betaDepthStd = betaStdNorm;
+output.gammaDepthNorm = gammaDepthNorm;
+output.gammaDepthStd = gammaStdNorm;
+output.mBetaBurst = mBetaBurst;
+
+output.mBetaPowerDepth = mBetaPowerDepth;
+output.mGammaWaveform = mGammaWaveform;
+output.mGammaEnvelope = mGammaEnvelope;
+
+output.betaGammaCoupling = betaGammaCoupling;
 %% Random Plots
 dplot=1
 if dplot
