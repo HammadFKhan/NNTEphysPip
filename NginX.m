@@ -82,7 +82,7 @@ TimeFreq.tf = TimeFreq.tfRun;
 stats = tfStats(TimeFreq);ylim([0 0.4])
 %%
 tfDepth = TimeFreq.tf.depth;
-betaGammaCoupling = gammaBetaCoupling(LFP,TimeFreq.tfRun,betaGroup);
+betaGammaCouplingRest = gammaBetaCoupling(LFP,TimeFreq.tfRest,betaGroupRest);
 betaGammam = mean(betaGammaCoupling,3);
 figure,imagesc(-179:20:180,1:64,interp2(betaGammam')),colormap(jet)
 figure,plot(mean(betaGammam))
