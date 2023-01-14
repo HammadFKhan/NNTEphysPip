@@ -285,7 +285,6 @@ disp('Analyzing Gamma Band for Layer 5...')
 
 %% Inter-trial Phase Clustering of Spike-LFP
 [tf.theta.theta,tf.theta.itpc,tf.beta.beta,tf.beta.itpc,tf.gamma.gamma,tf.gamma.itpc] = chronuxITPC(tf.theta.phi,tf.beta.phi,tf.gamma.phi);
-
 %% Inter-trial Phase Clustering of Spike-LFP per Layer
 disp('ITPC for layer 2/3')
 [tf.depth.L23.theta.theta,tf.depth.L23.theta.itpc,tf.depth.L23.beta.beta,tf.depth.L23.beta.itpc,tf.depth.L23.gamma.gamma,tf.depth.L23.gamma.itpc]...
