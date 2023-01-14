@@ -6,7 +6,7 @@ function make_UCLAChannelMap2(fpath,s)
 % an index to dead channels too). chanMap(1) is the row in the raw binary
 % file for the first channel. chanMap(1:2) = [33 34] in my case, which happen to
 % be dead channels. 
-load('UCLA_chanmap.mat');
+load('UCLA_chanmap_fixed.mat');
 % chanMap = [1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 ...
 %     25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 ...
 %     50 51 52 53 54 55 56 57 58 59 60 61 62 63 64];
@@ -50,4 +50,4 @@ kcoords = ones(1,64);
 % would be good to also save the sampling frequency here
 fs = 8192; 
 
-save(fullfile(fpath, 'chanMap.mat'), 'chanMap', 'connected', 'xcoords', 'ycoords', 'kcoords', 'fs')
+save(fullfile(fpath, 'UCLA_chanMap_fixed.mat'), 'chanMap', 'connected', 'xcoords', 'ycoords', 'kcoords', 'fs')
