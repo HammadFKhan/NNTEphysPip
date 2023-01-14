@@ -43,8 +43,8 @@ useGPU = 0;
 
 % LFP
 set(0,'DefaultFigureWindowStyle','normal')
-LFP = fastpreprocess_filtering(flip(Intan.allIntan,1),8192); %Only run for PFF data
-% LFP = fastpreprocess_filtering(Intan.allIntan,8192);
+% LFP = fastpreprocess_filtering(flip(Intan.allIntan,1),8192); %Only run for PFF data
+LFP = fastpreprocess_filtering(Intan.allIntan,8192);
 
 LFP = bestLFP(LFP);
 LFP = bandFilter(LFP,'depth'); % Extract LFPs based on 'depth' or 'single'
@@ -58,8 +58,8 @@ LFP = bandFilter(LFP,'depth'); % Extract LFPs based on 'depth' or 'single'
 Spikes = singleUnitAnalysis(fpath,VR_data); % VR_data.Time{1} = data(:,2); VR_data.Position{1} = data(:,1);
 % Calculate Depth profile
 set(0,'DefaultFigureWindowStyle','normal')
-load chanMap % use for PFF
-%load UCLA_chanMap
+% load chanMap % use for PFF
+load UCLA_chanMap_fixed
 [spikeAmps, spikeDepths, templateDepths, tempAmps, tempsUnW, templateDuration, waveforms] =...
     spikeTemplatePosition(fpath,ycoords);
 % figure,
@@ -82,6 +82,7 @@ TimeFreq.tf = TimeFreq.tfRun;
 stats = tfStats(TimeFreq);ylim([0 0.4])
 %%
 tfDepth = TimeFreq.tf.depth;
+betaGammaCoupling = gammaBetaCoupling(LFP,TimeFreq.tfRun,betaGroup);
 betaGammaCouplingRest = gammaBetaCoupling(LFP,TimeFreq.tfRest,betaGroupRest);
 betaGammam = mean(betaGammaCoupling,3);
 figure,imagesc(-179:20:180,1:64,interp2(betaGammam')),colormap(jet)
@@ -193,9 +194,10 @@ for i = 1:size(peakAlign,2) % Checks electrode size for median
     mPeakAlign(:,i) = mean(peakAlign{i},1);
     plot(peakAlign{i}')
 end
+mPeakAlign = mPeakAlign(:,[1:43,45:64]);
 figure,stack_plot(flip(mPeakAlign'),0.2,1.5)
 normPeakAlign = (mPeakAlign-min(mPeakAlign,[],'all'))/(max(mPeakAlign,[],'all')-min(mPeakAlign,[],'all'));
-figure,imagesc(0:250,LFPdepth,interp2(smoothdata(normPeakAlign'))),caxis([0.1 .85])
+figure,imagesc(0:250,LFPdepth,interp2(smoothdata(normPeakAlign'))),caxis([0.1 1])
 %% Plot beta CSD for each electrode
 for i = 1:size(csd,2) % Checks electrode size for median
     mcsd(:,:,i) = mean(csd{i},3);
