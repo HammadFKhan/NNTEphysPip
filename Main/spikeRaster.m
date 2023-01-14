@@ -18,7 +18,12 @@ else
     spikeTempL5 = vertcat(spikeTempL5{:});
 end
 
-figure,hold on,ylim([0 15]),title('L2/3 single units')
+% plot best representative neuron across trials
+t = cellfun(@mean,spikeTempL23);
+t(isnan(t)) = 0;
+t = mean(t,1);
+[~,idx] = max(t); %find max cell 
+figure,hold on,ylim([0 50]),title('L2/3 single units')
 trials = size(spikeTempL23,1);
 rasterAvg = [];
 rasterA = [];
@@ -69,7 +74,7 @@ end
 rasterAvg = vertcat(L5rasterAvg{:});
 rasterAvg(isnan(rasterAvg)) = 1;
 Y = discretize(rasterAvg,200);
-for i = 1:trials
+for i = 1:200
     rasterB(i) = length(rasterAvg(Y==i))/(0.02*(trials));
 end
 figure,plot(smoothdata(rasterB,'rloess',10),'b'),ylim([0 50]),xlim([0 100]), box off,title('L5 average response')
