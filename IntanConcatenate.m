@@ -23,11 +23,12 @@ Intan.allIntan = vertcat(allIntan{:})';
 disp('Compressing...')
 Intan.allIntan = single(Intan.allIntan);
 % Adjust electrode order by depth
-UCLA_probe_map
+% UCLA_probe_map %legacy file call
+load UCLA_chanmap_fixed.mat
 Intan.allIntan  = Intan.allIntan(s.sorted_electrodes,:);
 % Fix recording offset
 Intan.offset = 1; % second
-Intan.offsetSample = Intan.frequency_parameters.amplifier_sample_rate*Intan.offset;
+Intan.offsetSample = targetedFs*Intan.offset;
 disp(['Adjusting for ' num2str(Intan.offset) ' second offset']);
 Intan.allIntan = Intan.allIntan(:,Intan.offsetSample:size(Intan.allIntan,2));
 clear amplifier_data t_amplifier frequncy_parameters notes aux_input_channels...
