@@ -4,7 +4,7 @@ path = [fpath,'/preAutoMerge'];
 SpikeClusters = readNPY(fullfile(path, 'spike_clusters.npy'));
 SpikeSamples = readNPY(fullfile(path, 'spike_times.npy'));
 %% Analysis
-Spikes.SpikeClusters = SpikeClusters;
+Spikes.SpikeClusters = SpikeClusters+1; %Add one because of 0 index from python
 Spikes.SpikeSamples = SpikeSamples;
 Spikes = clusterSort(Spikes);
 % sizePlot = ceil(sqrt(size(Spikes.Clusters,2)));
