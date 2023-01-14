@@ -8,13 +8,16 @@ x = length(DeltaFoverF(1,:));
 y = length(DeltaFoverF(:,1));
 baseline = max(DeltaFoverF,[],'all');
 time = (1:x)/Fs;
+% [grad,~]=colorGradient([247 224 10]/255,[10 247 148]/255,y);
+[grad,~]=colorGradient([7 49 97]/255,[110 192 235]/255,y);
+
 for i = 1:y
     gradient = i/y;
-    plot(time,scale*DeltaFoverF(i,:)+(space*baseline),'LineWidth',1,'Color',[.5 .5 .5 .8]); hold on;
+    plot(time,scale*DeltaFoverF(i,:)+(space*baseline),'LineWidth',1,'Color',grad(i,:)); hold on;
     baseline = baseline + max(DeltaFoverF,[],'all');
 end
 axis tight,box off
-% set(gca,'XTick',[])
+set(gca,'XTick',[])
 set(gca,'YTick',[])
 disp('Done!')
 end
