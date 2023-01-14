@@ -20,9 +20,9 @@ Wn = Fc./(downSampleFreq/2);
 QF = Wn/10;
 [d1,c1] = iirnotch(Wn,QF);
 
-Fc = [1 256];
+Fc = [1 250];
 Wn = Fc./(downSampleFreq/2);
-b = fir1(10,Wn,'bandpass');
+b = fir1(5000,Wn,'bandpass');
 
 % Design butterworth filters for LFP
 % Fc = [128];
