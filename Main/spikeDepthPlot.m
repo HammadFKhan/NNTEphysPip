@@ -1,5 +1,10 @@
 function Spikes = spikeDepthPlot(Spikes,templateDepths)
-temp = templateDepths(1:length(Spikes.Clusters))*25;
+if max(templateDepths)>64 %Check if template depth have already been calculated by microns
+    temp = unique(templateDepths);
+else
+    temp = unique(templateDepths)*25;
+end
+% check for instances where 
 % find max cluster size
 [depth,idx] = sort(temp);
 % Removes nan values from depth
