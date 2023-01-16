@@ -18,7 +18,12 @@ else
     spikeTempL5 = vertcat(spikeTempL5{:});
 end
 
-figure,hold on,ylim([0 15]),title('L2/
+% plot best representative neuron across trials
+for i = 1:size(spikeTempL23,2)
+    L23UnitFreq(:,i) = cellfun(@length,spikeTempL23(:,i))*2; %multiply by two because of time window
+end
+[~,idx] = max(t); %find max cell 
+figure,hold on,ylim([0 50]),title('L2/3 single units')
 trials = size(spikeTempL23,1);
 rasterAvg = [];
 rasterA = [];
@@ -38,7 +43,7 @@ Y = discretize(rasterAvg,200); % Discretize into 10ms time bins by trial length 
 for i = 1:200
     rasterA(i) = length(rasterAvg(Y==i))/(0.02*(trials)); %Count number of spikes per bin
 end
-figure,plot(smoothdata(rasterA,'rloess',10),'r'),box off,ylim([0 50]),xlim([0 100])
+figure,plot(smoothdata(rasterA,'rloess',10),'r'),box off,ylim([0 50]),xlim([0 100]),title('L2/3 average response');
 % spikeTemp = squeeze(struct2cell(Spikes.dspikes.L4Run)); % Spike temp for layer 23 of cell cell array
 % spikeTemp = vertcat(spikeTemp{:});
 % figure,hold on
@@ -49,8 +54,10 @@ figure,plot(smoothdata(rasterA,'rloess',10),'r'),box off,ylim([0 50]),xlim([0 10
 % end
 % spikeTemp = [];
 
-
-figure,hold on,ylim([0 15])
+for i = 1:size(spikeTempL5,2)
+    L5UnitFreq(:,i) = cellfun(@length,spikeTempL5(:,i))*2; %Multiply by 2 becauase of time window
+end
+figure,hold on,ylim([0 15]),title('L5 single units')
 rasterAvg = [];
 raster = [];
 Y = [];
@@ -72,5 +79,5 @@ Y = discretize(rasterAvg,200);
 for i = 1:200
     rasterB(i) = length(rasterAvg(Y==i))/(0.02*(trials));
 end
-figure,plot(smoothdata(rasterB,'rloess',10),'b'),ylim([0 50]),xlim([0 100]), box off
+figure,plot(smoothdata(rasterB,'rloess',10),'b'),ylim([0 50]),xlim([0 100]), box off,title('L5 average response')
 end
