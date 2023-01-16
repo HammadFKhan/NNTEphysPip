@@ -97,8 +97,8 @@ figure,bar(total),hold on
 errorbar(1:3,total,err)
 idx1 = idx1';idx2 = idx2';idx3 = idx3';
 %% 
-[L23RunAvg,L5RunAvg] = spikeRaster(Spikes,1,5); %Spikes, flag (0/1) for rest/run, and scatter size (sz)
-[L23RestAvg,L5RestAvg] = spikeRaster(Spikes,0,5); %Spikes, flag (0/1) for rest/run
+[L23RunAvg,L5RunAvg,L23UnitRestFreq,L5UnitRestFreq] = spikeRaster(Spikes,1,5); %Spikes, flag (0/1) for rest/run, and scatter size (sz)
+[L23RestAvg,L5RestAvg,L23UnitRestFreq,L5UnitRestFreq] = spikeRaster(Spikes,0,5); %Spikes, flag (0/1) for rest/run
 %%
 t1 = cellfun('size',L23RestAvg,1)/4;
 t2 = cellfun('size',L5RestAvg,1)/4;
@@ -185,9 +185,13 @@ betaStats(bstats,LFPdepth)
 figure, hold on
 for i = 1:size(peakAlign,2) % Checks electrode size for median
     mPeakAlign(:,i) = mean(peakAlign{i},1);
-    plot(peakAlign{i}')
 end
-%mPeakAlign = mPeakAlign(:,[1:43,45:64]);
+mPeakAlign = mean(peakAlign{1});
+t = peakAlign{64};
+figure,plot(mean(t)), hold on
+plot(mean(t,1)+std(t,0,1),'--r')
+plot(mean(t,1)-std(t,0,1),'--r')
+
 figure,stack_plot(flip(mPeakAlign'),0.2,1.5)
 normPeakAlign = (mPeakAlign-min(mPeakAlign,[],'all'))/(max(mPeakAlign,[],'all')-min(mPeakAlign,[],'all'));
 figure,imagesc(0:250,LFPdepth,interp2(smoothdata(normPeakAlign'))),caxis([0.1 1])
