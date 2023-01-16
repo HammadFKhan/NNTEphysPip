@@ -97,8 +97,8 @@ figure,bar(total),hold on
 errorbar(1:3,total,err)
 idx1 = idx1';idx2 = idx2';idx3 = idx3';
 %% 
-[L23RunAvg,L5RunAvg] = spikeRaster(Spikes,1,5); %Spikes, flag (0/1) for rest/run, and scatter size (sz)
-[L23RestAvg,L5RestAvg] = spikeRaster(Spikes,0,5); %Spikes, flag (0/1) for rest/run
+[L23RunAvg,L5RunAvg,L23UnitRestFreq,L5UnitRestFreq] = spikeRaster(Spikes,1,5); %Spikes, flag (0/1) for rest/run, and scatter size (sz)
+[L23RestAvg,L5RestAvg,L23UnitRestFreq,L5UnitRestFreq] = spikeRaster(Spikes,0,5); %Spikes, flag (0/1) for rest/run
 %%
 t1 = cellfun('size',L23RestAvg,1)/4;
 t2 = cellfun('size',L5RestAvg,1)/4;
@@ -132,19 +132,23 @@ figure,boxplot(t2,x1,'plotstyle','compact'), hold on, box off,ylim([0 100]),titl
 %% Beta Analysis for each electrode
 if exist('bstats','var')
     clear bstats
+    clear betaNorm
+    clear csd
+    clear peakAlign
 end
-for i = 1:size(betaGroup,2) % Checks electrode size for median
+% badElectrode = 44;
+electrode = 1:size(betaGroup,2);
+% electrode(badElectrode) = [];
+for i = electrode % Checks electrode size for median
     disp(['Electrode: ' num2str(i)])
     [peakAlign{i},csd{i},betaNorm{i},f,bstats(i)] = betaAnalysis(betaGroup(i).electrode);
 end 
-% Remove non working electrodes
-badElectrode = 44;
-peakAlign(badElectrode) = []; csd{badElectrode} = {}; betaNorm{badElectrode} = {}; bstats(badElectrode) = [];
+
 
 % Beta Event Rate
 betaEventRate = [];
 betaEventDuration = [];
-for i = 1:64
+for i = electrode
     betaEventRate = [betaEventRate; bstats(i).betaER];
     betaEventDuration= [betaEventDuration;bstats(i).betaDuration];
 end
@@ -181,9 +185,13 @@ betaStats(bstats,LFPdepth)
 figure, hold on
 for i = 1:size(peakAlign,2) % Checks electrode size for median
     mPeakAlign(:,i) = mean(peakAlign{i},1);
-    plot(peakAlign{i}')
 end
-mPeakAlign = mPeakAlign(:,[1:43,45:64]);
+mPeakAlign = mean(peakAlign(1));
+
+figure,plot(mean(mPeakAlign,2)), hold on
+plot(mean(mPeakAlign,2)+std(mPeakAlign,0,2),'--r')
+plot(mean(mPeakAlign,2)-std(mPeakAlign,0,2),'--r')
+
 figure,stack_plot(flip(mPeakAlign'),0.2,1.5)
 normPeakAlign = (mPeakAlign-min(mPeakAlign,[],'all'))/(max(mPeakAlign,[],'all')-min(mPeakAlign,[],'all'));
 figure,imagesc(0:250,LFPdepth,interp2(smoothdata(normPeakAlign'))),caxis([0.1 1])
