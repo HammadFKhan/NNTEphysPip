@@ -1,4 +1,4 @@
-function [L23rasterAvg,L5rasterAvg] = spikeRaster(Spikes, flag,sz)
+function [L23rasterAvg,L5rasterAvg,L23UnitFreq,L5UnitFreq] = spikeRaster(Spikes, flag,sz)
 %Create Spike rasters of units by depth during brhavior state
 if nargin<3
     sz = 15;
@@ -19,10 +19,9 @@ else
 end
 
 % plot best representative neuron across trials
-t = cellfun(@mean,spikeTempL23);
-t(isnan(t)) = 0;
-t = mean(t,1);
-[~,idx] = max(t); %find max cell 
+for i = 1:size(spikeTempL23,2)
+    L23UnitFreq(:,i) = cellfun(@length,spikeTempL23(:,i))*2; %multiply by two because of time window
+end
 figure,hold on,ylim([0 50]),title('L2/3 single units')
 trials = size(spikeTempL23,1);
 rasterAvg = [];
@@ -54,7 +53,9 @@ figure,plot(smoothdata(rasterA,'rloess',10),'r'),box off,ylim([0 50]),xlim([0 10
 % end
 % spikeTemp = [];
 
-
+for i = 1:size(spikeTempL5,2)
+    L5UnitFreq(:,i) = cellfun(@length,spikeTempL5(:,i))*2; %Multiply by 2 becauase of time window
+end
 figure,hold on,ylim([0 15]),title('L5 single units')
 rasterAvg = [];
 raster = [];
