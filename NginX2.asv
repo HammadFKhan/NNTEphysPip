@@ -141,7 +141,7 @@ electrode = 1:size(betaGroup,2);
 % electrode(badElectrode) = [];
 for i = electrode % Checks electrode size for median
     disp(['Electrode: ' num2str(i)])
-    [peakAlign{i},csd{i},betaNorm{i},f,bstats(i)] = betaAnalysis(betaGroup(i).electrode);
+    [peakAlign{i},mLFP{i},betaNorm{i},f,bstats(i)] = betaAnalysis(betaGroup(i).electrode,LFP.LFP);
 end 
 
 
@@ -182,19 +182,19 @@ end
 betaStats(bstats,LFPdepth)
 
 %% Plot beta traces for each electrode
-figure, hold on
+% figure, hold on
 for i = 1:size(peakAlign,2) % Checks electrode size for median
     mPeakAlign(:,i) = mean(peakAlign{i},1);
 end
-mPeakAlign = mean(peakAlign(1));
+mPeakAlign = mPeakAlign(:,[1:43,45:64]);
 
 figure,plot(mean(mPeakAlign,2)), hold on
 plot(mean(mPeakAlign,2)+std(mPeakAlign,0,2),'--r')
 plot(mean(mPeakAlign,2)-std(mPeakAlign,0,2),'--r')
 
-figure,stack_plot(flip(mPeakAlign'),0.2,1.5)
+figure,stack_plot(flip(mPeakAlign'),0.3,1)
 normPeakAlign = (mPeakAlign-min(mPeakAlign,[],'all'))/(max(mPeakAlign,[],'all')-min(mPeakAlign,[],'all'));
-figure,imagesc(0:250,LFPdepth,interp2(smoothdata(normPeakAlign'))),caxis([0.1 1])
+figure,imagesc(0:250,LFPdepth,interp2(smoothdata(normPeakAlign'))),caxis([-0.1 1.25])
 %% Plot beta CSD for each electrode
 for i = 1:size(csd,2) % Checks electrode size for median
     mcsd(:,:,i) = mean(csd{i},3);
