@@ -1,5 +1,5 @@
 % Beta analysis
-function [peakAlign,csd,norm,f,stats] = betaAnalysis(LFP,allLFP)
+function [peakAlign,csdPeakAlign,norm,f,stats] = betaAnalysis(LFP,allLFP)
 if nargin<2
     allLFP = [];
     csd = [];
@@ -43,23 +43,6 @@ stats.DurationCVsquared = (std(duration)/mean(duration))^2;
 stats.AmplitudeFanoF = std(amplitude)^2/mean(amplitude);
 stats.AmplitudeCVsquared = (std(amplitude)/mean(amplitude))^2;
 
-CSDoutput = [];
-%CSD during velocity window
-% for i = 1:size(window,1)
-%     t = LFP.LFP(:,window(i,1)*1024:window(i,2)*1024);
-%     CSDoutput  = CSD(csdPeakAlign'/1E6,1024,2E-5);
-% end
-% mCSD = mean(CSDoutput,3);
-% figure,imagesc(0:1/Fs:2049,1:64,mCSD'),colormap(jet)
-% CSD during beta triggered event
-%%
-% CSDoutput = [];
-% for i = 1:size(detectedBeta,1)
-%     t = LFP.LFP(:,detectedBeta(i,1)*Fs:detectedBeta(i,3)*Fs);
-%     figure,CSDoutput(:,:,i)  = CSD(t'/1E6,1024,2E-5);
-% end
-% mCSD = mean(CSDoutput,3);
-% figure,imagesc(interp2(mCSD',2)),colormap(jet)
 %% Plot Beta Events
 plt = 1;
 if plt ==1
@@ -83,7 +66,7 @@ end
         if trialFlag == 1
             peak = detectedBeta(i,2)*Fs;
             peakAlign(i,:) = LFP.beta_band(peak-peakWin:peak+peakWin);
-%             csdPeakAlign = allLFP(:,peak-peakWin:peak+peakWin); %reference to all electrodes
+            csdPeakAlign(:,:,i) = allLFP(:,peak-peakWin:peak+peakWin); %reference to all electrodes
 %             CSDoutput(:,:,i) = zscore(CSD(csdPeakAlign'/1E6,1024,2E-5));
         else
             peakAlign(i,:) = LFP.beta_band(peak-peakWin:peak+peakWin);
