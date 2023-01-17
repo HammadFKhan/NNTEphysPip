@@ -91,7 +91,7 @@ function [CSDoutput]  = CSD(data,SR,spacing,varargin);
     else
         CSDtype = 1;
     end
-    
+    plotOn = 1;
     % Determines conA. Needed to convert CSD data to desired current units 
     if unitsCurrent=='A'; conA=1; elseif unitsCurrent=='mA'; conA=1000; ...
     elseif unitsCurrent=='uA'; conA=1000000; elseif unitsCurrent=='nA'; ...
@@ -103,67 +103,69 @@ function [CSDoutput]  = CSD(data,SR,spacing,varargin);
 
     SPm = (1/SR)*1000; % sampling period in ms      
     xAxis = [SPm:SPm:SPm*length(data)]'; % x-axis for plots
+    if plotOn
     
-    % Plots the voltage on the far left subplot
-    if CSDtype == 1; % plots the voltages for the standard CSD method 
-        MmV = max(max(abs(data(:,2:end-1)))); % absolute maximum voltage
-        yAxisM = MmV*(size(data,2)-2); % starting baseline for plots
-        figure; % plots voltage data for the 2nd to 2nd last electrode
-        subplot(1,3,1);          
-        for j = 1:(size(data,2)-2);    
-            plot(xAxis,data(:,j+1)+yAxisM,'k');
-            yAxisMCol(1,j) = yAxisM;
-            yAxisM = yAxisM-MmV; % moves baseline of plot down by MmV
-            hold on
-        end   
-%         converts axis labels to electrode number
-        g1 = get(gca,'YTickLabel');     
-        yAxisMCol = flipud(yAxisMCol');
-        set(gca,'Ytick',[yAxisMCol]);
-        ax=gca; ExV = ax.YRuler.Exponent; 
-        axis([0,inf,MmV*0.5,(MmV*(size(data,2)-1))-(MmV*0.5)]);        
-        set(gca, 'YTickLabel', [size(data,2)-1:-1:2]); % electrode number        
-    else % plots the voltages for the inverse CSD method  
-        MmV = max(max(abs(data))); % absolute maximum voltage
-        yAxisM = MmV*size(data,2); % starting baseline for plots
-        figure('name','LFP Response @ CF') % plots the voltage data for all electrodes
-%         subplot(1,3,1);    
-        for j = 1:size(data,2);    
-            plot(xAxis,3*data(:,j)+yAxisM,'k');
-            yAxisMCol(1,j) = yAxisM;
-            yAxisM = yAxisM-MmV; % moves baseline of plot down by MmV
-            hold on
-        end    
-        % converts axis labels to electrode number
-        g1 = get(gca,'YTickLabel'); 
-        yAxisMCol = flipud(yAxisMCol');
-        set(gca,'Ytick',[yAxisMCol]);
-        ax=gca; ExV = ax.YRuler.Exponent;
-        axis([0,inf,MmV*0.5,(MmV*(size(data,2)+1))-(MmV*0.5)])
-        set(gca, 'YTickLabel', [size(data,2):-1:1]); % electrode number 
+        % Plots the voltage on the far left subplot
+        if CSDtype == 1; % plots the voltages for the standard CSD method
+            MmV = max(max(abs(data(:,2:end-1)))); % absolute maximum voltage
+            yAxisM = MmV*(size(data,2)-2); % starting baseline for plots
+            figure; % plots voltage data for the 2nd to 2nd last electrode
+            subplot(1,3,1);
+            for j = 1:(size(data,2)-2);
+                plot(xAxis,data(:,j+1)+yAxisM,'k');
+                yAxisMCol(1,j) = yAxisM;
+                yAxisM = yAxisM-MmV; % moves baseline of plot down by MmV
+                hold on
+            end
+            %         converts axis labels to electrode number
+            g1 = get(gca,'YTickLabel');
+            yAxisMCol = flipud(yAxisMCol');
+            set(gca,'Ytick',[yAxisMCol]);
+            ax=gca; ExV = ax.YRuler.Exponent;
+            axis([0,inf,MmV*0.5,(MmV*(size(data,2)-1))-(MmV*0.5)]);
+            set(gca, 'YTickLabel', [size(data,2)-1:-1:2]); % electrode number
+        else % plots the voltages for the inverse CSD method
+            MmV = max(max(abs(data))); % absolute maximum voltage
+            yAxisM = MmV*size(data,2); % starting baseline for plots
+            figure('name','LFP Response @ CF') % plots the voltage data for all electrodes
+            %         subplot(1,3,1);
+            for j = 1:size(data,2);
+                plot(xAxis,3*data(:,j)+yAxisM,'k');
+                yAxisMCol(1,j) = yAxisM;
+                yAxisM = yAxisM-MmV; % moves baseline of plot down by MmV
+                hold on
+            end
+            % converts axis labels to electrode number
+            g1 = get(gca,'YTickLabel');
+            yAxisMCol = flipud(yAxisMCol');
+            set(gca,'Ytick',[yAxisMCol]);
+            ax=gca; ExV = ax.YRuler.Exponent;
+            axis([0,inf,MmV*0.5,(MmV*(size(data,2)+1))-(MmV*0.5)])
+            set(gca, 'YTickLabel', [size(data,2):-1:1]); % electrode number
+        end
+        % controls the size of magenta scale bar
+        if length(g1) < 5;
+            scale1 = ((str2num(g1{2})-str2num(g1{1}))/4)*10^double(ExV);
+        elseif length(g1) >= 5 & length(g1) < 10;
+            scale1 = ((str2num(g1{2})-str2num(g1{1}))/2)*10^double(ExV);
+        else
+            scale1 = ((str2num(g1{2})-str2num(g1{1})))*10^double(ExV);
+        end
+        % plots scale bar at bottom right of plot
+        scV = plot(repmat(max(xAxis),2,1),linspace(0,scale1,2)','m');
+        scV.LineWidth = 3;
+        % figure labels
+        ylabel('Electrode');
+        title({'Voltage'; ['(\color{magenta}scale bar = ' num2str(scale1)...
+            ' V\color{black})']});
+        xlabel('Time (ms)');
+        % plots color bar then turns visbility off. Allows all subplots to be
+        % aligned vertically (right subplot contains colorbar)
+        colorbar('SouthOutside','Box','off','Visible','off');
+        set(subplot(1,3,1),'color','none','box','off'); % controls appearance
+        axY = gca; axY.YRuler.Axle.Visible = 'off'; % controls appearance
+        hold off
     end
-    % controls the size of magenta scale bar
-    if length(g1) < 5;   
-        scale1 = ((str2num(g1{2})-str2num(g1{1}))/4)*10^double(ExV);
-    elseif length(g1) >= 5 & length(g1) < 10;
-        scale1 = ((str2num(g1{2})-str2num(g1{1}))/2)*10^double(ExV);
-    else
-        scale1 = ((str2num(g1{2})-str2num(g1{1})))*10^double(ExV);
-    end   
-    % plots scale bar at bottom right of plot
-    scV = plot(repmat(max(xAxis),2,1),linspace(0,scale1,2)','m'); 
-    scV.LineWidth = 3; 
-    % figure labels 
-    ylabel('Electrode');
-    title({'Voltage'; ['(\color{magenta}scale bar = ' num2str(scale1)...
-        ' V\color{black})']});
-    xlabel('Time (ms)');
-    % plots color bar then turns visbility off. Allows all subplots to be
-    % aligned vertically (right subplot contains colorbar)
-    colorbar('SouthOutside','Box','off','Visible','off');    
-    set(subplot(1,3,1),'color','none','box','off'); % controls appearance
-    axY = gca; axY.YRuler.Axle.Visible = 'off'; % controls appearance
-    hold off
 
     % Obtains the CSD
     if CSDtype == 1; % obtains the CSD using the standard CSD method
@@ -200,44 +202,46 @@ function [CSDoutput]  = CSD(data,SR,spacing,varargin);
     end
     
     % Plots the CSD on the middle subplot
-    if CSDtype == 1; % plots the CSD for the standard CSD method 
-        MC = max(max(abs(CSD(:,2:end-1)))); % absolute maximum CSD
-        yAxisM = MC*(size(CSD,2)-2); % starting baseline for plots
-        figure(1) % plots the CSD data for the 2nd to 2nd last electrode
-        subplot(1,3,2);
-        for j = 1:(size(CSD,2)-2);    
-            plot(xAxis,CSD(:,j+1)+yAxisM,'k');
-            yAxisMColC(1,j) = yAxisM;
-            yAxisM = yAxisM-MC; % moves baseline of plot down by MC
-            hold on
-        end    
-        % converts axis labels to electrode number
-        g2 = get(gca,'YTickLabel');        
-        yAxisMColC = flipud(yAxisMColC');
-        set(gca,'Ytick',[yAxisMColC]);
-        ax=gca; ExC = ax.YRuler.Exponent;
-        axis([0,inf,MC*0.5,(MC*(size(CSD,2)-1))-(MC*0.5)]);
-        set(gca, 'YTickLabel', [size(CSD,2)-1:-1:2]); % electrode number   
-    else % plots the CSD for the inverse CSD method
-        CSD = CSD';
-        MC = max(max(abs(CSD))); % absolute maximum CSD
-        yAxisM = MC*size(CSD,2); % starting baseline for plots
-        figure(1) % plots the CSD data for all electrodes
-        subplot(1,3,2);
-        for j = 1:size(CSD,2);    
-            plot(xAxis,CSD(:,j)+yAxisM,'k');
-            yAxisMColC(1,j) = yAxisM;
-            yAxisM = yAxisM-MC; % moves baseline of plot down by MmV
-            hold on
-        end  
-        % converts axis labels to electrode number
-        g2 = get(gca,'YTickLabel'); 
-        yAxisMColC = flipud(yAxisMColC');
-        set(gca,'Ytick',[yAxisMColC]);
-        ax=gca; ExC = ax.YRuler.Exponent;
-        axis([0,inf,MC*0.5,(MC*(size(CSD,2)+1))-(MC*0.5)])
-        set(gca, 'YTickLabel', [size(CSD,2):-1:1]); % electrode number 
-    end
+    if plotOn
+        if CSDtype == 1; % plots the CSD for the standard CSD method
+            MC = max(max(abs(CSD(:,2:end-1)))); % absolute maximum CSD
+            yAxisM = MC*(size(CSD,2)-2); % starting baseline for plots
+            figure(1) % plots the CSD data for the 2nd to 2nd last electrode
+            subplot(1,3,2);
+            for j = 1:(size(CSD,2)-2);
+                plot(xAxis,CSD(:,j+1)+yAxisM,'k');
+                yAxisMColC(1,j) = yAxisM;
+                yAxisM = yAxisM-MC; % moves baseline of plot down by MC
+                hold on
+            end
+            % converts axis labels to electrode number
+            g2 = get(gca,'YTickLabel');
+            yAxisMColC = flipud(yAxisMColC');
+            set(gca,'Ytick',[yAxisMColC]);
+            ax=gca; ExC = ax.YRuler.Exponent;
+            axis([0,inf,MC*0.5,(MC*(size(CSD,2)-1))-(MC*0.5)]);
+            set(gca, 'YTickLabel', [size(CSD,2)-1:-1:2]); % electrode number
+        else % plots the CSD for the inverse CSD method
+            CSD = CSD';
+            MC = max(max(abs(CSD))); % absolute maximum CSD
+            yAxisM = MC*size(CSD,2); % starting baseline for plots
+            figure(1) % plots the CSD data for all electrodes
+            subplot(1,3,2);
+            for j = 1:size(CSD,2);
+                plot(xAxis,CSD(:,j)+yAxisM,'k');
+                yAxisMColC(1,j) = yAxisM;
+                yAxisM = yAxisM-MC; % moves baseline of plot down by MmV
+                hold on
+            end
+            % converts axis labels to electrode number
+            g2 = get(gca,'YTickLabel');
+            yAxisMColC = flipud(yAxisMColC');
+            set(gca,'Ytick',[yAxisMColC]);
+            ax=gca; ExC = ax.YRuler.Exponent;
+            axis([0,inf,MC*0.5,(MC*(size(CSD,2)+1))-(MC*0.5)])
+            set(gca, 'YTickLabel', [size(CSD,2):-1:1]); % electrode number
+        end
+    
     % controls the size of magenta scale bar    
 %     if length(g2) < 5;   
 %         scale2 = ((str2num(g2{2})-str2num(g2{1}))/4)*10^double(ExC);
@@ -290,7 +294,7 @@ function [CSDoutput]  = CSD(data,SR,spacing,varargin);
     axis([0,max(xAxis),-inf,inf]);
     ylabel('Electrode');
     xlabel('Time (ms)');
-
+    end
     % Function output
     CSDoutput = CSD;
     
