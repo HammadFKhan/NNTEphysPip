@@ -179,7 +179,7 @@ end
 % figure('Name','Beta Amplitude'),bar(LFPdepth,bstats(:,2),'BarWidth',1),set(gcf, 'Position',  [100, 100, 500, 500])
 % figure('Name','Beta Event Rate'),bar(LFPdepth,bstats(:,3),'BarWidth',1),set(gcf, 'Position',  [100, 100, 500, 500])
 % Bar plot for each layer
-betaStats(bstats,LFPdepth)
+stats = betaStats(bstats,LFPdepth);
 
 %% Plot beta traces for each electrode
 % figure, hold on
