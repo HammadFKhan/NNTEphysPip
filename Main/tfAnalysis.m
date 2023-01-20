@@ -46,7 +46,7 @@ thetaLFP = LFP.theta_band'; %Downsampled LFP for P:P analysis
 betaLFP = LFP.beta_band';
 gammaLFP = LFP.gamma_band';
 fullLFP = LFP.LFP';
-LFPTime = (0:length(coherencyLFP)-1)';
+LFPTime = (1:length(coherencyLFP))';
 LFPTime = LFPTime/params.Fs;
 downsample_LFPTime = LFP.times';
 
@@ -59,6 +59,9 @@ if behaviorState
 else
     loc = Spikes.VR.binWinTime*find(abs(Velocity)<velocityTrig); %multiply by the cause of bin value
     disp(['Analyzing data during rest!'])
+    if  length(loc)>200
+        loc = loc(1:200);
+    end
 end
 
 % Check if threshold was too high
