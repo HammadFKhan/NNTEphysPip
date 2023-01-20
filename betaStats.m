@@ -15,5 +15,20 @@ betaEventLayers = [repmat({'L23'},length(L23betaEvent),1);repmat({'L5'},length(L
 figure('Name','Beta AmplitudeSingles'),boxplot(cell2mat(bstats(:,8)),betaEventLayers,'plotstyle','traditional'),...
     title('Beta Amplitude'),box off, set(gca,'TickDir','out');
 
-% figure('Name','Beta Event Rate'),boxplot(cell2mat(bstats(:,7)),LFPlayers,'plotstyle','traditional');title('Beta Event Rate')
+
+sElectrode = 10; %superficial electrode for beta event rate
+dElectrode = 60; %deep electrode for beta even rate
+L23 = repmat({'Superficial'},length(cell2mat(bstats(sElectrode,7))),1);
+L5 =  repmat({'Deep'},length(cell2mat(bstats(dElectrode,7))),1);
+
+figure('Name','Beta Event Rate'),boxplot(cell2mat(bstats([sElectrode dElectrode],7)),[L23;L5],'plotstyle','traditional');title('Beta Event Rate')
+
+L23 = repmat({'Superficial'},length(cell2mat(bstats(sElectrode,1))),1);
+L5 =  repmat({'Deep'},length(cell2mat(bstats(dElectrode,1))),1);
+
+figure('Name','Beta Event Duration'),boxplot(cell2mat(bstats([sElectrode dElectrode],1)),[L23;L5],'plotstyle','traditional');title('Beta Event Duration')
 % figure('Name','Amplitude Fano vs CV'),plot(bstats(:,10),sqrt(bstats(:,11)),'.'),axis([0 1.5 0 1.5]);xlabel('FanoFactor'),ylabel('CV'),title('Amplitude FanoFactor')
+
+stats.BetaAmplitudeNorm = cell2mat(bstats(:,2));
+stats.BetaEventRate = cell2mat(bstats([sElectrode dElectrode],7));
+stats.BetaEventDuration = cell2mat(bstats([sElectrode dElectrode],1));
