@@ -12,7 +12,19 @@ depth(isnan(depth)) = [];
 Velocity = Spikes.VR.Velocity(:,2);
 velocityTrig = 1; %Triggered at 1 cm
 loc = find(abs(Velocity)>=velocityTrig);
-sortedSpikeRate = Spikes.VR.spikeRate(:,idx)';
+try
+    sortedSpikeRate = Spikes.VR.spikeRate(:,idx)'; % TODO; for some reason there are cases where templates dont match
+catch
+    hardIdx = size(Spikes.VR.spikeRate,2);
+    if hardIdx~=length(idx)
+        disp('Spike templates do not match detected spikes...')
+        pause(1)
+        idx = idx(1:hardIdx);
+        depth = depth(1:hardIdx);
+        sortedSpikeRate = Spikes.VR.spikeRate(:,idx)'; % sort spikes until set VR spikes
+    end
+end
+    
 
 figure
 minmax = (sortedSpikeRate-min(sortedSpikeRate,[],1))./(max(sortedSpikeRate,[],1)-min(sortedSpikeRate,[],1));
