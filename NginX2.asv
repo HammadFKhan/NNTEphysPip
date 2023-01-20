@@ -141,7 +141,7 @@ electrode = 1:size(betaGroup,2);
 % electrode(badElectrode) = [];
 for i = electrode % Checks electrode size for median
     disp(['Electrode: ' num2str(i)])
-    [peakAlign{i},mLFP{i},betaNorm{i},f,bstats(i)] = betaAnalysis(betaGroup(i).electrode,LFP.LFP);
+    [peakAlign{i},mLFP{i},betaNorm{i},f,bstats(i)] = betaAnalysis(betaGroupRest(i).electrode,LFP.LFP);
 end 
 
 
