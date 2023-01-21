@@ -23,12 +23,14 @@ L5 =  repmat({'Deep'},length(cell2mat(bstats(dElectrode,7))),1);
 
 figure('Name','Beta Event Rate'),boxplot(cell2mat(bstats([sElectrode dElectrode],7)),[L23;L5],'plotstyle','traditional');title('Beta Event Rate')
 
-L23 = repmat({'Superficial'},length(cell2mat(bstats(sElectrode,1))),1);
-L5 =  repmat({'Deep'},length(cell2mat(bstats(dElectrode,1))),1);
+L23_1 = repmat({'Superficial'},length(cell2mat(bstats(sElectrode,1))),1);
+L5_1 =  repmat({'Deep'},length(cell2mat(bstats(dElectrode,1))),1);
 
-figure('Name','Beta Event Duration'),boxplot(cell2mat(bstats([sElectrode dElectrode],1)),[L23;L5],'plotstyle','traditional');title('Beta Event Duration')
+figure('Name','Beta Event Duration'),boxplot(cell2mat(bstats([sElectrode dElectrode],1)),[L23_1;L5_1],'plotstyle','traditional');title('Beta Event Duration')
 % figure('Name','Amplitude Fano vs CV'),plot(bstats(:,10),sqrt(bstats(:,11)),'.'),axis([0 1.5 0 1.5]);xlabel('FanoFactor'),ylabel('CV'),title('Amplitude FanoFactor')
 
 stats.BetaAmplitudeNorm = cell2mat(bstats(:,2));
 stats.BetaEventRate = cell2mat(bstats([sElectrode dElectrode],7));
+stats.BetaEventRateLabel = [L23;L5];
 stats.BetaEventDuration = cell2mat(bstats([sElectrode dElectrode],1));
+stats.BetaEventDurationLabel = [L23_1;L5_1];
