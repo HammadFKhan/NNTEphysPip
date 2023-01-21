@@ -11,9 +11,9 @@ else
 end
 
 lowThresholdFactor = 1; % Beta envolope must exceed lowThresholdFactor*stdev
-highThresholdFactor = 2.5; % Beta peak must exceed highThresholdFactor*stdev
+highThresholdFactor = 2; % Beta peak must exceed highThresholdFactor*stdev
 minInterRippleInterval = 30; % 30ms
-minBetaDuration = 50; % 50ms
+minBetaDuration = 40; % 50ms
 maxBetaDuration = 250; % 200ms
 noise = [];
 
@@ -36,11 +36,25 @@ for idx = 1:size(beta_signal,2)
         timestamps = window(idx,1):1/Fs:window(idx,2);
         timestamps = timestamps';
     end
-    signal = beta_signal(:,idx);
-    squaredSignal = signal.^2;
-    normalizedSquaredSignal = (squaredSignal - mean(squaredSignal))/std(squaredSignal);
-    % Detect beta periods by thresholding normalized squared signal
-    thresholded = normalizedSquaredSignal > lowThresholdFactor;
+    % super unoptimized method in creating the thresholding as a function of all trials instead of each trial
+    if normByTrial
+        disp('Thresholding by trial...'),pause(1)
+        signal = beta_signal(:,idx);
+        squaredSignal = signal.^2;
+        normalizedSquaredSignal = (squaredSignal - mean(squaredSignal))/std(squaredSignal);
+        % Detect beta periods by thresholding normalized squared signal
+        thresholded = normalizedSquaredSignal > lowThresholdFactor;
+    else 
+        disp('Thresholding by trial...'),pause(1)
+        signal = beta_signal(:); %collapes all trials and then threshold instead
+        squaredSignal = signal.^2;
+        normalizedSquaredSignal = (squaredSignal - mean(squaredSignal))/std(squaredSignal);
+        % Detect beta periods by thresholding normalized squared signal
+        thresholdedAll = normalizedSquaredSignal > lowThresholdFactor;
+        signal = beta_signal(:,idx); %rebuild the signal
+        thresholdedAll = reshape(thresholdedAll,size(beta_signal,1),size(beta_signal),2); %rebuild the threshold 
+         thresholded = thresholdedAll(:,idx);                                             % and then take the correct index in the for loop
+    end
     
     start = find(diff(thresholded)>0);
     stop = find(diff(thresholded)<0);
@@ -101,7 +115,7 @@ for idx = 1:size(beta_signal,2)
             if maxValue > highThresholdFactor,
                 thirdPass = [thirdPass ; secondPass(i,:)];
                 peakNormalizedPower = [peakNormalizedPower ; maxValue];
-                peakPower = [peakPower ; maxValue];
+                peakPower = [peakPower ; maxValue1];
             end
         end
         if isempty(thirdPass),
@@ -117,7 +131,7 @@ for idx = 1:size(beta_signal,2)
                 peakPosition(i) = minIndex + thirdPass(i,1) - 1;
             end
             % Discard beta events that are way too long
-            betaBurst = [timestamps(thirdPass(:,1))  timestamps(peakPosition)  timestamps(thirdPass(:,2)) peakNormalizedPower];
+            betaBurst = [timestamps(thirdPass(:,1))  timestamps(peakPosition)  timestamps(thirdPass(:,2)) peakNormalizedPower peakPower];
             duration = betaBurst(:,3)-betaBurst(:,1);
             betaBurst(duration>maxBetaDuration/1000,:) = NaN;
             disp(['After max duration test: ' num2str(size(betaBurst,1)) ' events.']);
