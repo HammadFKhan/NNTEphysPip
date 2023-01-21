@@ -141,7 +141,7 @@ electrode = 1:size(betaGroup,2);
 % electrode(badElectrode) = [];
 for i = electrode % Checks electrode size for median
     disp(['Electrode: ' num2str(i)])
-    [peakAlign{i},mLFP{i},betaNorm{i},f,bstats(i)] = betaAnalysis(betaGroup(i).electrode,LFP.LFP);
+    [peakAlign{i},mLFP{i},betaNorm{i},bstats(i)] = betaAnalysis(betaGroup(i).electrode,LFP.LFP);
 end 
 
 
@@ -346,3 +346,12 @@ hold on
 er = errorbar(mean(bothBeta,2),std(bothBeta'));    
 er.Color = [0 0 0];                            
 er.LineStyle = 'none';  
+%% Connected lines before and after
+figure,
+plot(ones(32,1),t(1:32),'.k'), hold on
+plot(2*ones(32,1),t1(1:32),'.k'),hold on
+for i = 1:32
+ line([1,2],[t(i) t1(i)])
+end
+ylim([4 5])
+xlim([0 3])
