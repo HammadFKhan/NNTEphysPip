@@ -30,7 +30,7 @@ Intan.allIntan  = Intan.allIntan(s.sorted_electrodes,:);
 Intan.offset = 1; % second
 Intan.offsetSample = targetedFs*Intan.offset;
 disp(['Adjusting for ' num2str(Intan.offset) ' second offset']);
-Intan.allIntan = Intan.allIntan(:,Intan.offsetSample:size(Intan.allIntan,2));
+Intan.allIntan = Intan.allIntan(:,Intan.offsetSample:(size(Intan.allIntan,2)-Intan.offsetSample));
 clear amplifier_data t_amplifier frequncy_parameters notes aux_input_channels...
     aux_input_data board_dig_in_channels board_dig_in_data amplifier_channels
 
