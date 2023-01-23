@@ -36,7 +36,7 @@ for idx = 1:size(beta_signal,2)
         timestamps = window(idx,1):1/Fs:window(idx,2);
         timestamps = timestamps';
     end
-    normByTrial = 0;
+    normByTrial = 1;
     % super unoptimized method in creating the thresholding as a function of all trials instead of each trial
     if normByTrial
         disp('Thresholding by trial...')
