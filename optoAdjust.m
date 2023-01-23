@@ -12,9 +12,9 @@ for i = 1:length(idx(idx>3000)) %opto has a 4 second interopto period
     optoPulse(pulseIdx:(pulseIdx+LFP.downSampleFreq*2)) = 1;
 end
 %%
+optoLFPm = squeeze(mean(optoLFP,2));
 figure,
 for i = 36
-    optoLFPm = squeeze(mean(optoLFP,2));
     data = [optoLFPm(1024:2048,i);optoLFPm(3074:4097,i)]; %1 second before and after stim
     [wavelet,f] = cwt(data,LFP.downSampleFreq,'FrequencyLimits',[1 100]);
     imagesc(0:2000,f,abs(wavelet)),colormap(jet),axis xy
@@ -41,21 +41,21 @@ pxxRef(61:68,:) = normrnd(10,8,[8,135]);
 figure,semilogx(f,mean((pxxRef),2)),hold on,ylim([0 50])
 %% beta Event detection around opto event
 %concatenate opto on trials to avoind the stim artifact
-data1 = optoBeta(512:1024,:,:); %.5 second before and after stim ** this will mess up the timestamp
-data2= optoBeta(2560:3072,:,:); %.5 second before and after stim ** this will mess up the timestamp
+data1 = optoBeta(1:1024,:,:); %.5 second before and after stim ** this will mess up the timestamp
+data2= optoBeta(2560:3584,:,:); %.5 second before and after stim ** this will mess up the timestamp
 
 temp1 = LFP.beta_band;
 parfor electrode = 1:size(temp1,1) % Checks electrode size for median
-    preOptoBetaGroup(electrode).electrode = groupBetaBurstDetection(temp1(electrode,:),data1(:,electrode,:),timestamps,1024); % Detect beta burst during window
+%     preOptoBetaGroup(electrode).electrode = groupBetaBurstDetection(temp1(electrode,:),data1(:,electrode,:),timestamps,1024); % Detect beta burst during window
     postOptoBetaGroup(electrode).electrode = groupBetaBurstDetection(temp1(electrode,:),data2(:,electrode,:),timestamps,1024); % Detect beta burst during window
 end
 %% Beta stats
 if exist('bstats','var')
-    clear bstats betaNorm peakAlign
+    clear bstats betaNorm peakAlign csd
 end
-for i = 1:size(preOptoBetaGroup,2) % Checks electrode size for median
+for i = 1:size(postOptoBetaGroup,2) % Checks electrode size for median
     disp(['Electrode: ' num2str(i)])
-    [peakAlign{i},csd{i},betaNorm{i},f,bstats(i)] = betaAnalysis(preOptoBetaGroup(i).electrode);
+    [peakAlign{i},mLFP{i},betaNorm{i},bstats(i)] = betaAnalysis(preOptoBetaGroup(i).electrode,LFP.LFP);
 end 
 
 % Beta Event Rate
@@ -98,7 +98,7 @@ if isstruct(bstats)
 end
 
 % Bar plot for each layer
-betaStats(bstats,LFPdepth(1:53))
+stats = betaStats(bstats,LFPdepth);
 
 %% Sort beta event rasters as a function of L2/3,L5, and L2/3->L5
 
