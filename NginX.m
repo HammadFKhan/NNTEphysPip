@@ -58,8 +58,8 @@ LFP = bandFilter(LFP,'depth'); % Extract LFPs based on 'depth' or 'single'
 Spikes = singleUnitAnalysis(fpath,VR_data); % VR_data.Time{1} = data(:,2); VR_data.Position{1} = data(:,1);
 % Calculate Depth profile
 set(0,'DefaultFigureWindowStyle','normal')
-% load chanMap % use for PFF
-load UCLA_chanMap_fixed
+load chanMap % use for PFF
+% load UCLA_chanMap_fixed
 [spikeAmps, spikeDepths, templateDepths, tempAmps, tempsUnW, templateDuration, waveforms] =...
     spikeTemplatePosition(fpath,ycoords);
 % figure,
