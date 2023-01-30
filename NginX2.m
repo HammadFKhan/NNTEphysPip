@@ -154,6 +154,8 @@ for i = electrode
 end
 figure,boxplot(betaEventRate,'Plotstyle','compact'),ylim([1 6]),box off
 figure,boxplot(betaEventDuration,'Plotstyle','compact'),box off
+figure,histogram(betaEventRate,1:15), box off, set(gca,'TickDir','out');
+figure,histogram(betaEventDuration,25:10:250),box off, set(gca,'TickDir','out');
 %%
 % Take out non-existant cell fields
 betaNorm = betaNorm(~cellfun('isempty',betaNorm));
@@ -179,7 +181,7 @@ end
 % figure('Name','Beta Amplitude'),bar(LFPdepth,bstats(:,2),'BarWidth',1),set(gcf, 'Position',  [100, 100, 500, 500])
 % figure('Name','Beta Event Rate'),bar(LFPdepth,bstats(:,3),'BarWidth',1),set(gcf, 'Position',  [100, 100, 500, 500])
 % Bar plot for each layer
-stats = betaStats(bstats,LFPdepth);
+stats = betaStats(bstats,LFPdepth,0); %(Bstats, LFPdepth,plotFlag
 
 %% Plot beta traces for each electrode
 % figure, hold on
@@ -210,15 +212,15 @@ spikeTriggeredBeta = betaEventPSH(betaGroup,Spikes,behaviorflag); %set behavior 
 % all happens on
 L23RunSR = Spikes.spikeRate.L23RunSR;
 L23RunSR = L23RunSR(:); %Reshape to 1d
-L23RunSR(L23RunSR<1) = []; %Remove zeros
+L23RunSR(L23RunSR<5) = []; %Remove zeros
 
-L4RunSR = Spikes.spikeRate.L4RunSR;
-L4RunSR = L4RunSR(:); %Reshape to 1d
-L4RunSR(L4RunSR<1) = []; %Remove zeros
+% L4RunSR = Spikes.spikeRate.L4RunSR;
+% L4RunSR = L4RunSR(:); %Reshape to 1d
+% L4RunSR(L4RunSR<5) = []; %Remove zeros
 
 L5RunSR = Spikes.spikeRate.L5RunSR;
 L5RunSR = L5RunSR(:); %Reshape to 1d
-L5RunSR(L5RunSR<1) = []; %Remove zeros
+L5RunSR(L5RunSR<5) = []; %Remove zeros
 
 L23RestSR = Spikes.spikeRate.L23RestSR;
 L23RestSR = L23RestSR(:); %Reshape to 1d
@@ -242,8 +244,8 @@ x = [1.1*ones(length(Spikes.spikeRate.L23avgSR),1);2.1*ones(length(Spikes.spikeR
 scatter(x,avgSR,'filled','k')
 
 %Rest SR
-restSR = vertcat(L23RestSR,L4RestSR,L5RestSR);
-xRestSR = [repmat({'L23'},length(L23RestSR),1);repmat({'L4'},length(L4RestSR),1);repmat({'L5'},length(L5RestSR),1)];
+restSR = vertcat(L23RestSR,L5RestSR);
+xRestSR = [repmat({'L23'},length(L23RestSR),1);repmat({'L5'},length(L5RestSR),1)];
 figure,boxplot(restSR,xRestSR,'plotstyle','compact'),title('Resting SR'),hold on
 ax = gca;
 ax.YAxis.Scale ='log';
@@ -252,8 +254,8 @@ x = [1.1*ones(length(L23RestSR),1);2.1*ones(length(L4RestSR),1);3.1*ones(length(
 scatter(x,restSR,'filled','k')
 
 % Run SR
-runSR = vertcat(L23RunSR,L4RunSR,L5RunSR);
-xRunSR = [repmat({'L23'},length(L23RunSR),1);repmat({'L4'},length(L4RunSR),1);repmat({'L5'},length(L5RunSR),1)];
+runSR = vertcat(L23RunSR,L5RunSR);
+xRunSR = [repmat({'L23'},length(L23RunSR),1);repmat({'L5'},length(L5RunSR),1)];
 figure,boxplot(runSR,xRunSR,'plotstyle','compact'),title('Running SR'),hold on
 ax = gca;
 ax.YAxis.Scale ='log';
