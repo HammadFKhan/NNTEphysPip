@@ -13,7 +13,7 @@ end
 lowThresholdFactor = 1; % Beta envolope must exceed lowThresholdFactor*stdev
 highThresholdFactor = 1; % Beta peak must exceed highThresholdFactor*stdev
 minInterRippleInterval = 30; % 30ms
-minBetaDuration = 30; % 50ms
+minBetaDuration = 40; % 50ms
 maxBetaDuration = 250; % 200ms
 noise = [];
 
@@ -37,7 +37,9 @@ for idx = 1:size(beta_signal,2)
         timestamps = timestamps';
     end
     normByTrial = 1;
-    % super unoptimized method in creating the thresholding as a function of all trials instead of each trial
+    % super unoptimized method in creating the thresholding as a function
+    % of all trials instead of each trial (TODO: check differences but I
+    % think not norming by trials is better....
     if normByTrial
         disp('Thresholding by trial...')
         signal = beta_signal(:,idx);
