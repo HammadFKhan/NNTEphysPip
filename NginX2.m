@@ -181,7 +181,7 @@ end
 % figure('Name','Beta Amplitude'),bar(LFPdepth,bstats(:,2),'BarWidth',1),set(gcf, 'Position',  [100, 100, 500, 500])
 % figure('Name','Beta Event Rate'),bar(LFPdepth,bstats(:,3),'BarWidth',1),set(gcf, 'Position',  [100, 100, 500, 500])
 % Bar plot for each layer
-stats = betaStats(bstats,LFPdepth,0); %(Bstats, LFPdepth,plotFlag
+stats = betaStats(bstats,LFPdepth,1); %(Bstats, LFPdepth,plotFlag
 
 %% Plot beta traces for each electrode
 % figure, hold on
@@ -194,9 +194,9 @@ figure,plot(mean(mPeakAlign,2)), hold on
 plot(mean(mPeakAlign,2)+std(mPeakAlign,0,2),'--r')
 plot(mean(mPeakAlign,2)-std(mPeakAlign,0,2),'--r')
 
-figure,stack_plot(flip(mPeakAlign'),0.3,1)
+figure,stack_plot(flip(mPeakAlign'),0.35,1)
 normPeakAlign = (mPeakAlign-min(mPeakAlign,[],'all'))/(max(mPeakAlign,[],'all')-min(mPeakAlign,[],'all'));
-figure,imagesc(0:250,LFPdepth,interp2(smoothdata(normPeakAlign'))),caxis([-0.1 1.25])
+figure,imagesc(0:250,LFPdepth,interp2(smoothdata(normPeakAlign'))),caxis([.1 1])
 %% Plot beta CSD for each electrode
 for i = 1:size(csd,2) % Checks electrode size for median
     mcsd(:,:,i) = mean(csd{i},3);
