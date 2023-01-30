@@ -27,6 +27,8 @@ if sum(LFP.betaBurst.NumDetectedBeta)==0
     stats.betaAmplitudeNum = [];
     stats.betaER = [];
     stats.betaAmplitudeSingle = [];
+    stats.betaAmplitudeRaw = [];
+
 
     %FanoFactor calculation
     stats.DurationFanoF = [];
@@ -45,6 +47,7 @@ else
     stats.betaAmplitudeNum = length(detectedBeta);
     stats.betaER = LFP.betaBurst.NumDetectedBeta(LFP.betaBurst.NumDetectedBeta~=0);
     stats.betaAmplitudeSingle = detectedBeta(:,4);
+    stats.betaAmplitudeRaw = detectedBeta(:,5);
     duration = (detectedBeta(:,3)-detectedBeta(:,1)).*1000;
     amplitude = detectedBeta(:,4);
     
