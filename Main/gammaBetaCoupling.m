@@ -52,7 +52,7 @@ gammaDepth = mean(gammaDepth,2);
 
 betaDepthAd = betaDepth-min(betaDepth,[],'all');
 gammaDepthAd = (betaDepth-gammaDepth);gammaDepthAd = gammaDepthAd-min(gammaDepthAd,[],'all');
-buff = gammaStd; %betaStd-gammaStd;
+buff = betaStd-gammaStd; %betaStd-gammaStd;
 betaDepthNorm = (betaDepthAd-min(betaDepthAd,[],'all'))/(max(betaDepthAd,[],'all')-min(betaDepthAd,[],'all'));
 gammaDepthNorm = (gammaDepthAd-min(gammaDepthAd,[],'all'))/(max(gammaDepthAd,[],'all')-min(gammaDepthAd,[],'all'));
 betaStdNorm = (betaStd-min(betaStd,[],'all'))/(max(betaStd,[],'all')-min(betaStd,[],'all'));
