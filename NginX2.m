@@ -6,6 +6,7 @@ addpath(genpath('Kilosort'));
 addpath(genpath('npy-matlab'));
 addpath(genpath('spikes-master'));
 IntanConcatenate
+%%
 % Intan = read_Intan_RHD2000_file(); %load intan data
 % ParpoolConfig
 fpath    = Intan.path; % where on disk do you want the analysis? ideally and SSD...
