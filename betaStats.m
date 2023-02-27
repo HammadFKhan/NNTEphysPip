@@ -36,3 +36,4 @@ stats.BetaAmplitudeRawL23 = cell2mat(bstats(l23Idx,9));
 stats.BetaAmplitudeRawL5 = cell2mat(bstats(l5Idx,9));
 stats.BetaEventDuration = cell2mat(bstats([sElectrode dElectrode],1));
 stats.BetaEventDurationLabel = [L23_1;L5_1];
+stats.BetaEventRateLabel = [L23;L5];
