@@ -1,8 +1,7 @@
-function stack_plot(DeltaFoverF,space,scale)
-if nargin<3,scale=1; end
-if nargin<2,space=1; end
-
-Fs = 1024;
+function stack_plot(DeltaFoverF,space,scale,Fs)
+if isempty(scale),scale=1; end
+if isempty(space),space=1; end
+if isempty(Fs),Fs = 1024; end
 
 x = length(DeltaFoverF(1,:));
 y = length(DeltaFoverF(:,1));
@@ -17,7 +16,8 @@ for i = 1:y
     baseline = baseline + max(DeltaFoverF,[],'all');
 end
 axis tight,box off
-set(gca,'XTick',[])
-set(gca,'YTick',[])
+% set(gca,'XTick',[])
+% set(gca,'YTick',[])
+set(gca,'TickDir','out')
 disp('Done!')
 end
