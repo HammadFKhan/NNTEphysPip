@@ -1,7 +1,7 @@
 for i = 1:29
     csdTest = CSD(t'/1E6,1024,2E-5);
 end
-t = mean(mLFP{15}([1:43,45:64],:,:),3);
+t = mean(mLFP{55}([1:43,45:64],:,:),3);
 rightSide = find(s.sorted_probe_wiring(:,2)==0);
 rightSide = [rightSide;find(s.sorted_probe_wiring(:,2)==36)];
 [CSD] = CustomCSD(t(rightSide,:),50,1024,0,0);
@@ -18,4 +18,4 @@ subplot(1,4,4),imagesc(CSD4),colormap(jet),colorbar
 
 figure,imagesc(CSD4),colormap(jet),colorbar
 
-figure,stack_plot(t(rightSide,:),1,2)
+figure,stack_plot(t(rightSide,:),1,2,1024)
