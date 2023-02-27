@@ -59,6 +59,11 @@ Spikes = spikeDepthPlot(Spikes,templateDepths);
 % Time-Frequency Analysis
 [TimeFreq,LFP,betaGroup,Spikes] = tfAnalysis(Spikes,LFP,1); %Behavior state running 1 (0 rest)
 [TimeFreq,LFP,betaGroupRest,Spikes] = tfAnalysis(Spikes,LFP,0,TimeFreq); %Behavior state running 1 (0 rest)
+%% Save ITPC 
+% Trunct rest and run into two columns for ease of comparison
+thetaITPC = [TimeFreq.tfRest.theta.itpc TimeFreq.tfRun.theta.itpc];
+betaITPC = [TimeFreq.tfRest.beta.itpc TimeFreq.tfRun.beta.itpc];
+gammaITPC = [TimeFreq.tfRest.gamma.itpc TimeFreq.tfRun.gamma.itpc];
 %%
 % [TimeFreq,LFP,betaGroupRest,Spikes] = tfAnalysis(Spikes,LFP,0,TimeFreq); %Behavior state running 1 (0 rest)
 
