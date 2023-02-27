@@ -21,7 +21,7 @@ if errorType == 0
     plot(x, yM, 'k', 'LineWidth', 2);
 else
     yM = mean(y,1);
-    x = x';
+%     x = x';
     error = std(y);
     error = 6*error/sqrt(length(yM));
     curve1 = yM + error;
