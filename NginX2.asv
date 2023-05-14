@@ -59,6 +59,16 @@ Spikes = spikeDepthPlot(Spikes,templateDepths);
 % Time-Frequency Analysis
 [TimeFreq,LFP,betaGroup,Spikes] = tfAnalysis(Spikes,LFP,1); %Behavior state running 1 (0 rest)
 [TimeFreq,LFP,betaGroupRest,Spikes] = tfAnalysis(Spikes,LFP,0,TimeFreq); %Behavior state running 1 (0 rest)
+%% Save ITPC 
+% Trunct rest and run into two columns for ease of comparison
+L23thetaITPC = [TimeFreq.tfRest.depth.L23.theta.itpc TimeFreq.tfRun.depth.L23.theta.itpc];
+L23betaITPC = [TimeFreq.tfRest.depth.L23.beta.itpc TimeFreq.tfRun.depth.L23.beta.itpc];
+L23gammaITPC = [TimeFreq.tfRest.depth.L23.gamma.itpc TimeFreq.tfRun.depth.L23.gamma.itpc];
+
+L5thetaITPC = [TimeFreq.tfRest.depth.L5.theta.itpc TimeFreq.tfRun.depth.L5.theta.itpc];
+L5betaITPC = [TimeFreq.tfRest.depth.L5.beta.itpc TimeFreq.tfRun.depth.L5.beta.itpc];
+L5gammaITPC = [TimeFreq.tfRest.depth.L5.gamma.itpc TimeFreq.tfRun.depth.L5.gamma.itpc];
+
 %%
 % [TimeFreq,LFP,betaGroupRest,Spikes] = tfAnalysis(Spikes,LFP,0,TimeFreq); %Behavior state running 1 (0 rest)
 
@@ -141,7 +151,7 @@ electrode = 1:size(betaGroup,2);
 % electrode(badElectrode) = [];
 for i = electrode % Checks electrode size for median
     disp(['Electrode: ' num2str(i)])
-    [peakAlign{i},mLFP{i},betaNorm{i},bstats(i)] = betaAnalysis(betaGroup(i).electrode,[]);
+    [peakAlign{i},mLFP{i},betaNorm{i},bstats(i)] = betaAnalysis(betaGroup(i).electrode,LFP.LFP);
 end 
 
 
