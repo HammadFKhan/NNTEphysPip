@@ -52,6 +52,8 @@ for i = 1:length(loc)
         spikeRatewin{i} = Spikes.VR(1).spikeRate(loc(i)-2:loc(i)+2,:)-baselineSpike;
     end
 end
+%% Spike Triggered average per spike
+
 spikeRateall = (horzcat(spikeRatewin{:}));
 plot(mean(spikeRateall,2));
 normTrig = (spikeRateTrig-min(spikeRateTrig,[],1))./(max(spikeRateTrig,[],1)-min(spikeRateTrig,[],1));
@@ -63,3 +65,4 @@ subplot(2,1,2),bar(1:size(loc,1),Spikes.VR.Velocity(loc,2));
 ylabel('Velocity cm/s')
 yline(velocityTrig,'r--'); box off
 ylim([-0.2 6])
+
