@@ -73,6 +73,15 @@ Spikes = spikeDepthPlot(Spikes,templateDepths);
 % Time-Frequency Analysis
 [TimeFreq,LFP,betaGroup,Spikes] = tfAnalysis(Spikes,LFP,1); %Behavior state running 1 (0 rest)
 [TimeFreq,LFP,betaGroupRest,Spikes] = tfAnalysis(Spikes,LFP,0,TimeFreq); %Behavior state running 1 (0 rest)
+
+% Trunct rest and run into two columns for ease of comparison
+L23thetaITPC = [TimeFreq.tfRest.depth.L23.theta.itpc TimeFreq.tfRun.depth.L23.theta.itpc];
+L23betaITPC = [TimeFreq.tfRest.depth.L23.beta.itpc TimeFreq.tfRun.depth.L23.beta.itpc];
+L23gammaITPC = [TimeFreq.tfRest.depth.L23.gamma.itpc TimeFreq.tfRun.depth.L23.gamma.itpc];
+
+L5thetaITPC = [TimeFreq.tfRest.depth.L5.theta.itpc TimeFreq.tfRun.depth.L5.theta.itpc];
+L5betaITPC = [TimeFreq.tfRest.depth.L5.beta.itpc TimeFreq.tfRun.depth.L5.beta.itpc];
+L5gammaITPC = [TimeFreq.tfRest.depth.L5.gamma.itpc TimeFreq.tfRun.depth.L5.gamma.itpc];
 %%
 % [TimeFreq,LFP,betaGroupRest,Spikes] = tfAnalysis(Spikes,LFP,0,TimeFreq); %Behavior state running 1 (0 rest)
 
@@ -90,7 +99,19 @@ figure,plot(mean(betaGammam))
 % figure,imagesc(betaGammam(:,1:40)'),colormagithup(jet)
 % figure,imagesc(betaGammam(:,41:64)'),colormap(jet)
 %% Broadband Spectrograms per behavior state
-pxSpecs = statePowerSpec(TimeFreq,LFP);
+%  pxSpecs = statePowerSpec(TimeFreq,LFP);  old version
+idx = find(s.sorted_probe_wiring(:,2)==0);
+params.Fs = 1024;
+params.fpass = [1 100];
+params.tapers = [5 9];
+movingwin = [0.5 0.5];
+params.pad = 1;
+params.trialave = 1;
+params.err = [2 0.05];
+[Srun,f,SerrRun] = mtspectrumc(squeeze(TimeFreq.tfRun.fullLFP(:,idx(end),:)),params);
+[Srest,f,SerrRest] = mtspectrumc(squeeze(TimeFreq.tfRest.fullLFP(:,idx(end),1:50)),params);
+figure,semilogy(f,Srun);hold on;semilogy(f,SerrRun);title('Run'),ylim([0 20E2]),box off,set(gca,'TickDir','out'),set(gca,'FontSize',14)
+figure,semilogy(f,Srest);hold on;semilogy(f,SerrRest);title('Rest'),ylim([0 20E2]),box off,set(gca,'TickDir','out'),set(gca,'FontSize',14)
 %% Plot Power Spectrum
 f = pxSpecs.f;
 broadband = pxSpecs.broadband;
