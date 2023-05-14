@@ -52,7 +52,7 @@ gammaDepth = mean(gammaDepth,2);
 
 betaDepthAd = betaDepth-min(betaDepth,[],'all');
 gammaDepthAd = (betaDepth-gammaDepth);gammaDepthAd = gammaDepthAd-min(gammaDepthAd,[],'all');
-buff = betaStd-gammaStd; %betaStd-gammaStd;
+buff = gammaStd; %betaStd-gammaStd;
 betaDepthNorm = (betaDepthAd-min(betaDepthAd,[],'all'))/(max(betaDepthAd,[],'all')-min(betaDepthAd,[],'all'));
 gammaDepthNorm = (gammaDepthAd-min(gammaDepthAd,[],'all'))/(max(gammaDepthAd,[],'all')-min(gammaDepthAd,[],'all'));
 betaStdNorm = (betaStd-min(betaStd,[],'all'))/(max(betaStd,[],'all')-min(betaStd,[],'all'));
@@ -197,9 +197,9 @@ if dplot
     subplot(2,1,1),plot(1:64,smoothdata(betaData+betaDataStd,'gaussian',10),'r--');
     subplot(2,1,1),plot(1:64,smoothdata(betaData-betaDataStd,'gaussian',10),'r--'),ylim([0. .9]),box off,set(gca,'TickDir','out');
     
-    subplot(2,1,2),plot(1:64,smoothdata(gammaData,'gaussian',10)),hold on,title('Gamma LFP')
-    subplot(2,1,2),plot(1:64,smoothdata(gammaData+gammaDataStd,'gaussian',10),'r--');
-    subplot(2,1,2),plot(1:64,smoothdata(gammaData-gammaDataStd,'gaussian',10),'r--'),ylim([0. .9]),box off,set(gca,'TickDir','out');
+    subplot(2,1,2),plot(1:64,smoothdata(flip(gammaData),'gaussian',10)),hold on,title('Gamma LFP')
+    subplot(2,1,2),plot(1:64,smoothdata(flip(gammaData+gammaDataStd),'gaussian',10),'r--');
+    subplot(2,1,2),plot(1:64,smoothdata(flip(gammaData-gammaDataStd),'gaussian',10),'r--'),ylim([0. .9]),box off,set(gca,'TickDir','out');
     
     % Gamma beta Event profile
 %     figure, %non adjusted data
