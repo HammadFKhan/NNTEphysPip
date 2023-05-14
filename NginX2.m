@@ -46,7 +46,7 @@ Spikes = singleUnitAnalysis(fpath,VR_data); % VR_data.Time{1} = data(:,2); VR_da
 % Calculate Depth profile
 set(0,'DefaultFigureWindowStyle','normal')
 % load chanMap % use for PFF
-load UCLA_chanMap
+load UCLA_chanMap_fixed
 [spikeAmps, spikeDepths, templateDepths, tempAmps, tempsUnW, templateDuration, waveforms] =...
     spikeTemplatePosition(fpath,ycoords);
 % figure,
@@ -61,9 +61,14 @@ Spikes = spikeDepthPlot(Spikes,templateDepths);
 [TimeFreq,LFP,betaGroupRest,Spikes] = tfAnalysis(Spikes,LFP,0,TimeFreq); %Behavior state running 1 (0 rest)
 %% Save ITPC 
 % Trunct rest and run into two columns for ease of comparison
-thetaITPC = [TimeFreq.tfRest.theta.itpc TimeFreq.tfRun.theta.itpc];
-betaITPC = [TimeFreq.tfRest.beta.itpc TimeFreq.tfRun.beta.itpc];
-gammaITPC = [TimeFreq.tfRest.gamma.itpc TimeFreq.tfRun.gamma.itpc];
+L23thetaITPC = [TimeFreq.tfRest.depth.L23.theta.itpc TimeFreq.tfRun.depth.L23.theta.itpc];
+L23betaITPC = [TimeFreq.tfRest.depth.L23.beta.itpc TimeFreq.tfRun.depth.L23.beta.itpc];
+L23gammaITPC = [TimeFreq.tfRest.depth.L23.gamma.itpc TimeFreq.tfRun.depth.L23.gamma.itpc];
+
+L5thetaITPC = [TimeFreq.tfRest.depth.L5.theta.itpc TimeFreq.tfRun.depth.L5.theta.itpc];
+L5betaITPC = [TimeFreq.tfRest.depth.L5.beta.itpc TimeFreq.tfRun.depth.L5.beta.itpc];
+L5gammaITPC = [TimeFreq.tfRest.depth.L5.gamma.itpc TimeFreq.tfRun.depth.L5.gamma.itpc];
+
 %%
 % [TimeFreq,LFP,betaGroupRest,Spikes] = tfAnalysis(Spikes,LFP,0,TimeFreq); %Behavior state running 1 (0 rest)
 
