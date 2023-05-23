@@ -9,14 +9,14 @@ Fs = 1/dt;
 VmTotal = [];
 % Vm = Vm-min(Vm,[],'all');
 % Vm = Vm-65;
-for i = 1:size(Vm,2)
+for i = 800:size(Vm,2)
     VmTotal = [VmTotal;Vm(:,i)];
 end
 
 % VmTotal = VmTotal-min(VmTotal,[],'all');
-% VmTotal = VmTotal-65;
+% VmTotal = VmTotal-62;
 figure,plot(0:dt:(length(VmTotal)-1)/Fs,VmTotal);xlim([0 length(VmTotal)/Fs])
-
+% figure,plot(0:dt:(length(VmfiltBeta)-1)/Fs,VmfiltBeta);xlim([0 length(VmTotal)/Fs])
 %% Im
 % Fix DC offset
 ImTotal = [];
@@ -38,13 +38,16 @@ end
 % upWin = interp1(1:size(win,1),win,1:0.05:size(win,1),'spline');
 %% Delete action potentials for subthreshold
 subThreshold = VmTotal;
-for i = 1:size(win,2)
-    thresh = find(subThreshold>0);
-    tri = diff(thresh);
-    trig = find(tri~=1);
-    COM = thresh(trig,1);
-    subThreshold(COM(1)-(0.001*Fs):COM(1)+(0.002*Fs)) = [];
-end
+%%
+
+thresh = find(subThreshold>-130);
+tri = diff(thresh);
+trig = find(tri~=1);
+COM = thresh(trig,1);
+
+subThreshold(COM(2:9000)-(0.001*Fs):COM(2:9000)+(0.002*Fs)) = [];
+
+
 
 figure,plot(0:dt:(length(subThreshold)-1)/Fs,subThreshold,'r');xlim([0 length(subThreshold)/Fs]),box off
 
@@ -52,14 +55,14 @@ figure,plot(0:dt:(length(subThreshold)-1)/Fs,subThreshold,'r');xlim([0 length(su
 figure,plot(upWin(:,1:150)),hold on
 plot(mean(upWin(:,1:150),2),'k','LineWidth',3),axis off
 %% Subthreshold Dynamics
-subthresh = VmTotal<30;
-subthresh = VmTotal(subthresh);
-Fc = [8 33];
+% subthresh = Intracellular2<-140;
+subthresh = Intracellular2(subthresh);
+Fc = [1 100];
 Wn = Fc./(Fs/2);
-b = fir1(50000,Wn,'bandpass');
-LFPfiltBeta = filtfilt(b,1,LFP2);
+b = fir1(10000,Wn,'bandpass');
+subthreshold = filtfilt(b,1,LFPtest);
 %% Filter
-filtered_dataIntra = customFilt(VmfiltBeta',Fs,[4 10]);
+filtered_dataIntra = customFilt(subthreshold,Fs,[12 30]);
 %%
 Intra = IntrabetaBurstDetection(filtered_dataIntra',Fs);
 %%
@@ -68,7 +71,7 @@ for i = 1:81
     subplot(9,9,i),plot(Intra.betaTrace{i}),axis off
 end
 %% Wavelet 
-[wavelet, f] = cwt(filtered_dataIntra,Fs,'FrequencyLimit',[10 30]);
+[wavelet, f] = cwt(Vm(:,1),Fs,'FrequencyLimit',[10 100]);
 figure,imagesc(0:dt:(length(subThreshold)-1)/Fs,f,abs(wavelet));colormap(jet);axis xy
 %%
 [peakAlign,norm,f,stats] = IntrabetaAnalysis(Intra);
