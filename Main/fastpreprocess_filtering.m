@@ -7,7 +7,7 @@ if nargin < 2 || strcmp(Fs,'')
 end
 
 LFP.Fs = Fs;
-downSampleFreq = 1024;
+downSampleFreq = 1000;
 
 % Notch Filtering
 channel_num = size(intanData,1);
