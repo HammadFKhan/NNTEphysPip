@@ -1,4 +1,5 @@
 function stats = tfStats(TimeFreq)
+stats = [];
 L23 = TimeFreq.tf.depth.L23;
 % L4 = TimeFreq.tf.depth.L4;
 L5 = TimeFreq.tf.depth.L5;
@@ -16,20 +17,20 @@ x = [xTheta; xBeta; xGamma];
 figure,boxplot(layers,x,'PlotStyle','compact'),hold on
 
 x = [1.2*ones(length(L23.theta.itpc),1);2.2*ones(length(L5.theta.itpc),1);...
-    4.2*ones(length(L23.beta.itpc),1);5.2*ones(length(L5.beta.itpc),1);6.2*ones(length(L5.beta.itpc),1);...
-    7.2*ones(length(L23.gamma.itpc),1);8.2*ones(length(L5.gamma.itpc),1);9.2*ones(length(L5.gamma.itpc),1)];
+   3.2*ones(length(L23.beta.itpc),1);4.2*ones(length(L5.beta.itpc),1);...
+    5.2*ones(length(L23.gamma.itpc),1);6.2*ones(length(L5.gamma.itpc),1);];
 scatter(x,layers,'filled','k')
 
 
-layers23 = [L23.theta.itpc;L23.beta.itpc;L23.gamma.itpc];
-x23 = [repmat({'L2/3-theta'},length(L23.theta.itpc), 1); repmat({'L23-beta'},length(L23.beta.itpc), 1); repmat({'L23-gamma'},length(L23.gamma.itpc), 1)];
-layers5 = [L5.theta.itpc;L5.beta.itpc;L5.gamma.itpc];
-x5 = [repmat({'L5-theta'},length(L5.theta.itpc), 1); repmat({'L5-beta'},length(L5.beta.itpc), 1); repmat({'L5-gamma'},length(L5.gamma.itpc), 1)];
-
-freq = [layers23;layers5];
-xl = [x23;x5];
-
-figure,boxplot(freq,xl,'PlotStyle','compact')
+% layers23 = [L23.theta.itpc;L23.beta.itpc;L23.gamma.itpc];
+% x23 = [repmat({'L2/3-theta'},length(L23.theta.itpc), 1); repmat({'L23-beta'},length(L23.beta.itpc), 1); repmat({'L23-gamma'},length(L23.gamma.itpc), 1)];
+% layers5 = [L5.theta.itpc;L5.beta.itpc;L5.gamma.itpc];
+% x5 = [repmat({'L5-theta'},length(L5.theta.itpc), 1); repmat({'L5-beta'},length(L5.beta.itpc), 1); repmat({'L5-gamma'},length(L5.gamma.itpc), 1)];
+% 
+% freq = [layers23;layers5];
+% xl = [x23;x5];
+% 
+% figure,boxplot(freq,xl,'PlotStyle','compact')
 % Export stat structure
 % stats.layersTheta = layersTheta;
 % stats.xTheta = xTheta;

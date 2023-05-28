@@ -4,7 +4,7 @@ path = [fpath,'/preAutoMerge'];
 SpikeClusters = readNPY(fullfile(path, 'spike_clusters.npy'));
 SpikeSamples = readNPY(fullfile(path, 'spike_times.npy'));
 %% Analysis
-Spikes.SpikeClusters = SpikeClusters;
+Spikes.SpikeClusters = SpikeClusters+1; %Add one because of 0 index from python
 Spikes.SpikeSamples = SpikeSamples;
 Spikes = clusterSort(Spikes);
 % sizePlot = ceil(sqrt(size(Spikes.Clusters,2)));
@@ -19,7 +19,7 @@ for i = 1:size(Spikes.Clusters,2)
     end
 end
 % ISI
-Spikes = ISI(Spikes,0.03,8192); %Spikes, Interval, Fs
+Spikes = ISI(Spikes,0.01,8192); %Spikes, Interval, Fs
 Spikes = rateMap(Spikes,VR_data); %Trial number
 
 % Clustered Projection
@@ -52,6 +52,8 @@ for i = 1:length(loc)
         spikeRatewin{i} = Spikes.VR(1).spikeRate(loc(i)-2:loc(i)+2,:)-baselineSpike;
     end
 end
+%% Spike Triggered average per spike
+
 spikeRateall = (horzcat(spikeRatewin{:}));
 plot(mean(spikeRateall,2));
 normTrig = (spikeRateTrig-min(spikeRateTrig,[],1))./(max(spikeRateTrig,[],1)-min(spikeRateTrig,[],1));
@@ -63,3 +65,4 @@ subplot(2,1,2),bar(1:size(loc,1),Spikes.VR.Velocity(loc,2));
 ylabel('Velocity cm/s')
 yline(velocityTrig,'r--'); box off
 ylim([-0.2 6])
+

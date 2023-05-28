@@ -11,7 +11,7 @@ else
 end
 
 lowThresholdFactor = 1; % Beta envolope must exceed lowThresholdFactor*stdev
-highThresholdFactor = 2; % Beta peak must exceed highThresholdFactor*stdev
+highThresholdFactor = 1; % Beta peak must exceed highThresholdFactor*stdev
 minInterRippleInterval = 30; % 30ms
 minBetaDuration = 40; % 50ms
 maxBetaDuration = 250; % 200ms
@@ -36,11 +36,28 @@ for idx = 1:size(beta_signal,2)
         timestamps = window(idx,1):1/Fs:window(idx,2);
         timestamps = timestamps';
     end
-    signal = beta_signal(:,idx);
-    squaredSignal = signal.^2;
-    normalizedSquaredSignal = (squaredSignal - mean(squaredSignal))/std(squaredSignal);
-    % Detect beta periods by thresholding normalized squared signal
-    thresholded = normalizedSquaredSignal > lowThresholdFactor;
+    normByTrial = 1;
+    % super unoptimized method in creating the thresholding as a function
+    % of all trials instead of each trial (TODO: check differences but I
+    % think not norming by trials is better....
+    if normByTrial
+        disp('Thresholding by trial...')
+        signal = beta_signal(:,idx);
+        squaredSignal = signal.^2;
+        normalizedSquaredSignal = (squaredSignal - mean(squaredSignal))/std(squaredSignal);
+        % Detect beta periods by thresholding normalized squared signal
+        thresholded = normalizedSquaredSignal > lowThresholdFactor;
+    else 
+        disp('Thresholding by entire behavior state...')
+        signal = beta_signal(:); %collapes all trials and then threshold instead
+        squaredSignal = signal.^2;
+        normalizedSquaredSignal = (squaredSignal - mean(squaredSignal))/std(squaredSignal);
+        % Detect beta periods by thresholding normalized squared signal
+        thresholdedAll = normalizedSquaredSignal > lowThresholdFactor;
+        signal = beta_signal(:,idx); %rebuild the signal
+        thresholdedAll = reshape(thresholdedAll,size(beta_signal,1),size(beta_signal,2)); %rebuild the threshold 
+        thresholded = thresholdedAll(:,idx);                                             % and then take the correct index in the for loop
+    end
     
     start = find(diff(thresholded)>0);
     stop = find(diff(thresholded)<0);

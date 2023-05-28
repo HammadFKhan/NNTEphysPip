@@ -20,9 +20,9 @@ Wn = Fc./(downSampleFreq/2);
 QF = Wn/10;
 [d1,c1] = iirnotch(Wn,QF);
 
-Fc = [1 256];
+Fc = [1 250];
 Wn = Fc./(downSampleFreq/2);
-b = fir1(10,Wn,'bandpass');
+b = fir1(5000,Wn,'bandpass');
 
 % Design butterworth filters for LFP
 % Fc = [128];
@@ -55,9 +55,9 @@ if useGPU
     %Output GPU data
     LFP.LFP = gather(lfp);
 else
-    rawData60 = filtfilt(d,c,downsample_Data');
-    rawData120 = filtfilt(d1,c,rawData60);
-    LFP.LFP = filtfilt(b,1,rawData60);
+%     rawData60 = filtfilt(d,c,downsample_Data');
+%     rawData120 = filtfilt(d1,c,rawData60);
+    LFP.LFP = filtfilt(b,1,downsample_Data');
 end
 LFP.LFP = LFP.LFP';
 LFP.channel_num = channel_num;

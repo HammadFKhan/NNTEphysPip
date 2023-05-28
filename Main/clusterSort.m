@@ -12,11 +12,11 @@ for i = 1:max(SpikeClusters)
     end
 end
 % Deletes clusters that are counted as zero
-count = 1;
-for ii = 1:length(Spikes.Clusters)
-    if isempty(Spikes.Clusters(count).cluster)
-        Spikes.Clusters(count) = [];
-    else
-        count = count+1;
-    end
-end
+% count = 1;
+% for ii = 1:length(Spikes.Clusters)
+%     if isempty(Spikes.Clusters(count).cluster)
+%         Spikes.Clusters(count) = [];
+%     else
+%         count = count+1;
+%     end
+% end

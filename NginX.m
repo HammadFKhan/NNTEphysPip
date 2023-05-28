@@ -9,11 +9,12 @@ IntanConcatenate
 % Intan = read_Intan_RHD2000_file(); %load intan data
 global useGPU 
 useGPU = 0;
-ParpoolConfig
+% ParpoolConfig
 fpath    = Intan.path; % where on disk do you want the analysis? ideally and SSD...
 pathToYourConfigFile = strcat(pwd,'/main/'); % for this example it's ok to leave this path inside the repo, but for your own config file you *must* put it somewhere else!  
 run(fullfile(pathToYourConfigFile, 'config_eMouse.m'))
-make_UCLAMouseChannelMap(fpath); % Creates channel map for electrode array
+%make_UCLAChannelMap2(fpath,s); % Creates channel map for electrode array
+make_UCLAMouseChannelMap(fpath);
 %%
 % filtData = preprocess_filtering(Intan.allIntan(:,1:400000),Intan.t_amplifier);
 %% Ripples
@@ -22,11 +23,14 @@ make_UCLAMouseChannelMap(fpath); % Creates channel map for electrode array
 
 
 %% Kilosort Analysis
+useGPU = 1;
 kilosortPrep(Intan.allIntan,fpath)
 set(0,'DefaultFigureWindowStyle','normal')
 rez = KilosortAnalysis(fpath,ops);
 % now fire up Phy and check these results. There should still be manual
 % work to be done (mostly merges, some refinements of contaminated clusters). 
+useGPU = 0;
+
 %% AUTO MERGES 
 % after spending quite some time with Phy checking on the results and understanding the merge and split functions, 
 % come back here and run Kilosort's automated merging strategy. This block
@@ -39,7 +43,9 @@ rez = KilosortAnalysis(fpath,ops);
 
 % LFP
 set(0,'DefaultFigureWindowStyle','normal')
-LFP = fastpreprocess_filtering(flip(Intan.allIntan,1),8192);
+LFP = fastpreprocess_filtering(flip(Intan.allIntan,1),8192); %Only run for PFF data
+% LFP = fastpreprocess_filtering(Intan.allIntan,8192);
+
 LFP = bestLFP(LFP);
 LFP = bandFilter(LFP,'depth'); % Extract LFPs based on 'depth' or 'single'
 % LFPplot(LFP)
@@ -49,10 +55,11 @@ LFP = bandFilter(LFP,'depth'); % Extract LFPs based on 'depth' or 'single'
 % [CSDoutput]  = CSD(LFPavg'/1E6,8192,2E-5);
 % Looking at single units
 % set(0,'DefaultFigureWindowStyle','docked')
-Spikes = singleUnitAnalysis(fpath,VR_data);
+Spikes = singleUnitAnalysis(fpath,VR_data); % VR_data.Time{1} = data(:,2); VR_data.Position{1} = data(:,1);
 % Calculate Depth profile
 set(0,'DefaultFigureWindowStyle','normal')
-load chanMap
+load chanMap % use for PFF
+% load UCLA_chanMap_fixed
 [spikeAmps, spikeDepths, templateDepths, tempAmps, tempsUnW, templateDuration, waveforms] =...
     spikeTemplatePosition(fpath,ycoords);
 % figure,
@@ -61,25 +68,50 @@ load chanMap
 % test
 
 Spikes = spikeDepthPlot(Spikes,templateDepths);
+
+%%
 % Time-Frequency Analysis
 [TimeFreq,LFP,betaGroup,Spikes] = tfAnalysis(Spikes,LFP,1); %Behavior state running 1 (0 rest)
 [TimeFreq,LFP,betaGroupRest,Spikes] = tfAnalysis(Spikes,LFP,0,TimeFreq); %Behavior state running 1 (0 rest)
+
+% Trunct rest and run into two columns for ease of comparison
+L23thetaITPC = [TimeFreq.tfRest.depth.L23.theta.itpc TimeFreq.tfRun.depth.L23.theta.itpc];
+L23betaITPC = [TimeFreq.tfRest.depth.L23.beta.itpc TimeFreq.tfRun.depth.L23.beta.itpc];
+L23gammaITPC = [TimeFreq.tfRest.depth.L23.gamma.itpc TimeFreq.tfRun.depth.L23.gamma.itpc];
+
+L5thetaITPC = [TimeFreq.tfRest.depth.L5.theta.itpc TimeFreq.tfRun.depth.L5.theta.itpc];
+L5betaITPC = [TimeFreq.tfRest.depth.L5.beta.itpc TimeFreq.tfRun.depth.L5.beta.itpc];
+L5gammaITPC = [TimeFreq.tfRest.depth.L5.gamma.itpc TimeFreq.tfRun.depth.L5.gamma.itpc];
 %%
 % [TimeFreq,LFP,betaGroupRest,Spikes] = tfAnalysis(Spikes,LFP,0,TimeFreq); %Behavior state running 1 (0 rest)
 
 % plotTF(TimeFreq,LFP)
 % TF stats of depth
-% TimeFreq.tf = TimeFreq.tfRun;
-% stats = tfStats(TimeFreq);
-% tfDepth = TimeFreq.tf.depth;
-betaGammaCoupling = gammaBetaCoupling(TimeFreq.tfRun.gammaLFP,TimeFreq.tfRun.betaLFP);
+TimeFreq.tf = TimeFreq.tfRun;
+stats = tfStats(TimeFreq);ylim([0 0.4])
+%%
+tfDepth = TimeFreq.tf.depth;
+betaGammaCoupling = gammaBetaCoupling(LFP,TimeFreq.tfRun,betaGroup);
+betaGammaCouplingRest = gammaBetaCoupling(LFP,TimeFreq.tfRest,betaGroupRest);
 betaGammam = mean(betaGammaCoupling,3);
 figure,imagesc(-179:20:180,1:64,interp2(betaGammam')),colormap(jet)
 figure,plot(mean(betaGammam))
 % figure,imagesc(betaGammam(:,1:40)'),colormagithup(jet)
 % figure,imagesc(betaGammam(:,41:64)'),colormap(jet)
 %% Broadband Spectrograms per behavior state
-pxSpecs = statePowerSpec(TimeFreq,LFP);
+%  pxSpecs = statePowerSpec(TimeFreq,LFP);  old version
+idx = find(s.sorted_probe_wiring(:,2)==0);
+params.Fs = 1024;
+params.fpass = [1 100];
+params.tapers = [5 9];
+movingwin = [0.5 0.5];
+params.pad = 1;
+params.trialave = 1;
+params.err = [2 0.05];
+[Srun,f,SerrRun] = mtspectrumc(squeeze(TimeFreq.tfRun.fullLFP(:,idx(end),:)),params);
+[Srest,f,SerrRest] = mtspectrumc(squeeze(TimeFreq.tfRest.fullLFP(:,idx(end),1:50)),params);
+figure,semilogy(f,Srun);hold on;semilogy(f,SerrRun);title('Run'),ylim([0 20E2]),box off,set(gca,'TickDir','out'),set(gca,'FontSize',14)
+figure,semilogy(f,Srest);hold on;semilogy(f,SerrRest);title('Rest'),ylim([0 20E2]),box off,set(gca,'TickDir','out'),set(gca,'FontSize',14)
 %% Plot Power Spectrum
 f = pxSpecs.f;
 broadband = pxSpecs.broadband;
@@ -100,7 +132,38 @@ figure,bar(total),hold on
 errorbar(1:3,total,err)
 idx1 = idx1';idx2 = idx2';idx3 = idx3';
 %% 
-spikeRaster(Spikes)
+[L23RunAvg,L5RunAvg] = spikeRaster(Spikes,1,5); %Spikes, flag (0/1) for rest/run, and scatter size (sz)
+[L23RestAvg,L5RestAvg] = spikeRaster(Spikes,0,5); %Spikes, flag (0/1) for rest/run
+%%
+t1 = cellfun('size',L23RestAvg,1)/4;
+t2 = cellfun('size',L5RestAvg,1)/4;
+L23Rest = t1';L5Rest = t2';
+figure,histogram(t1,0:10:100),hold on
+histogram(t2,0:10:100), box off
+
+t = vertcat(t1',t2');
+x = [repmat({'L23'},length(t1),1);];
+x1 = repmat({'L5'},length(t2),1);
+figure,boxplot(t1,x,'plotstyle','compact'), hold on, box off,ylim([0 100]),title('L23 Rest')
+figure,boxplot(t2,x,'plotstyle','compact'), hold on, box off,ylim([0 100]),title('L5 Rest')
+
+
+t1 = cellfun('size',L23RunAvg,1)/4;
+t2 = cellfun('size',L5RunAvg,1)/4;
+L23Run = t1';L5Run = t2';
+Resttotal = [L23Rest,L5Rest];
+Runtotal = [L23Run,L5Run];
+%%
+figure,histogram(t1,0:10:150),hold on
+histogram(t2,0:10:150), box off
+
+t = vertcat(t1',t2');
+%x = [repmat({'L23'},length(t1),1);repmat({'L5'},length(t2),1);];
+x = [repmat({'L23'},length(t1),1);];
+x1 = repmat({'L5'},length(t2),1);
+figure,boxplot(t1,x,'plotstyle','compact'), hold on, box off,ylim([0 100]),title('L23 Run')
+figure,boxplot(t2,x1,'plotstyle','compact'), hold on, box off,ylim([0 100]),title('L5 Run')
+
 %% Beta Analysis for each electrode
 if exist('bstats','var')
     clear bstats
@@ -152,9 +215,10 @@ for i = 1:size(peakAlign,2) % Checks electrode size for median
     mPeakAlign(:,i) = mean(peakAlign{i},1);
     plot(peakAlign{i}')
 end
+mPeakAlign = mPeakAlign(:,[1:43,45:64]);
 figure,stack_plot(flip(mPeakAlign'),0.2,1.5)
 normPeakAlign = (mPeakAlign-min(mPeakAlign,[],'all'))/(max(mPeakAlign,[],'all')-min(mPeakAlign,[],'all'));
-figure,imagesc(0:250,LFPdepth,smoothdata(normPeakAlign')),caxis([0 1])
+figure,imagesc(0:250,LFPdepth,interp2(smoothdata(normPeakAlign'))),caxis([0.1 1])
 %% Plot beta CSD for each electrode
 for i = 1:size(csd,2) % Checks electrode size for median
     mcsd(:,:,i) = mean(csd{i},3);

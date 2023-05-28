@@ -46,7 +46,7 @@ thetaLFP = LFP.theta_band'; %Downsampled LFP for P:P analysis
 betaLFP = LFP.beta_band';
 gammaLFP = LFP.gamma_band';
 fullLFP = LFP.LFP';
-LFPTime = (0:length(coherencyLFP)-1)';
+LFPTime = (1:length(coherencyLFP))';
 LFPTime = LFPTime/params.Fs;
 downsample_LFPTime = LFP.times';
 
@@ -59,6 +59,9 @@ if behaviorState
 else
     loc = Spikes.VR.binWinTime*find(abs(Velocity)<velocityTrig); %multiply by the cause of bin value
     disp(['Analyzing data during rest!'])
+    if  length(loc)>200
+        loc = loc(1:200);
+    end
 end
 
 % Check if threshold was too high
@@ -202,14 +205,25 @@ disp('Calculating LFP Phase Coupling')
 % if useGPU
 %     theta = gpuArray(theta);beta = gpuArray(beta);gamma = gpuArray(gamma);
 % end
-% params.Fs = 1024;
-% params.fpass = [4 30];
+params.Fs = 1024;
+params.fpass = [4 30];
 % [tf.oscillators.tb.C,tf.oscillators.tb.phi,S12,S1,S2,tf.oscillators.t,tf.oscillators.tb.f]=cohgramc(theta,beta,movingwin,params);
 % params.fpass = [4 80];
 % [tf.oscillators.tg.C,tf.oscillators.tg.phi,S12,S1,S2,t,tf.oscillators.tg.f]=cohgramc(theta,gamma,movingwin,params);
-% params.fpass = [30 80];
-% [tf.oscillators.bg.C,tf.oscillators.bg.phi,S12,S1,S2,t,tf.oscillators.bg.f]=cohgramc(beta,gamma,movingwin,params);
-
+params.fpass = [15 80];
+params.tapers = [15 29];
+movingwin = [0.5 0.1];
+params.pad = 0;
+count = 1;
+for i = [10,20,30,40,50,64]
+[tf.oscillators.bg(count).C,tf.oscillators.bg(count).phi,S12,S1,S2,t,tf.oscillators.bg.f]=...
+    cohgramc(squeeze(beta(:,i,:)),squeeze(gamma(:,i,:)),movingwin,params);
+end
+%%
+params.Fs = 8192;
+params.tapers = [5 9];
+movingwin = [0.5 0.05];
+params.pad = 2;
 params.Fs = 8192;
 if useGPU
     LFPTrig = gpuArray(LFPTrig);
@@ -274,7 +288,6 @@ disp('Analyzing Gamma Band for Layer 5...')
 
 %% Inter-trial Phase Clustering of Spike-LFP
 [tf.theta.theta,tf.theta.itpc,tf.beta.beta,tf.beta.itpc,tf.gamma.gamma,tf.gamma.itpc] = chronuxITPC(tf.theta.phi,tf.beta.phi,tf.gamma.phi);
-
 %% Inter-trial Phase Clustering of Spike-LFP per Layer
 disp('ITPC for layer 2/3')
 [tf.depth.L23.theta.theta,tf.depth.L23.theta.itpc,tf.depth.L23.beta.beta,tf.depth.L23.beta.itpc,tf.depth.L23.gamma.gamma,tf.depth.L23.gamma.itpc]...

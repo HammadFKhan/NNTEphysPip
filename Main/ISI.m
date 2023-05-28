@@ -12,7 +12,7 @@ for i = 1:length(Spikes.Clusters)
     title(['Cluster ' num2str(i)]);
 %     set(gca,'YTick','','YTickLabel','');
     xlabel('Time (s)')
-    xlim([0 1]);
+    xlim([0 0.5]);
 end
 
     

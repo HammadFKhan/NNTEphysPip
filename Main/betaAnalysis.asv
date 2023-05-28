@@ -33,6 +33,7 @@ stats.betaAmplitude = mean(detectedBeta(:,5));
 stats.betaAmplitudeError = std(detectedBeta(:,5));
 stats.betaAmplitudeNum = length(detectedBeta);
 stats.betaER = LFP.betaBurst.NumDetectedBeta(LFP.betaBurst.NumDetectedBeta~=0);  
+stats.betaAmplitudeSingle = detectedBeta(:,4);
 duration = (detectedBeta(:,3)-detectedBeta(:,1)).*1000;
 amplitude = detectedBeta(:,4);
 
@@ -44,10 +45,11 @@ stats.AmplitudeCVsquared = (std(amplitude)/mean(amplitude))^2;
 
 CSDoutput = [];
 %CSD during velocity window
-% for i = 1:size(window,1)
-%     t = LFP.LFP(:,window(i,1)*1024:window(i,2)*1024);
+for i = 1:size(window,1)
+    t(:,:,i) = LFP.LFP(:,window(i,1)*1024:window(i,2)*1024);
 %     CSDoutput  = CSD(csdPeakAlign'/1E6,1024,2E-5);
-% end
+end
+mLFP = mean(t,3);
 % mCSD = mean(CSDoutput,3);
 % figure,imagesc(0:1/Fs:2049,1:64,mCSD'),colormap(jet)
 % CSD during beta triggered event
@@ -71,7 +73,7 @@ if plt ==1
 %         'Direction','out','Color','kbr','LineStyle',{'-','-.',':'},...
 %         'LineWidth',[2,2,2],'Nbins',[20 100], 'marker','.','markersize',10)
 %     box off
-
+end
     % Create array for beta events
     maxdiff = 257;
     peakWin = ceil(maxdiff/2);
@@ -127,4 +129,5 @@ for i = 1:size(t2,2)
     freqPks(i) = fF(pks);
 end
 
+stats.freqPks = freqPks;
 
