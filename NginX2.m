@@ -29,19 +29,22 @@ rez = KilosortAnalysis(fpath,ops);
 % Kilosort's AUTO merges should not be confused with the "best" merges done inside the
 % benchmark (those are using the real ground truth!!!)
 
-% LFP
+%% LFP
 set(0,'DefaultFigureWindowStyle','normal')
 LFP = fastpreprocess_filtering(Intan.allIntan,10000);
 LFP = bestLFP(LFP);
 LFP = bandFilter(LFP,'depth'); % Extract LFPs based on 'depth' or 'single'
+%% Parameters 
+parameters.caFR = 30.048;
+parameters.ts = 1/parameters.caFR;
+parameters.caTime = 0:parameters.ts:(size(DeltaFoverF,2)-1)*parameters.ts;
+parameters.windowBeforePull = 1; % in seconds
+parameters.windowAfterPull = 1; % in seconds
 
-% LFPplot(LFP)
-% %% Beta Band Analysis
-% LFP = betaBurstDetection(LFP);
-% %% CSD
-% [CSDoutput]  = CSD(LFPavg'/1E6,8192,2E-5);
-% Looking at single units
-% set(0,'DefaultFigureWindowStyle','docked')
+%% Behavior
+
+[Behaviour] = readLever(parameters);
+%% Spikes
 Spikes = singleUnitAnalysis(fpath,VR_data); % VR_data.Time{1} = data(:,2); VR_data.Position{1} = data(:,1);
 % Calculate Depth profile
 set(0,'DefaultFigureWindowStyle','normal')
