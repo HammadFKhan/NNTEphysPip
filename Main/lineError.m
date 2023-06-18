@@ -5,7 +5,7 @@ elseif strcmp(varargin,'ste')
         errorType = 1;
 else
     warning('No error type given, defaulting to std')
-    errorType = 0;     
+    errorType = 1;     
 end
 
 if errorType == 0
@@ -23,7 +23,7 @@ else
     yM = mean(y,1);
 %     x = x';
     error = std(y);
-    error = 6*error/sqrt(length(yM));
+    error = error/sqrt(length(yM));
     curve1 = yM + error;
     curve2 = yM - error;
     x2 = [x, fliplr(x)];
