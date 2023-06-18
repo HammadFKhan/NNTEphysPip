@@ -31,7 +31,7 @@ rez = KilosortAnalysis(fpath,ops);
 
 % LFP
 set(0,'DefaultFigureWindowStyle','normal')
-LFP = fastpreprocess_filtering(Intan.allIntan,8192);
+LFP = fastpreprocess_filtering(Intan.allIntan,10000);
 LFP = bestLFP(LFP);
 LFP = bandFilter(LFP,'depth'); % Extract LFPs based on 'depth' or 'single'
 
