@@ -532,7 +532,8 @@ Intan.aux_input_channels = aux_input_channels;
 Intan.aux_input_data = aux_input_data;
 Intan.board_dig_in_channels = board_dig_in_channels;
 Intan.board_dig_in_data = board_dig_in_data;
-
+Intan.board_adc_channels = board_adc_channels;
+Intan.board_adc_data = board_adc_data;
 fprintf(1, 'Done!  Elapsed time: %0.1f seconds\n', toc);
 if (data_present)
     fprintf(1, 'Extracted data are now available in the MATLAB workspace.\n');
