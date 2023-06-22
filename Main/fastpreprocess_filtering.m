@@ -20,7 +20,7 @@ Wn = Fc./(downSampleFreq/2);
 QF = Wn/10;
 [d1,c1] = iirnotch(Wn,QF);
 
-Fc = [1 250];
+Fc = [4 100];
 Wn = Fc./(downSampleFreq/2);
 b = fir1(5000,Wn,'bandpass');
 
