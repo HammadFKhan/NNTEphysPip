@@ -29,24 +29,27 @@ rez = KilosortAnalysis(fpath,ops);
 % Kilosort's AUTO merges should not be confused with the "best" merges done inside the
 % benchmark (those are using the real ground truth!!!)
 
-% LFP
+%% LFP
 set(0,'DefaultFigureWindowStyle','normal')
-LFP = fastpreprocess_filtering(Intan.allIntan,8192);
+LFP = fastpreprocess_filtering(Intan.allIntan,10000);
 LFP = bestLFP(LFP);
 LFP = bandFilter(LFP,'depth'); % Extract LFPs based on 'depth' or 'single'
+%% Parameters 
+parameters.ephysFs = 1000;
+parameters.ts = 1/parameters.ephysFs;
+parameters.caTime = 0:parameters.ts:(size(LFP.medianLFP,2)-1)*parameters.ts;
+parameters.windowBeforePull = 1; % in seconds
+parameters.windowAfterPull = 1; % in seconds
 
-% LFPplot(LFP)
-% %% Beta Band Analysis
-% LFP = betaBurstDetection(LFP);
-% %% CSD
-% [CSDoutput]  = CSD(LFPavg'/1E6,8192,2E-5);
-% Looking at single units
-% set(0,'DefaultFigureWindowStyle','docked')
+%% Behavior
+lfptime = 1/LFP.downSampleFreq:1/LFP.downSampleFreq:size(LFP.medianLFP,2)/LFP.downSampleFreq;
+[Behaviour] = readLever(parameters,lfptime);
+%% Spikes
 Spikes = singleUnitAnalysis(fpath,VR_data); % VR_data.Time{1} = data(:,2); VR_data.Position{1} = data(:,1);
 % Calculate Depth profile
 set(0,'DefaultFigureWindowStyle','normal')
 % load chanMap % use for PFF
-load UCLA_chanMap
+load UCLA_chanMap_fixed
 [spikeAmps, spikeDepths, templateDepths, tempAmps, tempsUnW, templateDuration, waveforms] =...
     spikeTemplatePosition(fpath,ycoords);
 % figure,
@@ -55,8 +58,58 @@ load UCLA_chanMap
 % test
 
 Spikes = spikeDepthPlot(Spikes,templateDepths);
+%% CSD and spectrogram
+% Hit trials
+CSDoutputhit = [];waveletHit = [];waveletMiss = [];powerCWThit = [];CSDoutputmiss = []; hitLFP = []lmissLFP = []
+eIdx = find(s.sorted_probe_wiring(:,2)==0);
+linearProbe = LFP.medianLFP(eIdx,:);
+params.tapers = [5 9];
+params.Fs = 1000;
+params.fpass = [0 80];
+params.err = [2 0.05];
+for i = 1:Behaviour.nHit
+    hitWin = [Behaviour.hit(i,3)-1000, Behaviour.hit(i,3)+1000]; %ms
+    hitLFP(:,:,i) = linearProbe(1:8,hitWin(1):hitWin(2));
+    [waveletHit(:,:,i),fwavelet] = cwt(mean(hitLFP(:,:,i),1),1000,'FrequencyLimit',[4 80]);
+    [powerCWThit(:,:,i), fwt] = calCWTSpectogram(mean(hitLFP(:,:,i),1),0:2000,1000,10,[4 80],0);
+    [CSDoutputhit(:,:,i)]  = CSD(hitLFP(:,:,i)'/1E6,1000,20E-6);
+end
+[Shits,fhits,Serrhits]=mtspectrumc(squeeze(mean(hitLFP,1)),params);
+
+for i = 1:Behaviour.nMiss
+    missWin = [Behaviour.hit(i,3)-1000, Behaviour.hit(i,3)+1000]; %ms
+    missLFP(:,:,i) = linearProbe(1:8,missWin(1):missWin(2));
+    [waveletMiss(:,:,i),fwavelet] = cwt(mean(missLFP(:,:,i),1),1000,'FrequencyLimit',[4 80]);
+    [powerCWTmiss(:,:,i), fwt] = calCWTSpectogram(mean(missLFP(:,:,i),1),0:2000,1000,10,[4 80],0);
+    [CSDoutputmiss(:,:,i)]  = CSD(missLFP(:,:,i)'/1E6,1000,20E-6);
+end
+[Shits,fhits,Serrhits]=mtspectrumc(squeeze(mean(hitLFP,1)),params);
+[Smiss,fmiss,Serrmiss] = mtspectrumc(squeeze(mean(missLFP,1)),params);
 %%
-% Time-Frequency Analysis
+figure,
+pCSD = mean(CSDoutputhit(:,3:end-2,:),3)';
+pCSD = smoothdata(pCSD,'gaussian',5);
+Vq = pCSD;
+Vq = interp2(Vq,4);
+im = imagesc(Vq); % CSD as heatmap
+colormap(jet); % blue = sink; red = source
+caxis([-.4 .4])
+figure,
+imagesc(-1000:1000,fwavelet,mean(abs(waveletHit),3)),colormap(jet),axis xy
+figure,imagesc(-1000:1000,fwt,mean(powerCWThit,3)),colormap(jet),axis xy, colorbar
+
+figure,
+pCSD = mean(CSDoutputmiss(:,3:end-2,:),3)';
+pCSD = smoothdata(pCSD,'gaussian',5);
+Vq = pCSD;
+Vq = interp2(Vq,4);
+im = imagesc(Vq); % CSD as heatmap
+colormap(jet); % blue = sink; red = source
+caxis([-.4 .4])
+figure,
+imagesc(-1000:1000,fwavelet,mean(abs(waveletMiss),3)),colormap(jet),axis xy
+figure,imagesc(-1000:1000,fwt,mean(powerCWTmiss,3)),colormap(jet),axis xy, colorbar
+%% Time-Frequency Analysis
 [TimeFreq,LFP,betaGroup,Spikes] = tfAnalysis(Spikes,LFP,1); %Behavior state running 1 (0 rest)
 [TimeFreq,LFP,betaGroupRest,Spikes] = tfAnalysis(Spikes,LFP,0,TimeFreq); %Behavior state running 1 (0 rest)
 %% Save ITPC 
@@ -217,153 +270,3 @@ figure,imagesc(0:250,LFPdepth,interp2(smoothdata((mcsd')),2)),colormap(jet),caxi
 %%
 behaviorflag = 1;
 spikeTriggeredBeta = betaEventPSH(betaGroup,Spikes,behaviorflag); %set behavior flag 0 or 1 for rest/run
-%% Layer specific spike rate
-% Convert cell x trial to single array (cos we don't care what trial this
-% all happens on
-L23RunSR = Spikes.spikeRate.L23RunSR;
-L23RunSR = L23RunSR(:); %Reshape to 1d
-L23RunSR(L23RunSR<5) = []; %Remove zeros
-
-% L4RunSR = Spikes.spikeRate.L4RunSR;
-% L4RunSR = L4RunSR(:); %Reshape to 1d
-% L4RunSR(L4RunSR<5) = []; %Remove zeros
-
-L5RunSR = Spikes.spikeRate.L5RunSR;
-L5RunSR = L5RunSR(:); %Reshape to 1d
-L5RunSR(L5RunSR<5) = []; %Remove zeros
-
-L23RestSR = Spikes.spikeRate.L23RestSR;
-L23RestSR = L23RestSR(:); %Reshape to 1d
-L23RestSR(L23RestSR<1) = [];
-
-L4RestSR = Spikes.spikeRate.L4RestSR;
-L4RestSR = L4RestSR(:); %Reshape to 1d
-L4RestSR(L4RestSR<1) = [];
-
-L5RestSR = Spikes.spikeRate.L5RestSR;
-L5RestSR = L5RestSR(:); %Reshape to 1d
-L5RestSR(L5RestSR<1) = [];
-
-%Avg SR
-avgSR = vertcat(Spikes.spikeRate.L23avgSR,Spikes.spikeRate.L4avgSR,Spikes.spikeRate.L5avgSR);
-xAvgSR = [repmat({'L23'},length(Spikes.spikeRate.L23avgSR),1);repmat({'L4'},length(Spikes.spikeRate.L4avgSR),1);repmat({'L5'},length(Spikes.spikeRate.L5avgSR),1)];
-figure,boxplot(avgSR,xAvgSR,'plotstyle','compact'),title('Average SR'), hold on
-set(gca, 'YScale', 'log')
-ylim([00.1 100])
-x = [1.1*ones(length(Spikes.spikeRate.L23avgSR),1);2.1*ones(length(Spikes.spikeRate.L4avgSR),1);3.1*ones(length(Spikes.spikeRate.L5avgSR),1)];
-scatter(x,avgSR,'filled','k')
-
-%Rest SR
-restSR = vertcat(L23RestSR,L5RestSR);
-xRestSR = [repmat({'L23'},length(L23RestSR),1);repmat({'L5'},length(L5RestSR),1)];
-figure,boxplot(restSR,xRestSR,'plotstyle','compact'),title('Resting SR'),hold on
-ax = gca;
-ax.YAxis.Scale ='log';
-ylim([00.1 100])
-x = [1.1*ones(length(L23RestSR),1);2.1*ones(length(L4RestSR),1);3.1*ones(length(L5RestSR),1)];
-scatter(x,restSR,'filled','k')
-
-% Run SR
-runSR = vertcat(L23RunSR,L5RunSR);
-xRunSR = [repmat({'L23'},length(L23RunSR),1);repmat({'L5'},length(L5RunSR),1)];
-figure,boxplot(runSR,xRunSR,'plotstyle','compact'),title('Running SR'),hold on
-ax = gca;
-ax.YAxis.Scale ='log';
-ylim([00.1 100])
-x = [1.1*ones(length(L23RunSR),1);2.1*ones(length(L4RunSR),1);3.1*ones(length(L5RunSR),1)];
-scatter(x,runSR,'filled','k')
-%%
-%Histogram for each layer by brain state
-[~,edges] = histcounts(log10(L23RunSR));
-figure, histogram(L23RunSR,10.^edges),title('Layer 2/3'), hold on
-histogram(L23RestSR(1:length(L23RunSR),1),25.^edges);
-set(gca, 'xscale','log')
-xlim([00.1 100])                 
-
-[~,edges] = histcounts(log10(L4RunSR));
-figure, histogram(L4RunSR,10.^edges),title('Layer 4'), hold on
-histogram(L4RestSR(1:length(L4RunSR),1),25.^edges);
-set(gca, 'xscale','log')
-xlim([00.1 100])
-
-[~,edges] = histcounts(log10(L5RunSR));
-figure, histogram(L5RunSR,10.^edges),title('Layer 5'), hold on
-histogram(L5RestSR(1:length(L5RunSR),1),25.^edges);
-set(gca, 'xscale','log')
-xlim([00.1 100])
-
-%% histogram stats for beta event
-%
-figure,histogram(bstats(1:64,1),50:100),title('Event Duration')
-figure,histogram(bstats(1:64,3),1:0.1:5),title('Event Rate')
-figure,
-%% Beta states
-% Number of beta per electrode
-for i = 1:size(betaGroup,2)
-    runBetaNum(i) = mean(betaGroup(i).electrode.betaBurst.NumDetectedBeta);
-end
-% Number of beta per trial per electrode
-for i = 1:size(betaGroup,2)
-    runBetaDepth(i,:) = betaGroup(i).electrode.betaBurst.NumDetectedBeta;
-end
-
-%Number of beta per electrode during rest
-for i = 1:size(betaGroupRest,2)
-    restBetaNum(i) = mean(betaGroupRest(i).electrode.betaBurst.NumDetectedBeta);
-end
-
-% Number of beta per trial per electrode
-for i = 1:size(betaGroupRest,2)
-    restBetaDepth(i,:) = betaGroupRest(i).electrode.betaBurst.NumDetectedBeta;
-end
-%% 
-figure,
-colorH = jet(4);
-for i = 1:64
-    if i<=30
-        col = colorH(1,:);
-    else
-        col = colorH(4,:);
-    end
-    plot(bstats(i).freqPks,'.','color',col), hold on
-    freqPks = bstats(i).freqPks;
-    lowBeta{i} = freqPks(freqPks<=21);
-    highBeta{i} = freqPks(freqPks>21);
-end
-L23lowBeta = lowBeta(1:30);
-L23lowBeta = horzcat(L23lowBeta{:});
-L5lowBeta = lowBeta(31:64);
-L5lowBeta = horzcat(L5lowBeta{:});
-
-L23highBeta = highBeta(1:30);
-L23highBeta = horzcat(L23highBeta{:});
-L5highBeta = highBeta(31:64);
-L5highBeta = horzcat(L5highBeta{:});
-
-figure,histogram(L23highBeta,20:1:30),title('L23 High Beta')
-figure,histogram(L23lowBeta,13:1:20),title('L23 Low Beta')
-figure,histogram(L5highBeta,20:1:30),title('L5 High Beta')
-figure,histogram(L5lowBeta,13:1:20),title('L5 Low Beta')
-
-
-%%
-figure,histogram(restBetaNum,1:0.25:10),hold on
-histogram(runBetaNum,1:0.25:10)
-figure,lineError(1:64,restBetaDepth')
-figure,lineError(1:64,runBetaDepth')
-%%
-bothBeta = [restBetaNum;runBetaNum];
-figure,bar(mean(bothBeta,2))
-hold on
-er = errorbar(mean(bothBeta,2),std(bothBeta'));    
-er.Color = [0 0 0];                            
-er.LineStyle = 'none';  
-%% Connected lines before and after
-figure,
-plot(ones(32,1),t(1:32),'.k'), hold on
-plot(2*ones(32,1),t1(1:32),'.k'),hold on
-for i = 1:32
- line([1,2],[t(i) t1(i)])
-end
-ylim([4 5])
-xlim([0 3])
