@@ -91,7 +91,7 @@ if sum(strcmp('inverse',varargin)) == 1;
 else
     CSDtype = 1;
 end
-plotOn = 1;
+plotOn = 0;
 % Determines conA. Needed to convert CSD data to desired current units
 if unitsCurrent=='A'; conA=1; elseif unitsCurrent=='mA'; conA=1000; ...
 elseif unitsCurrent=='uA'; conA=1000000; elseif unitsCurrent=='nA'; ...
