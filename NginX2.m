@@ -34,7 +34,7 @@ set(0,'DefaultFigureWindowStyle','normal')
 LFP = fastpreprocess_filtering(Intan.allIntan,10000);
 LFP = bestLFP(LFP);
 LFP = bandFilter(LFP,'depth'); % Extract LFPs based on 'depth' or 'single'
-
+%%
 % LFPplot(LFP)
 % %% Beta Band Analysis
 % LFP = betaBurstDetection(LFP);
@@ -53,8 +53,12 @@ load UCLA_chanMap_fixed
 % plot(waveforms(:,20:end-20)','color',[0.5 0.5 0.5 0.25]), hold on;
 % figure,plot(mean(waveforms(1:30,20:end-20),1),'k','LineWidth',2)
 % test
-
+%%
+Spikes.spikeInfo.spikeAmps = spikeAmps;Spikes.spikeInfo.spikeDepths = spikeDepths;
+Spikes.spikeInfo.templateDepths = templateDepths; Spikes.spikeInfo.tempAmps = tempAmps; 
+Spikes.spikeInfo.waveforms = waveforms;
 Spikes = spikeDepthPlot(Spikes,templateDepths);
+Spikes = spikeRateAnalysis(Spikes);
 %%
 % Time-Frequency Analysis
 [TimeFreq,LFP,betaGroup,Spikes] = tfAnalysis(Spikes,LFP,1); %Behavior state running 1 (0 rest)
