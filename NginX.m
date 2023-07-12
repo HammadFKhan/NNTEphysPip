@@ -66,7 +66,10 @@ load chanMap % use for PFF
 % plot(waveforms(:,20:end-20)','color',[0.5 0.5 0.5 0.25]), hold on;
 % figure,plot(mean(waveforms(1:30,20:end-20),1),'k','LineWidth',2)
 % test
-
+%%
+Spikes.spikeInfo.spikeAmps = spikeAmps;Spikes.spikeInfo.spikeDepths = spikeDepths;
+Spikes.spikeInfo.templateDepths = templateDepths; Spikes.spikeInfo.tempAmps = tempAmps; 
+Spikes.spikeInfo.waveforms = waveforms;
 Spikes = spikeDepthPlot(Spikes,templateDepths);
 
 %%
