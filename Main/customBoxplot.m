@@ -10,13 +10,14 @@ if length(size(data))>1
         labels = [labels;repmat({num2str(i)},length(t(t>0)),1)];
     end
     boxplot(buff,labels), hold on
+    h=findobj('LineStyle','--'); set(h, 'LineStyle','-');
     for i = 1:size(data,2)
         t = data(:,i);
         buff = [buff;t(t>0)];
         labels = repmat({num2str(i)},length(buff),1);
-        scatter(i*ones(length(t(t>0)),1),t(t>0),'filled','jitter','on','jitterAmount',0.08)
+        scatter(i*ones(length(t(t>0)),1),t(t>0),'filled','jitter','on','jitterAmount',0.2)
     end
 else
     boxplot(data),hold on
-    scatter(ones(size(data,1),1),data,'filled','jitter','on','jitterAmount',0.08)
+    scatter(ones(size(data,1),1),data,'filled','jitter','on','jitterAmount',0.2)
 end
