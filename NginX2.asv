@@ -15,7 +15,7 @@ run(fullfile(pathToYourConfigFile, 'config_UCLAprobe.m'))
 make_UCLAChannelMap2(fpath,s); % Creates channel map for electrode array
 % make_UCLAMouseChannelMap(fpath);
 kilosortPrep(Intan.allIntan,fpath)
-set(0,'DefaultFigureWindowStyle','normal')
+set(0,'DefaultFigureWindowStyle','docked')
 rez = KilosortAnalysis(fpath,ops);
 % now fire up Phy and check these results. There should still be manual
 % work to be done (mostly merges, some refinements of contaminated clusters). 
@@ -44,11 +44,44 @@ parameters.windowAfterPull = 1; % in seconds
 %% Behavior
 lfptime = 1/LFP.downSampleFreq:1/LFP.downSampleFreq:size(LFP.medianLFP,2)/LFP.downSampleFreq;
 [Behaviour] = readLever(parameters,lfptime);
+%% CSD and spectrogram
+% Hit trials
+CSDoutputhit = [];waveletHit = [];waveletMiss = [];powerCWThit = [];CSDoutputmiss = []; hitLFP = [];missLFP = [];
+eIdx = find(s.sorted_probe_wiring(:,2)==0);
+linearProbe = LFP.medianLFP(eIdx,:);
+params.tapers = [5 9];
+params.Fs = 1000;
+params.fpass = [0 80];
+params.err = [2 0.05];
+for i = 1:100
+    hitWin = [Behaviour.hit(i,3)-1000, Behaviour.hit(i,3)+1000]; %ms
+    hitLFP(:,:,i) = linearProbe(1:4,hitWin(1):hitWin(2));
+    [waveletHit(:,:,i),fwavelet] = cwt(mean(hitLFP(:,:,i),1),1000,'FrequencyLimit',[4 80]);
+    [powerCWThit(:,:,i), fwt] = calCWTSpectogram(mean(hitLFP(:,:,i),1),0:2000,1000,10,[4 80],0);
+    [CSDoutputhit(:,:,i)]  = CSD(hitLFP(:,:,i)'/1E6,1000,20E-6);
+end
+[Shits,fhits,Serrhits]=mtspectrumc(squeeze(mean(hitLFP,1)),params);
+
+for i = 1:Behaviour.nMiss
+    missWin = [Behaviour.hit(i,3)-1000, Behaviour.hit(i,3)+1000]; %ms
+    missLFP(:,:,i) = linearProbe(1:4,missWin(1):missWin(2));
+    [waveletMiss(:,:,i),fwavelet] = cwt(mean(missLFP(:,:,i),1),1000,'FrequencyLimit',[4 80]);
+    [powerCWTmiss(:,:,i), fwt] = calCWTSpectogram(mean(missLFP(:,:,i),1),0:2000,1000,10,[4 80],0);
+    [CSDoutputmiss(:,:,i)]  = CSD(missLFP(:,:,i)'/1E6,1000,20E-6);
+end
+[Shits,fhits,Serrhits]=mtspectrumc(squeeze(mean(hitLFP,1)),params);
+[Smiss,fmiss,Serrmiss] = mtspectrumc(squeeze(mean(missLFP,1)),params);
 %% Spikes
-Spikes = singleUnitAnalysis(fpath,VR_data); % VR_data.Time{1} = data(:,2); VR_data.Position{1} = data(:,1);
-% Calculate Depth profile
-set(0,'DefaultFigureWindowStyle','normal')
-% load chanMap % use for PFF
+Spikes = singleUnitAnalysis(fpath,VR_data)
+path = [fpath,'/preAutoMerge'];
+% Read in kilosort data for matlab analysis
+SpikeClusters = readNPY(fullfile(path, 'spike_clusters.npy'));
+SpikeSamples = readNPY(fullfile(path, 'spike_times.npy'));
+%% Analysis
+Spikes.SpikeClusters = SpikeClusters+1; %Add one because of 0 index from python
+Spikes.SpikeSamples = SpikeSamples;
+Spikes = clusterSort(Spikes);
+%% Calculate Depth profile
 load UCLA_chanMap_fixed
 [spikeAmps, spikeDepths, templateDepths, tempAmps, tempsUnW, templateDuration, waveforms] =...
     spikeTemplatePosition(fpath,ycoords);
@@ -58,57 +91,6 @@ load UCLA_chanMap_fixed
 % test
 
 Spikes = spikeDepthPlot(Spikes,templateDepths);
-%% CSD and spectrogram
-% Hit trials
-CSDoutputhit = [];waveletHit = [];waveletMiss = [];powerCWThit = [];CSDoutputmiss = []; hitLFP = []lmissLFP = []
-eIdx = find(s.sorted_probe_wiring(:,2)==0);
-linearProbe = LFP.medianLFP(eIdx,:);
-params.tapers = [5 9];
-params.Fs = 1000;
-params.fpass = [0 80];
-params.err = [2 0.05];
-for i = 1:Behaviour.nHit
-    hitWin = [Behaviour.hit(i,3)-1000, Behaviour.hit(i,3)+1000]; %ms
-    hitLFP(:,:,i) = linearProbe(1:8,hitWin(1):hitWin(2));
-    [waveletHit(:,:,i),fwavelet] = cwt(mean(hitLFP(:,:,i),1),1000,'FrequencyLimit',[4 80]);
-    [powerCWThit(:,:,i), fwt] = calCWTSpectogram(mean(hitLFP(:,:,i),1),0:2000,1000,10,[4 80],0);
-    [CSDoutputhit(:,:,i)]  = CSD(hitLFP(:,:,i)'/1E6,1000,20E-6);
-end
-[Shits,fhits,Serrhits]=mtspectrumc(squeeze(mean(hitLFP,1)),params);
-
-for i = 1:Behaviour.nMiss
-    missWin = [Behaviour.hit(i,3)-1000, Behaviour.hit(i,3)+1000]; %ms
-    missLFP(:,:,i) = linearProbe(1:8,missWin(1):missWin(2));
-    [waveletMiss(:,:,i),fwavelet] = cwt(mean(missLFP(:,:,i),1),1000,'FrequencyLimit',[4 80]);
-    [powerCWTmiss(:,:,i), fwt] = calCWTSpectogram(mean(missLFP(:,:,i),1),0:2000,1000,10,[4 80],0);
-    [CSDoutputmiss(:,:,i)]  = CSD(missLFP(:,:,i)'/1E6,1000,20E-6);
-end
-[Shits,fhits,Serrhits]=mtspectrumc(squeeze(mean(hitLFP,1)),params);
-[Smiss,fmiss,Serrmiss] = mtspectrumc(squeeze(mean(missLFP,1)),params);
-%%
-figure,
-pCSD = mean(CSDoutputhit(:,3:end-2,:),3)';
-pCSD = smoothdata(pCSD,'gaussian',5);
-Vq = pCSD;
-Vq = interp2(Vq,4);
-im = imagesc(Vq); % CSD as heatmap
-colormap(jet); % blue = sink; red = source
-caxis([-.4 .4])
-figure,
-imagesc(-1000:1000,fwavelet,mean(abs(waveletHit),3)),colormap(jet),axis xy
-figure,imagesc(-1000:1000,fwt,mean(powerCWThit,3)),colormap(jet),axis xy, colorbar
-
-figure,
-pCSD = mean(CSDoutputmiss(:,3:end-2,:),3)';
-pCSD = smoothdata(pCSD,'gaussian',5);
-Vq = pCSD;
-Vq = interp2(Vq,4);
-im = imagesc(Vq); % CSD as heatmap
-colormap(jet); % blue = sink; red = source
-caxis([-.4 .4])
-figure,
-imagesc(-1000:1000,fwavelet,mean(abs(waveletMiss),3)),colormap(jet),axis xy
-figure,imagesc(-1000:1000,fwt,mean(powerCWTmiss,3)),colormap(jet),axis xy, colorbar
 %% Time-Frequency Analysis
 [TimeFreq,LFP,betaGroup,Spikes] = tfAnalysis(Spikes,LFP,1); %Behavior state running 1 (0 rest)
 [TimeFreq,LFP,betaGroupRest,Spikes] = tfAnalysis(Spikes,LFP,0,TimeFreq); %Behavior state running 1 (0 rest)
