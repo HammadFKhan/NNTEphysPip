@@ -60,7 +60,7 @@ end
 
 %% plot results
 figure(1), clf
-contourf(-1023:1024,frex,tf,25,'linecolor','none')
+contourf(-1023:1024,frex,tf,25,'linecolor','w')
 set(gca,'clim',[0 .8],'ydir','normal')
 title('ITPC')
 colormap(parula),colorbar
