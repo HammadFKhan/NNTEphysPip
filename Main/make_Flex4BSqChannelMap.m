@@ -16,9 +16,9 @@ chanMap = [1:16];
 % meaning not dead or used for non-ephys data
 
 connected = true(16, 1); 
-connected(2) = 0; %For no connections
-connected(3) = 0; 
-connected(15) = 0; 
+% connected(2) = 0; %For no connections
+% connected(3) = 0; 
+% connected(15) = 0; 
 % now we define the horizontal (x) and vertical (y) coordinates of these
 % channels. For dead or nonephys channels the values won't matter. Again
 % I will take this information from the specifications of the probe. These
@@ -49,6 +49,6 @@ kcoords = ones(1,16);
 % Now we can save our channel map for the eMouse. 
 
 % would be good to also save the sampling frequency here
-fs = 8192; 
+fs = 10000; 
 
 save(fullfile(fpath, 'Flex4BSq_Chan_Map.mat'), 'chanMap', 'connected', 'xcoords', 'ycoords', 'kcoords', 'fs')
