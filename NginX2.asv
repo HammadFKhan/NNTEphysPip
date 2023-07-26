@@ -60,8 +60,6 @@ for i = 1:100
     [powerCWThit(:,:,i), fwt] = calCWTSpectogram(mean(hitLFP(:,:,i),1),0:2000,1000,10,[4 80],0);
     [CSDoutputhit(:,:,i)]  = CSD(hitLFP(:,:,i)'/1E6,1000,20E-6);
 end
-[Shits,fhits,Serrhits]=mtspectrumc(squeeze(mean(hitLFP,1)),params);
-
 for i = 1:Behaviour.nMiss
     missWin = [Behaviour.hit(i,3)-1000, Behaviour.hit(i,3)+1000]; %ms
     missLFP(:,:,i) = linearProbe(1:4,missWin(1):missWin(2));
@@ -69,11 +67,11 @@ for i = 1:Behaviour.nMiss
     [powerCWTmiss(:,:,i), fwt] = calCWTSpectogram(mean(missLFP(:,:,i),1),0:2000,1000,10,[4 80],0);
     [CSDoutputmiss(:,:,i)]  = CSD(missLFP(:,:,i)'/1E6,1000,20E-6);
 end
+
 [Shits,fhits,Serrhits]=mtspectrumc(squeeze(mean(hitLFP,1)),params);
 [Smiss,fmiss,Serrmiss] = mtspectrumc(squeeze(mean(missLFP,1)),params);
 %% Spikes
-Spikes = singleUnitAnalysis(fpath,VR_data)
-path = [fpath,'/preAutoMerge'];
+path = [fpath,'/postAutoMerge'];
 % Read in kilosort data for matlab analysis
 SpikeClusters = readNPY(fullfile(path, 'spike_clusters.npy'));
 SpikeSamples = readNPY(fullfile(path, 'spike_times.npy'));
@@ -85,12 +83,7 @@ Spikes = clusterSort(Spikes);
 load UCLA_chanMap_fixed
 [spikeAmps, spikeDepths, templateDepths, tempAmps, tempsUnW, templateDuration, waveforms] =...
     spikeTemplatePosition(fpath,ycoords);
-% figure,
-% plot(waveforms(:,20:end-20)','color',[0.5 0.5 0.5 0.25]), hold on;
-% figure,plot(mean(waveforms(1:30,20:end-20),1),'k','LineWidth',2)
-% test
 
-Spikes = spikeDepthPlot(Spikes,templateDepths);
 %% Time-Frequency Analysis
 [TimeFreq,LFP,betaGroup,Spikes] = tfAnalysis(Spikes,LFP,1); %Behavior state running 1 (0 rest)
 [TimeFreq,LFP,betaGroupRest,Spikes] = tfAnalysis(Spikes,LFP,0,TimeFreq); %Behavior state running 1 (0 rest)
