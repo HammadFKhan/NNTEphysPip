@@ -71,7 +71,7 @@ end
 [Shits,fhits,Serrhits]=mtspectrumc(squeeze(mean(hitLFP,1)),params);
 [Smiss,fmiss,Serrmiss] = mtspectrumc(squeeze(mean(missLFP,1)),params);
 %% Spikes
-path = [fpath,'/preAutoMerge'];
+path = [fpath,'/postAutoMerge'];
 % Read in kilosort data for matlab analysis
 SpikeClusters = readNPY(fullfile(path, 'spike_clusters.npy'));
 SpikeSamples = readNPY(fullfile(path, 'spike_times.npy'));
