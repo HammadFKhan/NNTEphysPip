@@ -23,7 +23,7 @@ function [spikeAmps, spikeDepths, templateDepths, tempAmps, tempsUnW, templateDu
 % - tempScalingAmps, the amount by which the template was scaled to extract
 % each spike (nSpikes x 1)
 
-path = [fpath,'/preAutoMerge'];
+path = [fpath,'/postAutoMerge'];
 % Read in kilosort data for matlab analysis
 temps = readNPY(fullfile(path, 'templates.npy'));
 winv = readNPY(fullfile(path, 'whitening_mat.npy'));
