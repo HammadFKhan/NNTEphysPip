@@ -62,8 +62,8 @@ load chanMap % use for PFF
 % load UCLA_chanMap_fixed
 [spikeAmps, spikeDepths, templateDepths, tempAmps, tempsUnW, templateDuration, waveforms] =...
     spikeTemplatePosition(fpath,ycoords);
-% figure,
-% plot(waveforms(:,20:end-20)','color',[0.5 0.5 0.5 0.25]), hold on;
+figure,
+plot(waveforms(:,20:end-20)','color',[0.5 0.5 0.5 0.25]), hold on;
 % figure,plot(mean(waveforms(1:30,20:end-20),1),'k','LineWidth',2)
 % test
 
