@@ -1,5 +1,5 @@
 %% Compute and plot TF-ITPC for one electrode
-function tf = itpc(LFP,timestamps,electrode)
+function tf = itpc(lfp,timestamps,Fs)
 % add argument for specific electrode!!
 % if nargin<3
 %     numelectrode = [];
@@ -10,10 +10,9 @@ function tf = itpc(LFP,timestamps,electrode)
 num_frex = 30; % Frequency resolution
 min_freq =  5; % Lower frequency bound
 max_freq = 40; % Upper frequency bound
-timestamps = timestamps.*1024;
+timestamps = timestamps.*Fs;
 pnts = timestamps(1,2)-timestamps(1,1); % Sample size of each trial
 trials = length(timestamps); % Running event trials
-Fs = LFP.downSampleFreq;
 
 % set range for variable number of wavelet cycles
 range_cycles = [ 4 10 ];
@@ -29,10 +28,13 @@ nWave = length(time);
 nData = pnts*trials; %total size of data (sample points x trials)
 nConv = nWave+nData-1;
 %%
-for electrode = 30
 % build data format time x trials
 for i = 1:trials
-    data(:,i) = LFP.medianLFP(electrode,timestamps(i,1):timestamps(i,2));
+    try
+        data(:,i) = lfp(ceil(timestamps(i,1)):ceil(timestamps(i,2)));
+    catch ME
+        continue;
+    end
 end
 
 % FFT of data (doesn't change on frequency iteration)
@@ -59,9 +61,8 @@ for fi=1:num_frex
 end
 
 %% plot results
-figure(1), clf
-contourf(-1023:1024,frex,tf,25,'linecolor','none')
-set(gca,'clim',[0 .8],'ydir','normal')
+figure(), clf
+contourf(1:pnts,frex,tf,10,'linecolor','none')
+set(gca,'clim',[0 .5],'ydir','normal')
 title('ITPC')
-colormap(parula),colorbar
-end
+colormap(jet),colorbar
