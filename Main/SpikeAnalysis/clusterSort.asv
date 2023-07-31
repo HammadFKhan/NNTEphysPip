@@ -1,0 +1,18 @@
+function Spikes = clusterSort(Spikes)
+
+for i = 1:max(Spikes.SpikeClusters)+1
+    count = 1;
+    spikeIdx = find(Spikes.SpikeClusters==i-1);
+    Spikes.Clusters
+    Spikes.Clusters(i).cluster(count) = SpikeSamples(ii,:);
+    count = count+1;
+end
+% Deletes clusters that are counted as zero
+% count = 1;
+% for ii = 1:length(Spikes.Clusters)
+%     if isempty(Spikes.Clusters(count).cluster)
+%         Spikes.Clusters(count) = [];
+%     else
+%         count = count+1;
+%     end
+% end
