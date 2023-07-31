@@ -24,11 +24,11 @@ for fileNum = 1:numFile
     Spikes = ISI(Spikes,0.01,Fs,0); %Spikes, Interval, Fs
     %%
     load chanMap % use for PFF
-    % load UCLA_chanMap_fixed
+%     load UCLA_chanMap
     [spikeAmps, spikeDepths, templateDepths, tempAmps, tempsUnW, templateDuration, waveforms] =...
         spikeTemplatePosition(fpath,ycoords);
-    for i = 1:length(templateDepths)
-        Spikes.Clusters(i).spikeDepth = templateDepths(i)*25;
+    for i = 1:length(tempAmps)
+        Spikes.Clusters(i).spikeDepth = templateDepths(i);
         Spikes.Clusters(i).spikeAmplitude = tempAmps(i);
         Spikes.Clusters(i).waveforms = waveforms(i,:);
         Spikes.Clusters(i).spikeDuration = templateDuration(i)/Fs*1000;
@@ -47,7 +47,7 @@ for fileNum = 1:numFile
         end
     end
     I(isnan(I)) = [];
-    selectedCells = I(1:12); %Select top 10 best neurons
+    selectedCells = I(1:10); %Select top 10 best neurons
     for i = 1:length(Spikes.Clusters)
         if ismember(i,selectedCells)
             Spikes.Clusters(i).coherence = 1;
@@ -81,7 +81,7 @@ for fileNum = 1:numFile
         file_name = [file_name '_' datestr(now,30) '_'];
     end
     savepath = fullfile([folder_name, '\output'],[file_name,'.mat']);
-    save(savepath, 'fpath','pathname','spikeCoherence','Spikes','Fs');
+    save(savepath, 'fpath','pathname','spikeCoherence','Spikes','Fs','-v7.3');
     clearvars -except file numFile fileNum filetype foldername
 end
 %% ----------- Plot data *optional* --------------- %%
