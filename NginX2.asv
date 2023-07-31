@@ -57,8 +57,25 @@ for i=1:Behaviour.nHit
         continue
     end
 end
-[X] = featureProject(smorate,1,0,1);
-
+%%
+buff = hitTrace;
+buff(:,1:10) = 0;
+buff (:,150:200) = 0;
+ X = featureProject(smoothdata(buff,2,'gaussian',50),1,0,0);
+%%
+X = [];
+count = 1;
+for i = 1:31
+    buff = smorate{i};
+    blah = sum(buff,2);
+    id = blah==0;
+    buff(id,:) = [];
+    normBuff = (buff-min(buff,[],'all'))/(max(buff,[],'all')-min(buff,[],'all'));
+    if size(buff,1)>2
+        X(:,:,count) = featureProject(normBuff,1,0,0);
+        count = count+1;
+    end
+end
 %% CSD and spectrogram
 % Hit trials
 CSDoutputhit = [];waveletHit = [];waveletMiss = [];powerCWThit = [];CSDoutputmiss = []; hitLFP = [];missLFP = [];
@@ -70,7 +87,7 @@ params.fpass = [0 80];
 params.err = [2 0.05];
 for i = 1:100
     hitWin = [Behaviour.hit(i,3)-1000, Behaviour.hit(i,3)+1000]; %intan position
-    timestamp(i,:) = [Behaviour.hit(i,4)-1, Behaviour.hit(i,4)+1]; %s
+    timestamphit(i,:) = [Behaviour.hit(i,4)-1, Behaviour.hit(i,4)+1]; %s
     hitLFP(:,:,i) = linearProbe(1:4,hitWin(1):hitWin(2));
     [waveletHit(:,:,i),fwavelet] = cwt(mean(hitLFP(:,:,i),1),1000,'FrequencyLimit',[4 80]);
     [powerCWThit(:,:,i), fwt] = calCWTSpectogram(mean(hitLFP(:,:,i),1),0:2000,1000,10,[4 80],0);
@@ -78,14 +95,21 @@ for i = 1:100
 end
 for i = 1:Behaviour.nMiss
     missWin = [Behaviour.miss(i,3)-1000, Behaviour.miss(i,3)+1000]; %ms
-    timestamp(i,:) = [Behaviour.miss(i,4)-1, Behaviour.miss(i,4)+1]; %s
+    timestampmiss(i,:) = [Behaviour.miss(i,4)-1, Behaviour.miss(i,4)+1]; %s
     missLFP(:,:,i) = linearProbe(1:4,missWin(1):missWin(2));
     [waveletMiss(:,:,i),fwavelet] = cwt(mean(missLFP(:,:,i),1),1000,'FrequencyLimit',[4 80]);
     [powerCWTmiss(:,:,i), fwt] = calCWTSpectogram(mean(missLFP(:,:,i),1),0:2000,1000,10,[4 80],0);
     [CSDoutputmiss(:,:,i)]  = CSD(missLFP(:,:,i)'/1E6,1000,20E-6);
 end
+for i = 1:size(linearProbe,1)
+tfmiss(:,:,i) = itpc(linearProbe(i,:),timestampmiss,1000,1);
+tfhit(:,:,i) = itpc(linearProbe(i,:),timestamphit,1000,1);
+end
+%%
+figure,plot(smoothdata(squeeze(mean(tfhit,1)),'gaussian',50),'k')
+hold on,plot(smoothdata(squeeze(mean(tfmiss,1)),'gaussian',50),'r')
 
-tf = itpc(linearProbe(2,:),timestamp,1000);
+%%
 [Shits,fhits,Serrhits]=mtspectrumc(squeeze(mean(hitLFP,1)),params);
 [Smiss,fmiss,Serrmiss] = mtspectrumc(squeeze(mean(missLFP,1)),params);
 %% Spikes analysis
@@ -107,7 +131,7 @@ load UCLA_chanMap
         Spikes.Clusters(i).waveforms = waveforms(i,:);
         Spikes.Clusters(i).spikeDuration = templateDuration(i)/Fs*1000;
     end
-    %Calculate PSTH
+   %% Calculate PSTH
     count = 1;
     trials = {};
     for ii = 1:length(Spikes.Clusters)
@@ -126,6 +150,26 @@ load UCLA_chanMap
         end
         count = count+1;
     end
+    %% MISS
+      %Calculate PSTH
+    count = 1;
+    trials = {};
+    for ii = 1:length(Spikes.Clusters)
+        if ~isempty(Spikes.Clusters(ii).spikeTime)
+            for i = 1:Behaviour.nMiss
+                trials{i,count}= zeros(1,length(0:0.001:Behaviour.missTrace(i).t2-Behaviour.missTrace(i).t1));
+                spiketm = Spikes.Clusters(ii).spikeTime(Spikes.Clusters(ii).spikeTime>=Behaviour.missTrace(i).t1 & Spikes.Clusters(ii).spikeTime<=Behaviour.missTrace(i).t2);
+                spiked = discretize(spiketm,Behaviour.missTrace(i).t1:0.001:Behaviour.missTrace(i).t2);
+                if ~isnan(spiked)
+                    trials{i,count}(spiked) = 1;
+                end
+                
+            end
+        else
+            continue
+        end
+        count = count+1;
+    end
     %%
     figure;
 %****************
@@ -134,16 +178,24 @@ subplot('position',[0.1 0.4 0.4 0.55]);
 make_nice_spike_raster(t);
 V = axis;
 %%
+smorate = {}
+t = {};
 figure,hold on
 grid on;
 ylabel('Trial Number');
 title(fprintf('Unit rasters'));
 %*************
 smooth_window = 100;  % give sigma of 12.5ms
-for trils = 1:185
-    for i = 3:68
-        t{1}= vertcat(trials{trils,i-2:i+2});
-        smorate(i,:,trils) = make_nice_mean_raster(t,smooth_window);
+for trils = 1:31
+    count = 1;
+    for i = 10:60
+        t{1}= vertcat(trials{trils,i-5:i+5});
+        try
+        smorate{trils}(count,:) = make_nice_mean_raster(t,smooth_window);
+        catch
+            continue
+        end
+        count = count+1;
     end
 end
 V = axis;
@@ -447,7 +499,12 @@ for k = 1:numconds
     numtrials(k) = size(spud,1);
     smorate = gauss_smooth(sum( spud(1:numtrials(k),:))/....
         numtrials(k),smooth_window)*1000;
-    smorate = zscore(smorate);
+    [mSmo,idx] = max(smorate);
+    if idx<1400 && idx>200
+    smorate = gaussmf(1:length(smorate),[mSmo idx])'*mSmo;
+    end
+%     smorate = (smorate-min(smorate))/(max(smorate)-min(smorate));
+%     smorate = zscore(smorate);
     H = plot(smorate,'k-'); hold on;
     set(H,'Color',colo(k,:));
 end
