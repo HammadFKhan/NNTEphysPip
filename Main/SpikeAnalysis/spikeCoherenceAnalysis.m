@@ -47,7 +47,7 @@ for fileNum = 1:numFile
         end
     end
     I(isnan(I)) = [];
-    selectedCells = I(1:10); %Select top 10 best neurons
+    selectedCells = I(1:25); %Select top 10 best neurons
     for i = 1:length(Spikes.Clusters)
         if ismember(i,selectedCells)
             Spikes.Clusters(i).coherence = 1;
