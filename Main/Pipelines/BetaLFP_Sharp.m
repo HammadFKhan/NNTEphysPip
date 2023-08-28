@@ -16,7 +16,7 @@ b = fir1(20000,Wn,'low');
 tic;
 Intrafilt2 = filtfilt(b,1,Intracellular);toc;
 
-Intrafilt = customFilt(VmIntraL23scaled',Fs,[10 30]);
+LFPfilt = customFilt(lfp',Fs,[10 30]);
 scaledLFP = LFPfilt*1000;
 filtIntra = customFilt(Intracellular',Fs,[4 12]);
 %% generate trial dependancy for thresholding sake
@@ -24,8 +24,8 @@ trialLFP = [];trialIntra = [];trialFull = [];
 idx = 1:10:(length(scaledLFP))/Fs;
 for i = 1:length(idx)-1
     trialLFP(i,:) = scaledLFP(idx(i)*Fs:idx(i+1)*Fs);
-    trialIntra(i,:) = Intrafilt(idx(i)*Fs:idx(i+1)*Fs);
-%     trialFull(i,:) = Intracellular(idx(i)*Fs:idx(i+1)*Fs);
+%     trialIntra(i,:) = Intrafilt(idx(i)*Fs:idx(i+1)*Fs);
+    trialFull(i,:) = Intracellular(idx(i)*Fs:idx(i+1)*Fs);
 end
 %
 %% LFP intra /extra coherence
@@ -53,7 +53,7 @@ figure,plot(f,mean(pxxRef,2)),hold on,xlim([0 50])
 %%
 for i = 1:size(trialLFP,1)
 %     LFP(i).trial = IntrabetaBurstDetection(trialLFP(i,:)',Fs);
-    Intra(i) = IntrabetaBurstDetection(trialIntra(i,:)',Fs);
+    LFP(i).trial = IntrabetaBurstDetection(trialLFP(i,:)',Fs);
 end
 %%
 [peakAlignLFP,normLFP,fLFP,statsLFP] = IntrabetaAnalysis(LFP(1).trial);
