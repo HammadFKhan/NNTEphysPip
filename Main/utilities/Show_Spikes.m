@@ -1,4 +1,4 @@
-function spikePlot  = Show_Spikes(Spikes)
+function Show_Spikes(Spikes)
 y = length(Spikes(:,1));
 x = length(Spikes(1,:));
 spikePlot = zeros(y,x);
