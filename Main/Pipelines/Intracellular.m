@@ -62,7 +62,7 @@ Wn = Fc./(Fs/2);
 b = fir1(10000,Wn,'bandpass');
 subthreshold = filtfilt(b,1,LFPtest);
 %% Filter
-filtered_dataIntra = customFilt(subthreshold,Fs,[12 30]);
+filtered_dataIntra = customFilt(subThreshold',Fs,[12 30]);
 %%
 Intra = IntrabetaBurstDetection(filtered_dataIntra',Fs);
 %%
