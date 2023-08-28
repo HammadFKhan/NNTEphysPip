@@ -9,7 +9,7 @@ ops.fbinary             = fullfile(fpath, 'kilosort.bin'); % will be created for
 ops.fproc               = fullfile(fpath, 'temp_wh.dat'); % residual from RAM of preprocessed data		
 ops.root                = fpath; % 'openEphys' only: where raw files are		
 % define the channel map as a filename (string) or simply an array		
-ops.chanMap             = fullfile(fpath, 'UCLA_chanMap_fixed.mat'); % make this file using createChannelMapFile.m		
+ops.chanMap             = fullfile(fpath, 'chanMap64F.mat'); % make this file using createChannelMapFile.m		
 % ops.chanMap = 1:ops.Nchan; % treated as linear probe if unavailable chanMap file		
 
 ops.Nfilt               = 128;  % number of clusters to use (2-4 times more than Nchan, should be a multiple of 32)     		
