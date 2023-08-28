@@ -1,4 +1,4 @@
-function [X] = featureProject(featureData,navgtarget,flag,showplot)
+function [X,Q] = featureProject(featureData,navgtarget,flag,showplot)
 if nargin<2 || strcmp('navgtarget','')
     navgtarget = 1;
 end
@@ -17,9 +17,9 @@ covmatrix = covmatrix/size(featureData,1);
 [V,D] = eig(covmatrix);
 
 
-q(:,1) = V(:,size(featureData,2));
-q(:,2) = V(:,size(featureData,2)-1);
-q(:,3) = V(:,size(featureData,2)-2);
+q(:,1) = -V(:,size(featureData,2));
+q(:,2) = -V(:,size(featureData,2)-1);
+q(:,3) = -V(:,size(featureData,2)-2);
 
 
 
@@ -56,5 +56,5 @@ if showplot
     xlabel('ak');
 end
 X = [featureData*q(:,1),featureData*q(:,2),featureData*q(:,3)];
-
+Q = q;
 end
