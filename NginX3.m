@@ -10,8 +10,8 @@ IntanConcatenate
 % Intan = read_Intan_RHD2000_file(); %load intan data
 % ParpoolConfig
 fpath    = Intan.path; % where on disk do you want the analysis? ideally and SSD...
-pathToYourConfigFile = strcat(pwd,'/main/'); % for this example it's ok to leave this path inside the repo, but for your own config file you *must* put it somewhere else!  
-run(fullfile(pathToYourConfigFile, 'config_UCLAprobe.m'))
+pathToYourConfigFile = strcat(pwd,'/main/utilities'); % for this example it's ok to leave this path inside the repo, but for your own config file you *must* put it somewhere else!  
+run(fullfile(pathToYourConfigFile, 'config_UCLA64Fprobe.m'))
 % make_UCLAChannelMap2(fpath,s); % Creates channel map for electrode array
 make_UCLAChannelMap64F(fpath)
 kilosortPrep(Intan.allIntan,fpath)
