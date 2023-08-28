@@ -48,6 +48,6 @@ kcoords = ones(1,64);
 % Now we can save our channel map for the eMouse. 
 
 % would be good to also save the sampling frequency here
-fs = 10000; 
+fs = 20000; 
 
 save(fullfile(fpath, 'chanMap64F.mat'), 'chanMap', 'connected', 'xcoords', 'ycoords', 'kcoords', 'fs')
