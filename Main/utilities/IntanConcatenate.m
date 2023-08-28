@@ -42,8 +42,8 @@ end
 % Intan.dig_in_data = single(Intan.dig_in_data);
 % Adjust electrode order by depth
 % UCLA_probe_map %legacy file call
-% load UCLA_chanmap_64F.mat
-load Flex4BSq.mat
+load UCLA_chanmap_64F.mat
+% load Flex4BSq.mat
 Intan.allIntan  = Intan.allIntan(s.sorted_electrodes,:);
 % Fix recording offset
 Intan.offset = 1; % second
