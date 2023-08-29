@@ -1,37 +1,37 @@
 % clear; clc; 
 % close all;
 addpath(genpath('Main'));
-addpath(genpath('chronux'));
-addpath(genpath('Kilosort'));
+% addpath(genpath('chronux'));
+% addpath(genpath('Kilosort'));
 addpath(genpath('npy-matlab'));
 addpath(genpath('spikes-master'));
 % IntanConcatenate legacy version
 ds_filename = intanPreprocessing2;
-%% Kilosort3 
+% Run Kilosort3 
 % load only neccessary variables from memory mapped file
 data = matfile(ds_filename);
 fpath = data.fpath;
 Kilosort264FTestcode
 savepath = fullfile(fpath,['loadme','.mat']);
 save(savepath,'ds_filename');
+clearvars -except ds_filename
+
 %% LFP
 set(0,'DefaultFigureWindowStyle','normal')
 LFP = fastpreprocess_filtering(lfp,Fs);
 LFP = bestLFP(LFP);
 LFP = bandFilter(LFP,'depth'); % Extract LFPs based on 'depth' or 'single'
-%% Parameters 
-parameters.experiment = 'self'; % self - internally generated, cue - cue initiated
-parameters.opto = 1; % 1 - opto ON , 0 - opto OFF
+%% Parameters for behaviour
+parameters.experiment = 'cue'; % self - internally generated, cue - cue initiated
+parameters.opto = 0; % 1 - opto ON , 0 - opto OFF
 parameters.windowBeforePull = 1; % in seconds
 parameters.windowAfterPull = 1; % in seconds
 parameters.windowBeforeCue = 0.5; % in seconds
 parameters.windowAfterCue = 1.5; % in seconds
 parameters.Fs = 1000;
 parameters.ts = 1/parameters.Fs;
-%% Behavior
-lfptime = 1/LFP.downSampleFreq:1/LFP.downSampleFreq:size(LFP.medianLFP,2)/LFP.downSampleFreq;
-[Behaviour] = readLever3(parameters,lfptime);
-
+[Behaviour] = readLever(parameters,data.amplifierTime);
+[IntanBehaviour] = readLeverIntan(parameters,data.amplifierTime,data.analogChannels,data.digitalChannels,Behaviour);
 %% Plot behaviour
 for i=1:Behaviour.nHit
     plot(0:2000,smoothdata(Behaviour.hitTrace(i).trace),'Color',[0 0 0 0.2],'LineWidth',1.5);
@@ -46,23 +46,23 @@ end
 %% CSD and spectrogram
 leverLFPAnalysis(LFP,Behaviour)
 %% Spikes analysis
-path = [fpath,'/postAutoMerge'];
+path = [data.fpath,'/kilosort3'];
 % Read in kilosort data for matlab analysis
 SpikeClusters = readNPY(fullfile(path, 'spike_clusters.npy'));
 SpikeSamples = readNPY(fullfile(path, 'spike_times.npy'));
 Spikes.SpikeClusters = SpikeClusters; %Add one because of 0 index from python
 Spikes.SpikeSamples = SpikeSamples;
 Spikes = clusterSort(Spikes);
-Spikes = ISI(Spikes,0.01,Fs,0); %Spikes, Interval, Fs
+Spikes = ISI(Spikes,0.01,data.Fs,0); %Spikes, Interval, Fs
 % Calculate Depth profile
-load UCLA_chanMap
+load chanMap64F
 [spikeAmps, spikeDepths, templateDepths, tempAmps, tempsUnW, templateDuration, waveforms] =...
-    spikeTemplatePosition(fpath,ycoords);
+    spikeTemplatePosition(data.fpath,ycoords);
 for i = 1:length(tempAmps)
     Spikes.Clusters(i).spikeDepth = templateDepths(i);
     Spikes.Clusters(i).spikeAmplitude = tempAmps(i);
     Spikes.Clusters(i).waveforms = waveforms(i,:);
-    Spikes.Clusters(i).spikeDuration = templateDuration(i)/Fs*1000;
+    Spikes.Clusters(i).spikeDuration = templateDuration(i)/data.Fs*1000;
 end
 %% Calculate trial PSTH for lever
 Spikes = leverPSTH(Spikes,Behaviour);
