@@ -1,6 +1,6 @@
 %% you need to change most of the paths in this block
 
-addpath(genpath('C:\Users\khan332\Documents\GitHub\Kilosort') % path to kilosort folder
+addpath(genpath('C:\Users\khan332\Documents\GitHub\Kilosort')) % path to kilosort folder
 % addpath('D:\GitHub\npy-matlab') % for converting to Phy
 rootZ = fpath; % the raw data binary file is in this folder
 rootH = fpath; % path to temporary binary file (same size as data, should be on fast SSD)
@@ -8,7 +8,7 @@ pathToYourConfigFile = 'C:\Users\khan332\Documents\GitHub\NNTEphysPip\'; % take 
 chanMapFile = 'chanMap64F.mat';
 
 ops.trange    = [0 Inf]; % time range to sort
-ops.NchanTOT  = 385; % total number of channels in your recording
+ops.NchanTOT  = 64; % total number of channels in your recording
 
 run(fullfile(pathToYourConfigFile, 'config64Fkilosort2Test.m'))
 ops.fproc   = fullfile(rootH, 'temp_wh.dat'); % proc file on a fast SSD
