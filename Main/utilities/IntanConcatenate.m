@@ -11,9 +11,11 @@ L = length(directory);
 for idx = 1:L
     file = directory(idx).folder;
     path = directory(idx).name;
-    Intan = read_Intan_RHD2000_file(file,path); 
+    Intan = read_Intan_RHD2000_file(file,path);
     Fs =  Intan.frequency_parameters.amplifier_sample_rate;
-    allIntan{count} = resample(Intan.amplifier_data',targetedFs,Fs)';
+%     allIntan{count} = resample(Intan.amplifier_data',targetedFs,Fs)';
+    allIntan{count} = Intan.amplifier_data;
+
     if ~isempty(Intan.board_adc_data)
         analog_adc_data{count} = resample(Intan.board_adc_data',targetedFs,Fs);
     end
