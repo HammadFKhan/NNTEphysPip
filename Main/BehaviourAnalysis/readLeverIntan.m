@@ -38,11 +38,11 @@ end
 if parameters.opto == 1
     IntanBehaviour.optoTrace = downsample(optoTrace,round(intanFs/parameters.Fs),2);
     optoIndex = find(diff(IntanBehaviour.optoTrace)==1)+1;
+    IntanBehaviour.nOpto = size(optoIndex,2);
 end
 
 IntanBehaviour.nCueHit = size(rewardIndex,2);
 IntanBehaviour.nCueMiss = Behaviour.nCueMiss;
-IntanBehaviour.nOpto = size(optoIndex,2);
 
 % Estimating the threshold for reward
 IntanBehaviour.threshold = mean(IntanBehaviour.leverTrace(rewardIndex),'all');
@@ -74,47 +74,47 @@ end
 
 % figure();plot(1:1:10001,(5/1024)*Behaviour.leverTrace(Behaviour.miss(15,1)-5000:Behaviour.miss(15,1)+5000));hold on;
 % plot(0.1:0.1:10000.1,IntanBehaviour.leverTrace(Behaviour.miss(15,3)-50000:Behaviour.miss(15,3)+50000));
-correctionWindow = 800; % in number of points in LFPFs
-tol = 0.005;
-nDiffSlope = 10;
-disp('Finding miss trials in the Intan data ...');
-for i=1:Behaviour.nMiss
-    missIndexAr = Behaviour.miss(i,3);
-    trace1 = IntanBehaviour.leverTrace(missIndexAr-correctionWindow:missIndexAr+correctionWindow);
-    misstrigs1 = find(trace1 <IntanBehaviour.threshold+tol & trace1>IntanBehaviour.threshold-tol);  
-    if isempty(misstrigs1)
-        missIndex(i) = NaN;
-        disp('Suss miss trial removed');
-        continue;
-    end
-    % Checking slope 
-    for j=1:size(misstrigs1,2)
-        % Checking edge cases, rejects all the edge cases 
-        if((misstrigs1(j)+nDiffSlope >= (correctionWindow*2+1)) || (misstrigs1(j)-nDiffSlope <= 0)) 
-            misstrigs1(j) = NaN;
-            continue
-        end
-        % Checking slope, reject all negative slope 
-        slope = mean(trace1(misstrigs1(j):misstrigs1(j)+nDiffSlope)) - mean(trace1(misstrigs1(j)-nDiffSlope:misstrigs1(j)));
-        if slope < 0
-            misstrigs1(j) = NaN;
-        end
-    end
-    misstrigs1 = misstrigs1(~isnan(misstrigs1));
-    missIndex(i) =  missIndexAr - correctionWindow + min(misstrigs1);
-end
-
-missIndex = removeNaNRows(missIndex');
-
-IntanBehaviour.nMiss = size(missIndex,1);
-
-for i=1:IntanBehaviour.nMiss
-%     IntanBehaviour.hit(i) = [rewardIndex(i) lfpTime(rewardIndex(i)) rewardIndex(i) lfpTime(rewardIndex(i))];
-    IntanBehaviour.missTrace(i).trace = IntanBehaviour.leverTrace(missIndex(i)-parameters.windowBeforePull*parameters.Fs:missIndex(i)+parameters.windowAfterPull*parameters.Fs)';
-    IntanBehaviour.missTrace(i).time = (0:1/parameters.Fs:(size(IntanBehaviour.hitTrace(i).trace,1)-1)*1/parameters.Fs)';
-    IntanBehaviour.missTrace(i).LFPIndex = ([missIndex(i)-parameters.windowBeforePull*parameters.Fs:1:missIndex(i)+parameters.windowAfterPull*parameters.Fs])';
-    IntanBehaviour.missTrace(i).LFPtime = IntanBehaviour.time(missIndex(i)-parameters.windowBeforePull*parameters.Fs:missIndex(i)+parameters.windowAfterPull*parameters.Fs)';
-end
+% correctionWindow = 800; % in number of points in LFPFs
+% tol = 0.005;
+% nDiffSlope = 10;
+% disp('Finding miss trials in the Intan data ...');
+% for i=1:Behaviour.nMiss
+%     missIndexAr = Behaviour.miss(i,3);
+%     trace1 = IntanBehaviour.leverTrace(missIndexAr-correctionWindow:missIndexAr+correctionWindow);
+%     misstrigs1 = find(trace1 <IntanBehaviour.threshold+tol & trace1>IntanBehaviour.threshold-tol);  
+%     if isempty(misstrigs1)
+%         missIndex(i) = NaN;
+%         disp('Suss miss trial removed');
+%         continue;
+%     end
+%     % Checking slope 
+%     for j=1:size(misstrigs1,2)
+%         % Checking edge cases, rejects all the edge cases 
+%         if((misstrigs1(j)+nDiffSlope >= (correctionWindow*2+1)) || (misstrigs1(j)-nDiffSlope <= 0)) 
+%             misstrigs1(j) = NaN;
+%             continue
+%         end
+%         % Checking slope, reject all negative slope 
+%         slope = mean(trace1(misstrigs1(j):misstrigs1(j)+nDiffSlope)) - mean(trace1(misstrigs1(j)-nDiffSlope:misstrigs1(j)));
+%         if slope < 0
+%             misstrigs1(j) = NaN;
+%         end
+%     end
+%     misstrigs1 = misstrigs1(~isnan(misstrigs1));
+%     missIndex(i) =  missIndexAr - correctionWindow + min(misstrigs1);
+% end
+% 
+% missIndex = removeNaNRows(missIndex');
+% 
+% IntanBehaviour.nMiss = size(missIndex,1);
+% 
+% for i=1:IntanBehaviour.nMiss
+% %     IntanBehaviour.hit(i) = [rewardIndex(i) lfpTime(rewardIndex(i)) rewardIndex(i) lfpTime(rewardIndex(i))];
+%     IntanBehaviour.missTrace(i).trace = IntanBehaviour.leverTrace(missIndex(i)-parameters.windowBeforePull*parameters.Fs:missIndex(i)+parameters.windowAfterPull*parameters.Fs)';
+%     IntanBehaviour.missTrace(i).time = (0:1/parameters.Fs:(size(IntanBehaviour.hitTrace(i).trace,1)-1)*1/parameters.Fs)';
+%     IntanBehaviour.missTrace(i).LFPIndex = ([missIndex(i)-parameters.windowBeforePull*parameters.Fs:1:missIndex(i)+parameters.windowAfterPull*parameters.Fs])';
+%     IntanBehaviour.missTrace(i).LFPtime = IntanBehaviour.time(missIndex(i)-parameters.windowBeforePull*parameters.Fs:missIndex(i)+parameters.windowAfterPull*parameters.Fs)';
+% end
 
 %% Getting cue Hit traces
 a = zeros(IntanBehaviour.nCueHit,1);
@@ -124,11 +124,13 @@ for i=1:IntanBehaviour.nCueHit
     a(i) = max(find(cueIndex<=rewardIndex(i)));
     IntanBehaviour.cueHit(i,1) = cueIndex(a(i)); % Cue index 
     IntanBehaviour.cueHit(i,2) = rewardIndex(i); % pull index for hits
-    if ~isempty(find(optoIndex == IntanBehaviour.cueHit(i,1))) 
-        IntanBehaviour.cueHitTrace(i).opto = 1;
-    else 
-        IntanBehaviour.cueHitTrace(i).opto = 0;
-    end 
+    if parameters.opto == 1
+        if ~isempty(find(optoIndex == IntanBehaviour.cueHit(i,1))) 
+            IntanBehaviour.cueHitTrace(i).opto = 1;
+        else 
+            IntanBehaviour.cueHitTrace(i).opto = 0;
+        end 
+    end
     st = IntanBehaviour.cueHit(i,1)-parameters.windowBeforeCue*parameters.Fs;
     sp = IntanBehaviour.cueHit(i,1)+parameters.windowAfterCue*parameters.Fs;
     if st <= 0
@@ -186,11 +188,13 @@ if spend >= size(IntanBehaviour.leverTrace,2)
 end
 
 for i=1:IntanBehaviour.nCueMiss
-    if ~isempty(find(optoIndex == IntanBehaviour.cueMiss(i,1))) 
-        IntanBehaviour.cueMissTrace(i).opto = 1;
-    else
-        IntanBehaviour.cueMissTrace(i).opto = 0;
-    end 
+    if parameters.opto == 1
+        if ~isempty(find(optoIndex == IntanBehaviour.cueMiss(i,1))) 
+            IntanBehaviour.cueMissTrace(i).opto = 1;
+        else
+            IntanBehaviour.cueMissTrace(i).opto = 0;
+        end 
+    end
     st = IntanBehaviour.cueMiss(i,1)-parameters.windowBeforeCue*parameters.Fs;
     sp = IntanBehaviour.cueMiss(i,1)+parameters.windowAfterCue*parameters.Fs;
     IntanBehaviour.cueMissTrace(i).trace = IntanBehaviour.leverTrace(st:sp)';
