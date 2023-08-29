@@ -5,16 +5,16 @@ if ~isstruct(Behaviour),error('Behaviour must be structure!');end
 if ~isstruct(Spikes), error('Spikes must be a structure!');end
 
 %% Analyze for hit trials
-if isfield(Behaviour,'nHit')
+if isfield(Behaviour,'nCueHit')
     fprintf('Analyzing hit trials...\n')
     count = 1;
     trials = {};
     for ii = 1:length(Spikes.Clusters)
         if ~isempty(Spikes.Clusters(ii).spikeTime)
             for i = 1:Behaviour.nHit
-                temp = zeros(1,length(0:0.001:Behaviour.hitTrace(i).t2-Behaviour.hitTrace(i).t1));
-                spiketm = Spikes.Clusters(ii).spikeTime(Spikes.Clusters(ii).spikeTime>=Behaviour.hitTrace(i).t1 & Spikes.Clusters(ii).spikeTime<=Behaviour.hitTrace(i).t2);
-                spiked = discretize(spiketm,Behaviour.hitTrace(i).t1:0.001:Behaviour.hitTrace(i).t2); % 0.001 bin for 1 ms
+                temp = zeros(1,length(0:0.001:Behaviour.hitCueTrace(i).t2-Behaviour.hitCueTrace(i).t1));
+                spiketm = Spikes.Clusters(ii).spikeTime(Spikes.Clusters(ii).spikeTime>=Behaviour.hitCueTrace(i).t1 & Spikes.Clusters(ii).spikeTime<=Behaviour.hitCueTrace(i).t2);
+                spiked = discretize(spiketm,Behaviour.hitCueTrace(i).t1:0.001:Behaviour.hitCueTrace(i).t2); % 0.001 bin for 1 ms
                 if ~isnan(spiked)
                     temp(spiked) = 1;
                 end
@@ -39,10 +39,10 @@ if isfield(Behaviour,'nMiss')
     trials = {};
     for ii = 1:length(Spikes.Clusters)
         if ~isempty(Spikes.Clusters(ii).spikeTime)
-            for i = 1:Behaviour.nMiss
-                temp= zeros(1,length(0:0.001:Behaviour.missTrace(i).t2-Behaviour.missTrace(i).t1));
-                spiketm = Spikes.Clusters(ii).spikeTime(Spikes.Clusters(ii).spikeTime>=Behaviour.missTrace(i).t1 & Spikes.Clusters(ii).spikeTime<=Behaviour.missTrace(i).t2);
-                spiked = discretize(spiketm,Behaviour.missTrace(i).t1:0.001:Behaviour.missTrace(i).t2);
+            for i = 1:Behaviour.nCueMiss
+                temp= zeros(1,length(0:0.001:Behaviour.missCueTrace(i).t2-Behaviour.missCueTrace(i).t1));
+                spiketm = Spikes.Clusters(ii).spikeTime(Spikes.Clusters(ii).spikeTime>=Behaviour.missCueTrace(i).t1 & Spikes.Clusters(ii).spikeTime<=Behaviour.missCueTrace(i).t2);
+                spiked = discretize(spiketm,Behaviour.missCueTrace(i).t1:0.001:Behaviour.missCueTrace(i).t2);
                 if ~isnan(spiked)
                     temp(spiked) = 1;
                 end
