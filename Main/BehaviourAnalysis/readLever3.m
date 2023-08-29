@@ -1,4 +1,4 @@
-function [Behaviour] = readLever(parameters,lfpTime)
+function [Behaviour] = readLever3(parameters,lfpTime,B)
 
 % if ~exist('parameters.experiment','var')
 %     parameters.experiment = 'self';
@@ -21,13 +21,12 @@ else
     disp('Intan time data not passed. Function set to training.');
 end
 %% Reading file from arduino 
-[enfile,enpath] = uigetfile('*.csv');
-if isequal(enfile,0)
-   disp('User selected Cancel');
-else
-   disp(['User selected ', fullfile(enpath,enfile)]);
-end
-
+% [enfile,enpath] = uigetfile('*.csv');
+% if isequal(enfile,0)
+%    disp('User selected Cancel');
+% else
+%    disp(['User selected ', fullfile(enpath,enfile)]);
+% end
 resting_position = 241;
 flip = 1;
 nlengthBeforePull = round(parameters.windowBeforePull/parameters.ts);
@@ -35,7 +34,7 @@ nlength = round(parameters.windowBeforePull/parameters.ts + parameters.windowAft
 nlengthBeforeCue = round(parameters.windowBeforeCue/parameters.ts);
 nlengthCue = round(parameters.windowBeforeCue/parameters.ts + parameters.windowAfterCue/parameters.ts + 1);
 
-B = readmatrix([enpath,'/',enfile]);
+% B = readmatrix([enpath,'/',enfile]);
 Behaviour.leverTrace = (B(2:end,1) - resting_position)*flip;
 Behaviour.time = (B(2:end,2) - B(2,2))/1e6; % time in seconds
 Behaviour.nHit = B(end,3);
