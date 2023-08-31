@@ -108,14 +108,14 @@ for i = 1:Behaviour.nCueHit
     timestamphit(i,:) = [Behaviour.cueHitTrace(i).LFPtime(1),Behaviour.cueHitTrace(i).LFPtime(end)]; %taken in seconds
     hitWin = floor(Behaviour.cueHitTrace(i).LFPtime*1000); %multiply by Fs;
     hitLFP(:,:,i) = linearProbe(:,hitWin);
-    [powerCWThit(:,:,i), fwt] = calCWTSpectogram(mean(hitLFP(1:2,:,i),1),0:2000,1000,10,[10 40],0,0);
+    [powerCWThit(:,:,i), fwt] = calCWTSpectogram(mean(hitLFP(10:15,:,i),1),0:2000,1000,10,[10 40],0,1);
 %     [CSDoutputhit(:,:,i)]  = CSD(hitLFP(:,:,i)/1E6,1000,50E-6);
 end
 for i = 1:Behaviour.nCueMiss
     timestampmiss(i,:) = [Behaviour.cueMissTrace(i).LFPtime(1),Behaviour.cueMissTrace(i).LFPtime(end)]; %taken in seconds
     missWin = floor(Behaviour.cueMissTrace(i).LFPtime*1000);
     missLFP(:,:,i) = linearProbe(:,missWin);
-    [powerCWTmiss(:,:,i), fwt] = calCWTSpectogram(mean(missLFP(1:2,:,i),1),0:2000,1000,10,[10 40],0);
+    [powerCWTmiss(:,:,i), fwt] = calCWTSpectogram(mean(missLFP(10:15,:,i),1),0:2000,1000,10,[10 40],0,1);
     %     [CSDoutputmiss(:,:,i)]  = CSD(missLFP(:,:,i)'/1E6,1000,20E-6);
 end
 for i = 1:size(linearProbe,1)
