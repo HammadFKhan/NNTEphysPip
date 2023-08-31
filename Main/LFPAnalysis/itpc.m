@@ -1,5 +1,5 @@
 %% Compute and plot TF-ITPC for one electrode
-function tf = itpc(lfp,timestamps,Fs,showplot)
+function [tf,frex,pnts] = itpc(lfp,timestamps,Fs,showplot)
 % add argument for specific electrode!!
 % if nargin<3
 %     numelectrode = [];
@@ -10,7 +10,7 @@ function tf = itpc(lfp,timestamps,Fs,showplot)
 num_frex = 30; % Frequency resolution
 min_freq =  30; % Lower frequency bound
 max_freq = 80; % Upper frequency bound
-timestamps = timestamps.*Fs;
+timestamps = floor(timestamps.*Fs);
 pnts = timestamps(1,2)-timestamps(1,1); % Sample size of each trial
 trials = length(timestamps); % Running event trials
 
@@ -20,7 +20,7 @@ range_cycles = [ 4 10 ];
 % other wavelet parameters
 frex = logspace(log10(min_freq),log10(max_freq),num_frex);
 wavecycles = logspace(log10(range_cycles(1)),log10(range_cycles(end)),num_frex);
-time = -2:1/Fs:2;
+time = -1:1/Fs:1;
 half_wave_size = (length(time)-1)/2;
 
 % FFT parameters
@@ -30,11 +30,7 @@ nConv = nWave+nData-1;
 %%
 % build data format time x trials
 for i = 1:trials
-    try
-        data(:,i) = lfp(ceil(timestamps(i,1)):ceil(timestamps(i,2)));
-    catch ME
-        continue;
-    end
+    data(:,i) = lfp(ceil(timestamps(i,1)):ceil(timestamps(i,2)));
 end
 
 % FFT of data (doesn't change on frequency iteration)
