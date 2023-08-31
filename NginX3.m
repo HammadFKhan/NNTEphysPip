@@ -15,12 +15,6 @@ Kilosort264FTestcode
 savepath = fullfile(fpath,['loadme','.mat']);
 save(savepath,'ds_filename');
 clearvars -except ds_filename
-
-%% LFP
-set(0,'DefaultFigureWindowStyle','normal')
-LFP = fastpreprocess_filtering(lfp,Fs);
-LFP = bestLFP(LFP);
-LFP = bandFilter(LFP,'depth'); % Extract LFPs based on 'depth' or 'single'
 %% Parameters for behaviour
 parameters.experiment = 'cue'; % self - internally generated, cue - cue initiated
 parameters.opto = 0; % 1 - opto ON , 0 - opto OFF
@@ -33,18 +27,51 @@ parameters.ts = 1/parameters.Fs;
 [Behaviour] = readLever(parameters,data.amplifierTime);
 [IntanBehaviour] = readLeverIntan(parameters,data.amplifierTime,data.analogChannels,data.digitalChannels,Behaviour);
 %% Plot behaviour
-for i=1:Behaviour.nHit
-    plot(0:2000,smoothdata(Behaviour.hitTrace(i).trace),'Color',[0 0 0 0.2],'LineWidth',1.5);
+figure
+for i=1:IntanBehaviour.nCueHit
+    plot(0:2000,smoothdata(IntanBehaviour.cueHitTrace(i).trace),'Color',[0 0 0 0.2],'LineWidth',1.5);
     hold on;
     try
-        hitTrace(i,:) = smoothdata(Behaviour.hitTrace(i).rawtrace);
+        hitTrace(i,:) = smoothdata(IntanBehaviour.cueHitTrace(i).rawtrace);
     catch
         continue
     end
 end
+for n = 1:IntanBehaviour.nCueHit
+    IntanBehaviour.AvgHitTrace(n,:) = IntanBehaviour.cueHitTrace(n).trace;
+end
+IntanBehaviour.AvgHitTrace = mean(IntanBehaviour.AvgHitTrace,1);
+for n = 1:IntanBehaviour.nCueMiss
+    IntanBehaviour.AvgMissTrace(n,:) = IntanBehaviour.cueMissTrace(n).trace;
+end
+IntanBehaviour.AvgMissTrace = mean(IntanBehaviour.AvgMissTrace,1);
+%% LFP probe setup for 64F and analysis
+% Since there are two probes we want to seperate everything into linear
+% maps for CSD and depthwise LFP analysis and then we do filtering
+data = matfile(ds_filename);
+load UCLA_chanMap_64F
+if ~exist('lfp','var'),lfp = data.amplifierData;end
+%TODO check if the field orientation during insertion is reversed (ie. probe 1 is lateral to probe 2)
+probe1 = lfp(s.sorted_probe_wiring(:,5)==1,:);
+probe2 = lfp(s.sorted_probe_wiring(:,5)==2,:);
+chanProbe1 = s.sorted_probe_wiring(s.sorted_probe_wiring(:,5)==1,:); %needed for linear channel mapping later
+chanProbe2 = s.sorted_probe_wiring(s.sorted_probe_wiring(:,5)==2,:); 
 
+%% LFP filter
+set(0,'DefaultFigureWindowStyle','normal')
+LFP.probe1 = fastpreprocess_filtering(probe1,data.targetedFs);
+LFP.probe1 = bestLFP(LFP.probe1);
+% LFP.probe1 = bandFilter(LFP.probe1,'depth'); % Extract LFPs based on 'depth' or 'single'
+LFP.probe2 = fastpreprocess_filtering(probe2,data.targetedFs);
+LFP.probe2 = bestLFP(LFP.probe2);
+% LFP.probe2 = bandFilter(LFP.probe2,'depth'); % Extract LFPs based on 'depth' or 'single'
+% Build linear channels (should be four from the 64F)
+LFP.probe1.chan1 = find(chanProbe1(:,2)==300);
+LFP.probe1.chan2 = find(chanProbe1(:,2)==320.1);
+LFP.probe2.chan1 = find(chanProbe2(:,2)==0);
+LFP.probe2.chan2 = find(chanProbe2(:,2)==20);
 %% CSD and spectrogram
-leverLFPAnalysis(LFP,Behaviour)
+LFP.probe1.power = leverLFPAnalysis(LFP.probe1.LFP(LFP.probe1.chan2,:),IntanBehaviour);
 %% Spikes analysis
 path = [data.fpath,'/kilosort3'];
 % Read in kilosort data for matlab analysis
@@ -70,41 +97,57 @@ Spikes = leverPSTH(Spikes,Behaviour);
 Spikes = makeSpikeGPFA(Spikes);
 [result,seqTrain] = gpfaAnalysis(Spikes.GPFA.hit.dat);
 %% Some local function to make things easier 
-
 % Hit trials
-function leverLFPAnalysis(LFP,Behaviour)
+function output = leverLFPAnalysis(linearProbe,Behaviour) % LFP of linear channel and Behaviour struct
 CSDoutputhit = [];waveletHit = [];waveletMiss = [];powerCWThit = [];CSDoutputmiss = []; hitLFP = [];missLFP = [];
-eIdx = find(s.sorted_probe_wiring(:,2)==0);
-linearProbe = LFP.medianLFP(eIdx,:);
 params.tapers = [5 9];
 params.Fs = 1000;
-params.fpass = [0 80];
+params.fpass = [4 80];
 params.err = [2 0.05];
-for i = 1:100
-    hitWin = [Behaviour.hit(i,3)-1000, Behaviour.hit(i,3)+1000]; %intan position
-    timestamphit(i,:) = [Behaviour.hit(i,4)-1, Behaviour.hit(i,4)+1]; %s
-    hitLFP(:,:,i) = linearProbe(1:4,hitWin(1):hitWin(2));
-    [waveletHit(:,:,i),fwavelet] = cwt(mean(hitLFP(:,:,i),1),1000,'FrequencyLimit',[4 80]);
-    [powerCWThit(:,:,i), fwt] = calCWTSpectogram(mean(hitLFP(:,:,i),1),0:2000,1000,10,[4 80],0);
-    [CSDoutputhit(:,:,i)]  = CSD(hitLFP(:,:,i)'/1E6,1000,20E-6);
+for i = 1:Behaviour.nCueHit
+    timestamphit(i,:) = [Behaviour.cueHitTrace(i).LFPtime(1),Behaviour.cueHitTrace(i).LFPtime(end)]; %taken in seconds
+    hitWin = floor(Behaviour.cueHitTrace(i).LFPtime*1000); %multiply by Fs;
+    hitLFP(:,:,i) = linearProbe(:,hitWin);
+    [powerCWThit(:,:,i), fwt] = calCWTSpectogram(mean(hitLFP(1:2,:,i),1),0:2000,1000,10,[10 40],0,0);
+%     [CSDoutputhit(:,:,i)]  = CSD(hitLFP(:,:,i)/1E6,1000,50E-6);
 end
-for i = 1:Behaviour.nMiss
-    missWin = [Behaviour.miss(i,3)-1000, Behaviour.miss(i,3)+1000]; %ms
-    timestampmiss(i,:) = [Behaviour.miss(i,4)-1, Behaviour.miss(i,4)+1]; %s
-    missLFP(:,:,i) = linearProbe(1:4,missWin(1):missWin(2));
-    [waveletMiss(:,:,i),fwavelet] = cwt(mean(missLFP(:,:,i),1),1000,'FrequencyLimit',[4 80]);
-    [powerCWTmiss(:,:,i), fwt] = calCWTSpectogram(mean(missLFP(:,:,i),1),0:2000,1000,10,[4 80],0);
-    [CSDoutputmiss(:,:,i)]  = CSD(missLFP(:,:,i)'/1E6,1000,20E-6);
+for i = 1:Behaviour.nCueMiss
+    timestampmiss(i,:) = [Behaviour.cueMissTrace(i).LFPtime(1),Behaviour.cueMissTrace(i).LFPtime(end)]; %taken in seconds
+    missWin = floor(Behaviour.cueMissTrace(i).LFPtime*1000);
+    missLFP(:,:,i) = linearProbe(:,missWin);
+    [powerCWTmiss(:,:,i), fwt] = calCWTSpectogram(mean(missLFP(1:2,:,i),1),0:2000,1000,10,[10 40],0);
+    %     [CSDoutputmiss(:,:,i)]  = CSD(missLFP(:,:,i)'/1E6,1000,20E-6);
 end
 for i = 1:size(linearProbe,1)
-    tfmiss(:,:,i) = itpc(linearProbe(i,:),timestampmiss,1000,1);
-    tfhit(:,:,i) = itpc(linearProbe(i,:),timestamphit,1000,1);
+    tfmiss(:,:,i) = itpc(linearProbe(i,:),timestampmiss,1000,0);
+    [tfhit(:,:,i),frex,pnts] = itpc(linearProbe(i,:),timestamphit,1000,0);
 end
-figure,plot(smoothdata(squeeze(mean(tfhit,1)),'gaussian',50),'k')
-hold on,plot(smoothdata(squeeze(mean(tfmiss,1)),'gaussian',50),'r')
-[Shits,fhits,Serrhits]=mtspectrumc(squeeze(mean(hitLFP,1)),params);
-[Smiss,fmiss,Serrmiss] = mtspectrumc(squeeze(mean(missLFP,1)),params);
+% figure(), clf
+% contourf(1:pnts,frex,mean(tfhit,3),10,'linecolor','none')
+% set(gca,'clim',[0 .2],'ydir','normal')
+% title('ITPC')
+% colormap(jet),colorbar
+% figure,plot(smoothdata(squeeze(mean(tfhit,1)),'gaussian',50),'k')
+% hold on,plot(smoothdata(squeeze(mean(tfmiss,1)),'gaussian',50),'r')
+[Shit,fhit,Serrhit]=mtspectrumc(squeeze(mean(hitLFP,1)),params);
+[Smiss,~,Serrmiss] = mtspectrumc(squeeze(mean(missLFP,1)),params);
 
+% output data
+output.hitLFP = hitLFP;
+output.powerCWThit = powerCWThit;
+output.tfhit = tfhit;
+output.fwt = fwt;
+output.frex = frex;
+output.pnts = pnts;
+output.Shit = Shit;
+
+output.Sf = fhit;
+output.Serrhit = Serrhit;
+output.missLFP = missLFP;
+output.powerCWTmiss = powerCWTmiss;
+output.tfmiss = tfmiss;
+output.Smiss = Smiss;
+output.Serrmiss = Serrmiss;
 end
 
 function [trials,win] = makeSpikeWin(Spikes,spikeId,Fs)
