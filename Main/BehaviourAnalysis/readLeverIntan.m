@@ -18,7 +18,7 @@ else
     disp('Experiment has no opto trials.');
 end
 
-intanFs = 5000;
+intanFs = 2000;
 
 resting_position = 241*5/1024;
 flip = 1;
@@ -28,18 +28,19 @@ nlengthBeforeCue = round(parameters.windowBeforeCue/parameters.ts);
 nlengthCue = round(parameters.windowBeforeCue/parameters.ts + parameters.windowAfterCue/parameters.ts + 1);
 
 IntanBehaviour.leverTrace = resample(((double(leverTrace)- resting_position)*flip),parameters.Fs,intanFs);
-IntanBehaviour.time = lfpTime; % time in seconds
-IntanBehaviour.rewardTrace = downsample(rewardTrace,round(intanFs/parameters.Fs),2);
+IntanBehaviour.time = downsample(lfpTime,round(intanFs/parameters.Fs),1); % time in seconds
+IntanBehaviour.rewardTrace = downsample(rewardTrace,round(intanFs/parameters.Fs),1);
 rewardIndex = find(diff(IntanBehaviour.rewardTrace)==1)+1;
 if cue == 1
-    IntanBehaviour.cueTrace = downsample(cueTrace,round(intanFs/parameters.Fs),2); 
+    IntanBehaviour.cueTrace = downsample(cueTrace,round(intanFs/parameters.Fs),1); 
     cueIndex = find(diff(IntanBehaviour.cueTrace)==1)+1;
 end
 if parameters.opto == 1
-    IntanBehaviour.optoTrace = downsample(optoTrace,round(intanFs/parameters.Fs),2);
+    IntanBehaviour.optoTrace = downsample(optoTrace,round(intanFs/parameters.Fs),1);
     optoIndex = find(diff(IntanBehaviour.optoTrace)==1)+1;
     IntanBehaviour.nOpto = size(optoIndex,2);
 end
+
 
 IntanBehaviour.nCueHit = size(rewardIndex,2);
 IntanBehaviour.nCueMiss = Behaviour.nCueMiss;
