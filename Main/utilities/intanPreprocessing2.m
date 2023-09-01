@@ -9,7 +9,7 @@
 % memory management
 function ds_filename = intanPreprocessing2
 addpath(genpath('Main'));
-chanMapFile = 'UCLA_chanmap_64F.mat';
+chanMapFile = 'UCLA_chanmap_64F2.mat';
 disp(['Using ' chanMapFile ' as electrode map'])
 pause(1)
 load(chanMapFile)
@@ -20,7 +20,7 @@ targetedFs = 2000;
 L = length(directory);
 % Now we build the memory map file if file doesnt exist % only for LFP/behaviour
 % data. Spikes are sent to .bin files for kilosort
-ds_filename = fullfile(pathname,'intan_ds_data.mat'); % check incremented file name for image
+ds_filename = fullfile(pathname,'intan_ds_data3.mat'); % check incremented file name for image
 kilosort_filename = fullfile(pathname,'kilosort.bin');
 if exist(ds_filename,'file') %check if downsampled data file already exists
     error('Preprocessed file already exists! Please remove from directory')
@@ -95,7 +95,8 @@ amplifierData = horzcat(amplifierData{:});
 fprintf('done\n')
 % sort electrodes
 fprintf('Saving amplifier data...')
-data.amplifierData = amplifierData(s.sorted_electrodes,:); 
+amplifierData = amplifierData(s.sorted_electrodes,:); 
+data.amplifierData = amplifierData;
 fprintf('Saving everything else...')
 data.chanMapFile = chanMapFile;
 data.digitalChannels = horzcat(digitalChannels{:});
