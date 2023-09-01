@@ -12,7 +12,7 @@ ds_filename = intanPreprocessing2;
 data = matfile(ds_filename);
 fpath = data.fpath;
 Kilosort264FTestcode
-savepath = fullfile(fpath,['loadme','.mat']);
+savepath = fullfile(fpath,['loadme3','.mat']);
 save(savepath,'ds_filename');
 clearvars -except ds_filename
 %% Parameters for behaviour
@@ -20,7 +20,7 @@ parameters.experiment = 'cue'; % self - internally generated, cue - cue initiate
 parameters.opto = 0; % 1 - opto ON , 0 - opto OFF
 parameters.windowBeforePull = 1; % in seconds
 parameters.windowAfterPull = 1; % in seconds
-parameters.windowBeforeCue = 0.5; % in seconds
+parameters.windowBeforeCue = 1; % in seconds
 parameters.windowAfterCue = 1.5; % in seconds
 parameters.Fs = 1000;
 parameters.ts = 1/parameters.Fs;
@@ -29,7 +29,7 @@ parameters.ts = 1/parameters.Fs;
 %% Plot behaviour
 figure
 for i=1:IntanBehaviour.nCueHit
-    plot(0:2000,smoothdata(IntanBehaviour.cueHitTrace(i).trace),'Color',[0 0 0 0.2],'LineWidth',1.5);
+    plot(0:2500,smoothdata(IntanBehaviour.cueHitTrace(i).trace),'Color',[0 0 0 0.2],'LineWidth',1.5);
     hold on;
     try
         hitTrace(i,:) = smoothdata(IntanBehaviour.cueHitTrace(i).rawtrace);
@@ -49,7 +49,7 @@ IntanBehaviour.AvgMissTrace = mean(IntanBehaviour.AvgMissTrace,1);
 % Since there are two probes we want to seperate everything into linear
 % maps for CSD and depthwise LFP analysis and then we do filtering
 data = matfile(ds_filename);
-load UCLA_chanMap_64F
+load UCLA_chanMap_64F2
 if ~exist('lfp','var'),lfp = data.amplifierData;end
 %TODO check if the field orientation during insertion is reversed (ie. probe 1 is lateral to probe 2)
 probe1 = lfp(s.sorted_probe_wiring(:,5)==1,:);
@@ -59,19 +59,23 @@ chanProbe2 = s.sorted_probe_wiring(s.sorted_probe_wiring(:,5)==2,:);
 
 %% LFP filter
 set(0,'DefaultFigureWindowStyle','normal')
-LFP.probe1 = fastpreprocess_filtering(probe1,data.targetedFs);
+LFP.probe1= fastpreprocess_filtering(probe1,data.targetedFs);
 LFP.probe1 = bestLFP(LFP.probe1);
 % LFP.probe1 = bandFilter(LFP.probe1,'depth'); % Extract LFPs based on 'depth' or 'single'
 LFP.probe2 = fastpreprocess_filtering(probe2,data.targetedFs);
 LFP.probe2 = bestLFP(LFP.probe2);
 % LFP.probe2 = bandFilter(LFP.probe2,'depth'); % Extract LFPs based on 'depth' or 'single'
 % Build linear channels (should be four from the 64F)
-LFP.probe1.chan1 = find(chanProbe1(:,2)==300);
-LFP.probe1.chan2 = find(chanProbe1(:,2)==320.1);
-LFP.probe2.chan1 = find(chanProbe2(:,2)==0);
-LFP.probe2.chan2 = find(chanProbe2(:,2)==20);
+LFP.probe1.chan1 = find(chanProbe1(:,2)>10);
+LFP.probe1.chan2 = find(chanProbe1(:,2)==-10);
+LFP.probe2.chan1 = find(chanProbe2(:,2)==290.1);
+LFP.probe2.chan2 = find(chanProbe2(:,2)==310.1);
 %% CSD and spectrogram
-LFP.probe1.power = leverLFPAnalysis(LFP.probe1.LFP(LFP.probe1.chan2,:),IntanBehaviour);
+LFP.probe2.analysis = leverLFPAnalysis(LFP.probe2.LFP(LFP.probe2.chan2,:),IntanBehaviour);
+%% Now we used the segmented LFPs to do statistical analysis
+LFP.probe1.narrowband.hitLFP = bandFilter2(LFP.probe1.analysis.hitLFP,1000);
+LFP.probe1.narrowband.missLFP = bandFilter2(LFP.probe1.analysis.missLFP,1000);
+
 %% Spikes analysis
 path = [data.fpath,'/kilosort3'];
 % Read in kilosort data for matlab analysis
@@ -108,14 +112,14 @@ for i = 1:Behaviour.nCueHit
     timestamphit(i,:) = [Behaviour.cueHitTrace(i).LFPtime(1),Behaviour.cueHitTrace(i).LFPtime(end)]; %taken in seconds
     hitWin = floor(Behaviour.cueHitTrace(i).LFPtime*1000); %multiply by Fs;
     hitLFP(:,:,i) = linearProbe(:,hitWin);
-    [powerCWThit(:,:,i), fwt] = calCWTSpectogram(mean(hitLFP(10:15,:,i),1),0:2000,1000,10,[10 40],0,1);
+    [powerCWThit(:,:,i), fwt] = calCWTSpectogram(mean(hitLFP(10:15,:,i),1),0:2500,1000,10,[10 40],0,1);
 %     [CSDoutputhit(:,:,i)]  = CSD(hitLFP(:,:,i)/1E6,1000,50E-6);
 end
 for i = 1:Behaviour.nCueMiss
     timestampmiss(i,:) = [Behaviour.cueMissTrace(i).LFPtime(1),Behaviour.cueMissTrace(i).LFPtime(end)]; %taken in seconds
     missWin = floor(Behaviour.cueMissTrace(i).LFPtime*1000);
     missLFP(:,:,i) = linearProbe(:,missWin);
-    [powerCWTmiss(:,:,i), fwt] = calCWTSpectogram(mean(missLFP(10:15,:,i),1),0:2000,1000,10,[10 40],0,1);
+    [powerCWTmiss(:,:,i), fwt] = calCWTSpectogram(mean(missLFP(10:15,:,i),1),0:2500,1000,10,[10 40],0,1);
     %     [CSDoutputmiss(:,:,i)]  = CSD(missLFP(:,:,i)'/1E6,1000,20E-6);
 end
 for i = 1:size(linearProbe,1)
