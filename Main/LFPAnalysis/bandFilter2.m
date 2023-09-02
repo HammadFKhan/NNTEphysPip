@@ -16,14 +16,19 @@ beta = init;
 gamma = init;
 parfor i = 1:size(temp,1)
     % Filter signals using FIR linear regression
-    theta(i,:) = customFilt(temp(i,:),Fs,[4 10]);
-    beta(i,:) = customFilt(temp(i,:),Fs,[10 30]);
-    gamma(i,:) = customFilt(temp(i,:),Fs,[30 80]);
+    theta(i,:) = customFilt(temp(i,:),Fs,[4 12]);
+    beta(i,:) = customFilt(temp(i,:),Fs,[12 30]);
+    gamma(i,:) = customFilt(temp(i,:),Fs,[30 90]);
 end
-%% Compute Band Power
-% LFP.theta_temppow  = 10*log10(abs(hilbert(theta)).^2);
-% LFP.beta_temppow  = 10*log10(abs(hilbert(beta)).^2);
-% LFP.gamma_temppow  = 10*log10(abs(hilbert(gamma)).^2);
+% for i = 1:size(temp,1)
+%     thetaPow(i,:) = abs(hilbert(theta(i,:)));
+%     betaPow(i,:) = abs(hilbert(beta(i,:)));
+%     gammaPow(i,:) = abs(hilbert(gamma(i,:)));
+% end
+% %% Compute Band Power
+% LFP.thetaPower  = reshape(thetaPow,sz(1),sz(2),[]);
+% LFP.betaPower  = reshape(betaPow,sz(1),sz(2),[]);
+% LFP.gammaPower = reshape(gammaPow,sz(1),sz(2),[]);
 LFP.theta_band = reshape(theta,sz(1),sz(2),[]);
 LFP.beta_band = reshape(beta,sz(1),sz(2),[]);
 LFP.gamma_band = reshape(gamma,sz(1),sz(2),[]);
