@@ -20,7 +20,7 @@ targetedFs = 2000;
 L = length(directory);
 % Now we build the memory map file if file doesnt exist % only for LFP/behaviour
 % data. Spikes are sent to .bin files for kilosort
-ds_filename = fullfile(pathname,'intan_ds_data3.mat'); % check incremented file name for image
+ds_filename = fullfile(pathname,'intan_ds_data.mat'); % check incremented file name for image
 kilosort_filename = fullfile(pathname,'kilosort.bin');
 if exist(ds_filename,'file') %check if downsampled data file already exists
     error('Preprocessed file already exists! Please remove from directory')
