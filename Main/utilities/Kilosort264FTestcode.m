@@ -4,15 +4,14 @@ addpath(genpath('C:\Users\khan332\Documents\GitHub\Kilosort')) % path to kilosor
 % addpath('D:\GitHub\npy-matlab') % for converting to Phy
 rootZ = fpath; % the raw data binary file is in this folder
 rootH = fpath; % path to temporary binary file (same size as data, should be on fast SSD)
-pathToYourConfigFile = 'C:\Users\khan332\Documents\GitHub\NNTEphysPip\'; % take from Github folder and put it somewhere else (together with the master_file)
-chanMapFile = 'chanMap64F.mat';
-
+pathToYourConfigFile = 'C:\Users\khan332\Documents\GitHub\NNTEphysPip\Main\utilities'; % take from Github folder and put it somewhere else (together with the master_file)
+chanMapFile = 'chanMap64F2.mat';
 ops.trange    = [0 Inf]; % time range to sort
 ops.NchanTOT  = 64; % total number of channels in your recording
-
 run(fullfile(pathToYourConfigFile, 'config64Fkilosort2Test.m'))
 ops.fproc   = fullfile(rootH, 'temp_wh.dat'); % proc file on a fast SSD
 ops.chanMap = fullfile(pathToYourConfigFile, chanMapFile);
+make_UCLAChannelMap64F(rootZ)
 %% this block runs all the steps of the algorithm
 fprintf('Looking for data inside %s \n', rootZ)
 

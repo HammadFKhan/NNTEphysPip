@@ -1,4 +1,4 @@
-function make_UCLAChannelMap64F(fpath,s)
+function make_UCLAChannelMap64F(fpath)
 % create a channel Map file for simulated data (eMouse)
 
 % here I know a priori what order my channels are in.  So I just manually 
@@ -6,7 +6,7 @@ function make_UCLAChannelMap64F(fpath,s)
 % an index to dead channels too). chanMap(1) is the row in the raw binary
 % file for the first channel. chanMap(1:2) = [33 34] in my case, which happen to
 % be dead channels. 
-load('UCLA_chanmap_64F.mat')
+load('UCLA_chanmap_64F2.mat')
 % chanMap = [1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 ...
 %     25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 ...
 %     50 51 52 53 54 55 56 57 58 59 60 61 62 63 64];
@@ -39,7 +39,7 @@ ycoords = s.sorted_probe_wiring(:,4)';
 % In our case all channels are on the same shank in a single group so we
 % assign them all to group 1. 
 
-kcoords = ones(1,64);
+kcoords = s.sorted_probe_wiring(:,5)';
 
 % at this point in Kilosort we do data = data(connected, :), ycoords =
 % ycoords(connected), xcoords = xcoords(connected) and kcoords =
@@ -50,4 +50,4 @@ kcoords = ones(1,64);
 % would be good to also save the sampling frequency here
 fs = 20000; 
 
-save(fullfile(fpath, 'chanMap64F.mat'), 'chanMap', 'connected', 'xcoords', 'ycoords', 'kcoords', 'fs')
+save(fullfile(fpath, 'chanMap64F2.mat'), 'chanMap', 'connected', 'xcoords', 'ycoords', 'kcoords', 'fs')

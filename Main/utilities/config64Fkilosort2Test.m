@@ -1,4 +1,4 @@
-ops.chanMap             = 'C:\Users\khan332\Documents\GitHub\NNTEphysPip\chanMap64F.mat';
+ops.chanMap             = 'C:\Users\khan332\Documents\GitHub\NNTEphysPip\chanMap64F2.mat';
 % ops.chanMap = 1:ops.Nchan; % treated as linear probe if no chanMap file
 
 % sample rate
