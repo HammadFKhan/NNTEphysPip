@@ -5,7 +5,7 @@ if ~exist('baselinesub','var')
     BLsub = 0;
 else
     BLsub = baselinesub;
-    nBLSub = 0.25*Fs; % in number of points
+    nBLSub = 0.05*Fs; % in number of points
 end
 
 assert( numel(x)==numel(t), 'Number of elements in x and t dont match' );
@@ -15,7 +15,7 @@ powerCWT = (abs(wt).^2)/abs(var(x,1)); % Estimate power from CWT
 % The power calculated is normalzied/relative to th ewhite noise power 
 
 if BLsub == 1
-    BLPower = mean(powerCWT(:,1:nBLSub),2);
+    BLPower = mean(powerCWT,2);
     powerCWTBLsub = bsxfun(@rdivide,powerCWT,BLPower);
     powerCWT = powerCWTBLsub;
 end
