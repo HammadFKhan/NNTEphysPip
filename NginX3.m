@@ -11,25 +11,26 @@ ds_filename = intanPreprocessing2;
 % load only neccessary variables from memory mapped file
 data = matfile(ds_filename);
 fpath = data.fpath;
-Kilosort264FTestcode
-savepath = fullfile(fpath,['loadme3','.mat']);
+% Kilosort264FTestcode
+savepath = fullfile(fpath,['loadme','.mat']);
 save(savepath,'ds_filename');
 clearvars -except ds_filename
 %% Parameters for behaviour
+data = matfile(ds_filename);
 parameters.experiment = 'cue'; % self - internally generated, cue - cue initiated
 parameters.opto = 0; % 1 - opto ON , 0 - opto OFF
 parameters.windowBeforePull = 1; % in seconds
 parameters.windowAfterPull = 1; % in seconds
-parameters.windowBeforeCue = 1; % in seconds
+parameters.windowBeforeCue = 0.5; % in seconds
 parameters.windowAfterCue = 1.5; % in seconds
-parameters.Fs = 1000;
+parameters.Fs = 1000; % Eventual downsampled data
 parameters.ts = 1/parameters.Fs;
 [Behaviour] = readLever(parameters,data.amplifierTime);
 [IntanBehaviour] = readLeverIntan(parameters,data.amplifierTime,data.analogChannels,data.digitalChannels,Behaviour);
 %% Plot behaviour
 figure
 for i=1:IntanBehaviour.nCueHit
-    plot(0:2500,smoothdata(IntanBehaviour.cueHitTrace(i).trace),'Color',[0 0 0 0.2],'LineWidth',1.5);
+    plot(0:2000,smoothdata(IntanBehaviour.cueHitTrace(i).trace),'Color',[0 0 0 0.2],'LineWidth',1.5);
     hold on;
     try
         hitTrace(i,:) = smoothdata(IntanBehaviour.cueHitTrace(i).rawtrace);
@@ -56,8 +57,7 @@ probe1 = lfp(s.sorted_probe_wiring(:,5)==1,:);
 probe2 = lfp(s.sorted_probe_wiring(:,5)==2,:);
 chanProbe1 = s.sorted_probe_wiring(s.sorted_probe_wiring(:,5)==1,:); %needed for linear channel mapping later
 chanProbe2 = s.sorted_probe_wiring(s.sorted_probe_wiring(:,5)==2,:); 
-
-%% LFP filter
+% LFP filter
 set(0,'DefaultFigureWindowStyle','normal')
 LFP.probe1= fastpreprocess_filtering(probe1,data.targetedFs);
 LFP.probe1 = bestLFP(LFP.probe1);
@@ -71,11 +71,57 @@ LFP.probe1.chan2 = find(chanProbe1(:,2)==-10);
 LFP.probe2.chan1 = find(chanProbe2(:,2)==290.1);
 LFP.probe2.chan2 = find(chanProbe2(:,2)==310.1);
 %% CSD and spectrogram
-LFP.probe2.analysis = leverLFPAnalysis(LFP.probe2.LFP(LFP.probe2.chan2,:),IntanBehaviour);
-%% Now we used the segmented LFPs to do statistical analysis
-LFP.probe1.narrowband.hitLFP = bandFilter2(LFP.probe1.analysis.hitLFP,1000);
-LFP.probe1.narrowband.missLFP = bandFilter2(LFP.probe1.analysis.missLFP,1000);
+LFP.probe1.spectrogram = leverLFPAnalysis(LFP.probe1.LFP,IntanBehaviour);
+LFP.probe2.spectrogram = leverLFPAnalysis(LFP.probe2.LFP,IntanBehaviour);
+%% Now we used the segmented LFPs to do statistical analysis across narrowbands
+LFP.probe1.narrowband.hitLFP = bandFilter2(LFP.probe1.spectrogram.hitLFP,1000);
+LFP.probe2.narrowband.hitLFP = bandFilter2(LFP.probe2.spectrogram.hitLFP,1000);
+LFP.probe1.narrowband.missLFP = bandFilter2(LFP.probe1.spectrogram.missLFP,1000);
+LFP.probe2.narrowband.missLFP = bandFilter2(LFP.probe2.spectrogram.missLFP,1000);
+%% Calculate trial-trial narrow power using hilbert across electrode
+for electrode = 1:32
+    LFP.probe1.narrowband.hitLFP.betaPower(:,:,electrode) = calcBandPower(LFP.probe1.narrowband.hitLFP.beta_band(electrode,:,:));
+    LFP.probe1.narrowband.hitLFP.gammaPower(:,:,electrode) = calcBandPower(LFP.probe1.narrowband.hitLFP.gamma_band(electrode,:,:));
+    LFP.probe1.narrowband.missLFP.betaPower(:,:,electrode) = calcBandPower(LFP.probe1.narrowband.missLFP.beta_band(electrode,:,:));
+    LFP.probe1.narrowband.missLFP.gammaPower(:,:,electrode) = calcBandPower(LFP.probe1.narrowband.missLFP.gamma_band(electrode,:,:));
+end
+%% Calculate p-value of beta/gamma coupling for each electrode pair
+for nn = 1:size(LFP.probe1.narrowband.hitLFP.betaPower,3)
+    for n = 1:size(LFP.probe1.narrowband.hitLFP.betaPower,2)
+        LFP.probe1.narrowband.hitLFP.betaGammaPvalue(nn,n) = ranksum(LFP.probe1.narrowband.hitLFP.betaPower(:,n,nn),LFP.probe1.narrowband.hitLFP.gammaPower(:,n,nn));
+        LFP.probe1.narrowband.missLFP.betaGammaPvalue(nn,n) = ranksum(LFP.probe1.narrowband.missLFP.betaPower(:,n,nn),LFP.probe1.narrowband.missLFP.gammaPower(:,n,nn));
+    end
+end
+%% Beta/Gamma coupling
+electrode = 32;
+figure,subplot(3,1,[1 2]),plot(-500:1500,smoothdata(squeeze(mean(LFP.probe1.narrowband.hitLFP.betaPower(:,:,electrode),1)),'gaussian',10),'k','LineWidth',2),hold on
+plot(-500:1500,smoothdata(squeeze(mean(LFP.probe1.narrowband.hitLFP.gammaPower(:,:,electrode),1)),'gaussian',10),'Color',[188/255 190/255 192/255],'LineWidth',2)
+legend('Beta','Gamma')
+box off,set(gca,'TickDir','out')
+set(gca,'xtick',[])
+set(gca,'FontSize',16)
+ylabel('Power')
+title('Hit Trials')
+subplot(3,1,3),plot(-500:1500,smoothdata(1-LFP.probe1.narrowband.hitLFP.betaGammaPvalue(electrode,:),'gaussian',10),'k','LineWidth',2),hold on
+box off,set(gca,'TickDir','out')
+set(gca,'FontSize',16)
+xlabel('Time from cue onset (ms)') 
+ylabel('1-p-val')
 
+figure,subplot(3,1,[1 2]),plot(-500:1500,smoothdata(mean(LFP.probe1.narrowband.missLFP.betaPower(:,:,electrode),1),'gaussian',10),'k','LineWidth',2),hold on
+plot(-500:1500,smoothdata(mean(LFP.probe1.narrowband.missLFP.gammaPower(:,:,electrode),1),'gaussian',10),'Color',[188/255 190/255 192/255],'LineWidth',2)
+legend('Beta','Gamma')
+box off,set(gca,'TickDir','out')
+set(gca,'xtick',[])
+set(gca,'FontSize',16)
+ylabel('Power')
+title('Miss Trials')
+subplot(3,1,3),plot(-500:1500,smoothdata(1-LFP.probe1.narrowband.missLFP.betaGammaPvalue(electrode,:),'gaussian',10),'k','LineWidth',2),hold on
+box off,set(gca,'TickDir','out')
+set(gca,'FontSize',16)
+xlabel('Time from cue onset (ms)') 
+ylabel('1-p-val')
+%% Depth-wise beta/gamma
 %% Spikes analysis
 path = [data.fpath,'/kilosort3'];
 % Read in kilosort data for matlab analysis
@@ -100,7 +146,17 @@ Spikes = leverPSTH(Spikes,Behaviour);
 %% Neural Trajectory Analysis using GPFA
 Spikes = makeSpikeGPFA(Spikes);
 [result,seqTrain] = gpfaAnalysis(Spikes.GPFA.hit.dat);
-%% Some local function to make things easier 
+
+
+
+
+
+
+
+
+
+
+%% ----------------------- Some local function to make things easier ----------------------- %%
 % Hit trials
 function output = leverLFPAnalysis(linearProbe,Behaviour) % LFP of linear channel and Behaviour struct
 CSDoutputhit = [];waveletHit = [];waveletMiss = [];powerCWThit = [];CSDoutputmiss = []; hitLFP = [];missLFP = [];
@@ -108,21 +164,31 @@ params.tapers = [5 9];
 params.Fs = 1000;
 params.fpass = [4 80];
 params.err = [2 0.05];
+timpnts = size(Behaviour.AvgHitTrace,2); %timepoints
 for i = 1:Behaviour.nCueHit
+    disp(['Analyzing trial: ' num2str(i)])
     timestamphit(i,:) = [Behaviour.cueHitTrace(i).LFPtime(1),Behaviour.cueHitTrace(i).LFPtime(end)]; %taken in seconds
     hitWin = floor(Behaviour.cueHitTrace(i).LFPtime*1000); %multiply by Fs;
     hitLFP(:,:,i) = linearProbe(:,hitWin);
-    [powerCWThit(:,:,i), fwt] = calCWTSpectogram(mean(hitLFP(10:15,:,i),1),0:2500,1000,10,[10 40],0,1);
+    for n = 1:size(hitLFP,1)
+        [temp(:,:,n), fwt] = calCWTSpectogram(hitLFP(n,:,i),1:timpnts,1000,10,[10 40],0,1);
+    end
+    powerCWThit(:,:,i) = mean(temp,3);
 %     [CSDoutputhit(:,:,i)]  = CSD(hitLFP(:,:,i)/1E6,1000,50E-6);
 end
 for i = 1:Behaviour.nCueMiss
+    disp(['Analyzing trial: ' num2str(i)])
     timestampmiss(i,:) = [Behaviour.cueMissTrace(i).LFPtime(1),Behaviour.cueMissTrace(i).LFPtime(end)]; %taken in seconds
     missWin = floor(Behaviour.cueMissTrace(i).LFPtime*1000);
     missLFP(:,:,i) = linearProbe(:,missWin);
-    [powerCWTmiss(:,:,i), fwt] = calCWTSpectogram(mean(missLFP(10:15,:,i),1),0:2500,1000,10,[10 40],0,1);
+    for n = 1:size(missLFP,1)
+        [temp(:,:,n), fwt] = calCWTSpectogram(missLFP(n,:,i),1:timpnts,1000,10,[10 40],0,1);
+    end
+    powerCWTmiss(:,:,i) = mean(temp,3);
     %     [CSDoutputmiss(:,:,i)]  = CSD(missLFP(:,:,i)'/1E6,1000,20E-6);
 end
 for i = 1:size(linearProbe,1)
+    disp(['Analyzing electrode: ' num2str(i)])
     tfmiss(:,:,i) = itpc(linearProbe(i,:),timestampmiss,1000,0);
     [tfhit(:,:,i),frex,pnts] = itpc(linearProbe(i,:),timestamphit,1000,0);
 end
@@ -154,6 +220,13 @@ output.Smiss = Smiss;
 output.Serrmiss = Serrmiss;
 end
 
+function power = calcBandPower(narrowBand)
+for n = 1:size(narrowBand,3)
+    temp  = mean(narrowBand(:,:,n),1);
+    power(n,:) = (abs(hilbert(temp)));
+end
+power = power-mean(power,'all'); % mean substract
+end
 function [trials,win] = makeSpikeWin(Spikes,spikeId,Fs)
 %% Begin analysis across clusters
 winLen = 4;
