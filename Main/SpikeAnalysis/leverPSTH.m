@@ -11,10 +11,12 @@ if isfield(Behaviour,'nCueHit')
     trials = {};
     for ii = 1:length(Spikes.Clusters)
         if ~isempty(Spikes.Clusters(ii).spikeTime)
-            for i = 1:Behaviour.nHit
-                temp = zeros(1,length(0:0.001:Behaviour.hitCueTrace(i).t2-Behaviour.hitCueTrace(i).t1));
-                spiketm = Spikes.Clusters(ii).spikeTime(Spikes.Clusters(ii).spikeTime>=Behaviour.hitCueTrace(i).t1 & Spikes.Clusters(ii).spikeTime<=Behaviour.hitCueTrace(i).t2);
-                spiked = discretize(spiketm,Behaviour.hitCueTrace(i).t1:0.001:Behaviour.hitCueTrace(i).t2); % 0.001 bin for 1 ms
+            for i = 1:Behaviour.nCueHit
+                st = Behaviour.cueHitTrace(i).LFPtime(1);
+                stp = Behaviour.cueHitTrace(i).LFPtime(end);
+                temp = zeros(1,length(0:0.001:(stp-st)));
+                spiketm = Spikes.Clusters(ii).spikeTime(Spikes.Clusters(ii).spikeTime>=st & Spikes.Clusters(ii).spikeTime<=stp);
+                spiked = discretize(spiketm,st:0.001:stp); % 0.001 bin for 1 ms
                 if ~isnan(spiked)
                     temp(spiked) = 1;
                 end
@@ -33,16 +35,18 @@ if isfield(Behaviour,'nCueHit')
     Spikes.PSTH.hitspikeRates = output;
 end
 %% Analyze for miss trials
-if isfield(Behaviour,'nMiss')
+if isfield(Behaviour,'nCueMiss')
     fprintf('Analyzing miss trials...\n')
     count = 1;
     trials = {};
     for ii = 1:length(Spikes.Clusters)
         if ~isempty(Spikes.Clusters(ii).spikeTime)
             for i = 1:Behaviour.nCueMiss
-                temp= zeros(1,length(0:0.001:Behaviour.missCueTrace(i).t2-Behaviour.missCueTrace(i).t1));
-                spiketm = Spikes.Clusters(ii).spikeTime(Spikes.Clusters(ii).spikeTime>=Behaviour.missCueTrace(i).t1 & Spikes.Clusters(ii).spikeTime<=Behaviour.missCueTrace(i).t2);
-                spiked = discretize(spiketm,Behaviour.missCueTrace(i).t1:0.001:Behaviour.missCueTrace(i).t2);
+                st = floor(Behaviour.cueMissTrace(i).LFPtime(1));
+                stp = floor(Behaviour.cueMissTrace(i).LFPtime(end));
+                temp = zeros(1,length(0:0.001:(stp-st)));
+                spiketm = Spikes.Clusters(ii).spikeTime(Spikes.Clusters(ii).spikeTime>=st & Spikes.Clusters(ii).spikeTime<=stp);
+                spiked = discretize(spiketm,st:0.001:stp); % 0.001 bin for 1 ms
                 if ~isnan(spiked)
                     temp(spiked) = 1;
                 end
