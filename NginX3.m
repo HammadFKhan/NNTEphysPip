@@ -206,144 +206,28 @@ set(gca,'clim',[-.5 .5]),colormap(jet)
 xlabel('Frequency for phase')
 ylabel('frequency for amplitude')
 title('Post-cue Miss phase-amplitude coupling')
-
-%% Statistically plot out PPA
-X = mean(postCueMissphaseamp,3);
-r = 1:3
-[U,S,V] = svd(X);
-Xapprox = U(:,r)*S(r,r)*V(:,r)';
-figure,plot(ampl_freqs,Xapprox)
-figure(4),clf,contourf(phas_freqs,ampl_freqs,Xapprox',140,'linecolor','none'),colormap(jet)
-set(gca,'clim',[-.5 .5]),colormap(jet)
-xlabel('Frequency for phase')
-ylabel('frequency for amplitude')
-title('Post-cue Miss phase-amplitude coupling')
-%%
-temp = X;
-lbId = find(phas_freqs>=12 & phas_freqs <=20);
-hbId = find(phas_freqs>=20 & phas_freqs <=30);
-lowBeta = mean(temp(lbId,:),1);
-lowBetaerr = std(temp(lbId,:),[],1)/length(lbId);
-highBeta = mean(temp(hbId,:),1);
-highBetaerr = std(temp(hbId,:),[],1)/length(hbId);
-
-figure,plot(ampl_freqs,lowBeta,'k','Linewidth',2);hold on
-errorbar(ampl_freqs,lowBeta,lowBetaerr,'k','Linewidth',2);
-plot(ampl_freqs,highBeta,'Color',[188/255 190/255 192/255],'LineWidth',2);hold on
-errorbar(ampl_freqs,highBeta,highBetaerr,'Color',[188/255 190/255 192/255],'LineWidth',2);
-box off,set(gca,'TickDir','out')
-ylabel('CFC Modulation')
-xlabel('Gamma Frequency (Hz)')
-legend('Low Beta','ste','High Beta')
-%% gedCFA (?)
+%% gedCFA
 % Calculate channel coherence
 rawData = LFP.probe1.LFP;
-temp = LFP.probe1.spectrogram.hitLFP(:,:,:);
-temp2 = LFP.probe1.spectrogram.missLFP(:,:,:);
-Rdata = temp2; % Cue
-Sdata = temp; % Stimulus
-ntrials = size(Rdata,3);
-nbchans = size(Rdata,1);
-[allCovS,allCovR] = deal(zeros(ntrials,nbchans,nbchans)); % Initiate matrices
-% Build SxR channels pre- post- stimulus
-for triali = 1:ntrials
-    seg = Sdata(:,:,triali); % extract one trial
-    seg = seg-mean(seg,2); % temporally mean center
-    allCovS(triali,:,:) = covmat+seg*seg'/size(seg,2); % Compute covariance with weight factor N
-    % Do the same for reference matrix
-    seg = Rdata(:,:,triali); % extract one trial
-    seg = seg-mean(seg,2); % temporally mean center
-    allCovR(triali,:,:) = covmat+seg*seg'/size(seg,2); % Compute covariance with weight factor N
-end
-% Clean up covariances
-% Clean R
-meanR = squeeze(mean(allCovR)); % average across trials
-dists = zeros(ntrials,1);
-for segn = 1:size(allCovR,1)
-    r = allCovR(segn,:,:);
-    % Euclidean distance
-    dists(segn) = sqrt(sum((r(:)-meanR(:)).^2)); %Summed difference
-end
-% Clean trial outliers with RHO value >0.001 (2.98 z)
-covR = squeeze(mean(allCovR(zscore(dists)<3,:,:),1));
-
-% Now we do the same with S
-meanS = squeeze(mean(allCovS)); % average across trials
-dists = zeros(ntrials,1);
-for segn = 1:size(allCovS,1)
-    r = allCovS(segn,:,:);
-    % Euclidean distance
-    dists(segn) = sqrt(sum((r(:)-meanS(:)).^2)); %Summed difference
-end
-% Clean channel outliers with RHO value >0.001 (2.98 z)
-covS = squeeze(mean(allCovS(zscore(dists)<3,:,:),1));
-
-% GED calculation
-[evecs,evals] = eig(covS,covR);
-[evals,sidx]  = sort(diag(evals),'descend');
-evecs = evecs(:,sidx);
-data2D = reshape(rawData,nbchans,[]); % Raw data is reshaped into just electrode x time
-% Calculate components
-compts = evecs(:,1:3)'*data2D; % "component electrode" x time series
-compts = reshape(compts,[],size(rawData,2)); % change back into trials
-%%% power spectrum
-comppower = abs(fft(compts,[],1)).^2;
-comppowerAve = squeeze(mean(comppower,2));
-
-%%% component map
-compmap = evecs(:,1:3)' * covS;
-% flip map sign
-[~,se] = max(abs( compmap ));
-compmap = compmap .* sign(compmap(se));
-
-%% Visualize
-figure,subplot(131),imagesc(covR),colormap(hot)
-axis square
-title('Covariance R')
-xlabel('Electrode'), ylabel('Electrode')
-v = caxis;
-subplot(132),imagesc(covS),colormap(hot)
-axis square
-title('Covariance S')
-xlabel('Electrode'), ylabel('Electrode')
-caxis(v)
-subplot(133),imagesc(covS-covR),colormap(hot)
-axis square
-title('S-R')
-xlabel('Electrode'), ylabel('Electrode')
-
-figure,plot(evals,'ks-','markersize',10,'markerfacecolor','r')
-axis square, box off,set(gca,'tickdir','out')
-set(gca,'xlim',[0 30])
-title('GED components plot')
-xlabel('Component number'), ylabel('Power ratio (\lambda)')
-figure,imagesc(evecs(1:3,:)'),colormap(hot)
-title('Component Electrode Map')
-xlabel('Component number'), ylabel('Electrode')
-figure,plot(smoothdata(abs(compmap(1:3,:))'),'LineWidth',2)
-cmap = gray(4);
-set(gca(),'ColorOrder',cmap)
-title('Components Depth')
-xlabel('Depth'), ylabel('Component Power')
-box off,set(gca,'TickDir','out'),set(gca,'FontSize',16)
-legend
-xlim([0 1000])
+Rdata = LFP.probe1.spectrogram.missLFP;
+Sdata = LFP.probe1.spectrogram.hitLFP;
+GED = genEigenDecomp(rawData,Rdata,Sdata);
 %% Now do the same analysis of LFP but using broadband GED LFP
-LFP.probe1.GED.comp1 = leverLFPAnalysis(compts(1,:),IntanBehaviour);
-LFP.probe1.GED.comp2 = leverLFPAnalysis(compts(2,:),IntanBehaviour);
-LFP.probe1.GED.comp3 = leverLFPAnalysis(compts(3,:),IntanBehaviour);
+LFP.probe1.GED.comp1 = leverLFPAnalysis(GED.compts(1,:),IntanBehaviour);
+LFP.probe1.GED.comp2 = leverLFPAnalysis(GED.compts(2,:),IntanBehaviour);
+LFP.probe1.GED.comp3 = leverLFPAnalysis(GED.compts(3,:),IntanBehaviour);
 %% ITPC by component
-broadBandIdx = 62:80; %Broadband idx base on spectrogram.frex
+broadBandIdx = 55:60; %Broadband idx base on spectrogram.frex (35:40)
 sz = size(LFP.probe1.GED.comp1.tfhit);
-hit = smoothdata(squeeze(mean(LFP.probe1.GED.comp3.tfhit(broadBandIdx,:),1)));
-miss = smoothdata(squeeze(mean(LFP.probe1.GED.comp3.tfmiss(broadBandIdx,:),1)));
+hit = smoothdata(squeeze(mean(LFP.probe1.GED.comp2.tfhit(broadBandIdx,:),1)));
+miss = smoothdata(squeeze(mean(LFP.probe1.GED.comp2.tfmiss(broadBandIdx,:),1)));
 figure,hold on
 plot(-499:1500,hit,'k','LineWidth',2)
 plot(-499:1500,miss,'Color',[188/255 190/255 192/255],'LineWidth',2)
 xlabel('Time from cue (ms)')
 set(gca,'fontsize',16)
 box off, set(gca,'TickDir','out')
-yline(1.65)
+yline(1.98)
 yline(2.58)
 xline(mean(IntanBehaviour.reactionTime)*1000)
 %% Analyze as a function of phase locking
@@ -356,7 +240,7 @@ phasefilt = filterFGx(squeeze(LFP.probe1.GED.comp1.hitLFP(:,:,1)),1000,freq4phas
 phase = angle(hilbert(phasefilt));
 
 % get power values (note: 'power' is a built-in function so we'll name this variable 'amp')
-ampfilt = filterFGx(squeeze(LFP.probe1.GED.comp1.hitLFP(:,:,1)),1000,freq4power,40,1);
+ampfilt = filterFGx(squeeze(LFP.probe1.GED.comp1.hitLFP(:,:,1)),1000,freq4power,20,1);
 amp = abs(hilbert(ampfilt)).^2;
 
 % plot power and phase
