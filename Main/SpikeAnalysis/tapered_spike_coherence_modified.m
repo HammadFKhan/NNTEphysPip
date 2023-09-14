@@ -3,39 +3,22 @@ function info = tapered_spike_coherence_modified(spikea,spikeb,interval,window,s
 %********* HAMMAD KHAN (khan332@purdue.edu): 7/23/2023
 %******** function info = tapered_spike_coherence(data,data2,interval,window,showplot)
 %******* example: info =
-%                   tapered_spike_coherence('msiv3_u8','msiv3_u11',[],800,1);
+%                   spikeCoherence(trial).spikecoherence = ...
+%            tapered_spike_coherence_modified(spikeCoherence(trial).spikea,spikeCoherence(trial).spikeb,[],800,0);
 %
 %**********
 %***** general: computes the coherence using Multiple tapers
 %** inputs:
 %********** data - all relevent data fields for a neuron
+%******     spikea - cell structure of trials with discretized AP 
+%****** 
+%****** 
+%****** 
+%******                
 %******
-%****** data.label(nChannels) = {'SU1' ; 'MU1'; 'LFP1'; 'EYE1'};
-%****** data.trials{ntrials} = [[Su1 data 1:T];[Mu1 data from 1:T];...];
-%****** data.spontaneous{ntrials} = [Su1 data 1:250ms]; %spike data only,
-%******                % data from interval when fixation first occurs
-%******                % and before the stimuli first onset
-%****** data.time{ntrials} = [1:T]
-%****** data.attend(ntrials) = 1 if attended in RF, 2 is 2 of 4 unatt, 3 is
-%******                             for the 1 of 4 unattended case
-%****** data.exactspikes{ntrials} = exact single unit spike times per
-%******                              per trial to 0.025 ms precision
-%****** data.fsample = 1000;
-%****** data.sustained = XA:XB  % to mark the 800 ms sustained period
-%****** data.morepause = -250 to +250 after 1000ms pause, 1500 ms
-%****** data.pause = exact period of 1000ms pause
-%****** data.surround = -950 to -450 ms before pause, stimuli are outside
-%******                   the RF (period of non-visual response?)
-%****** data.waveform = [1:32];
-%****** data.isolation = 1 - well isolated single unit,
-%******                  2 - clear cluster but some overlap
-%******                  3 - multi-unit, large overlap
-%******                  4 - well isolated, but lost midway in session
-%******
-%******
-%********** data for second unit
+%********** spikeb - data for second unit
 %********** interval - interval of analysis, 1xN array of timepoints
-%********** window - duration of LFP window around each spike for FFT
+%********** window - duration of LFP window around each spike for FFT (start with 800)
 %********** showplot - to plot out results
 %*****
 %****** showplot - set this to 1 to see the results plotted out
@@ -57,9 +40,8 @@ function info = tapered_spike_coherence_modified(spikea,spikeb,interval,window,s
 
 %************ plot the spike rasters and mean firing rates to sanity check
 %************ and also show the local fields and mean local fields
-interval = 1:2001;
 if (showplot == 1)
-    
+    % Make some nice spike plots of data
     spiker = spikea;
     
     figure;
@@ -116,7 +98,7 @@ M = 20;  % repeat analysis several times doing a
 %******** find min number of spikes per condition ******
 minspikecnta = 10000000000000;
 minspikecntb = 10000000000000;
-CNUM = 1;
+CNUM = length(spikea); % Number of experimental conditions or trials
 for cubo = 1:CNUM
     %***************************
     it = sum( sum( spikea{cubo}(:,interval) ) );
@@ -148,7 +130,7 @@ zfreq = cell(1,CNUM);
 %**********************************************
 for cubo = 1:CNUM
     fprintf('Computing coherence on group %d trials\n',cubo);
-    for ii = 1:1
+    for ii = 1:M
         fprintf('Computing interation %d...', ii)
         spikeholea = spikea{cubo}(:,interval);
         spikeholeb = spikeb{cubo}(:,interval);
