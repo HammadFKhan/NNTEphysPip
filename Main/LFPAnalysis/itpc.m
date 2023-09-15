@@ -7,8 +7,8 @@ function [tf,frex,pnts] = itpc(lfp,timestamps,Fs,showplot)
 %     numelectrode = 64;
 % end
 % wavelet parameters
-num_frex = 30; % Frequency resolution
-min_freq =  30; % Lower frequency bound
+num_frex = 80; % Frequency resolution
+min_freq =  4; % Lower frequency bound
 max_freq = 80; % Upper frequency bound
 timestamps = floor(timestamps.*Fs);
 pnts = timestamps(1,2)-timestamps(1,1); % Sample size of each trial
@@ -27,6 +27,7 @@ half_wave_size = (length(time)-1)/2;
 nWave = length(time);
 nData = pnts*trials; %total size of data (sample points x trials)
 nConv = nWave+nData-1;
+n_iter = 500;
 %%
 % build data format time x trials
 for i = 1:trials
@@ -53,7 +54,18 @@ for fi=1:num_frex
     as = reshape(as,pnts,trials);
     
     % compute ITPC
-    tf(fi,:) = abs(mean(exp(1i*angle(as)),2));
+    tftemp = abs(mean(exp(1i*angle(as)),2));
+    % now use permutation testing to get Z-value
+    bm = zeros(pnts,n_iter);
+    for bi=1:n_iter
+        cutpoint = randsample(round(pnts/10):round(pnts*.9),1);
+        bm(:,bi) = abs(mean(exp(1i*angle(as([ cutpoint:end 1:cutpoint-1 ],:))),2));
+    end
+    
+    % the value we use is the normalized distance away from the mean of
+    % boot-strapped values
+    tf(fi,:) = (tftemp-mean(bm,2))./std(bm,[],2);
+    %     tf(fi,:) = tftemp;
 end
 
 %% plot results

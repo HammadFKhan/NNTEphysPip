@@ -27,6 +27,14 @@ parameters.Fs = 1000; % Eventual downsampled data
 parameters.ts = 1/parameters.Fs;
 [Behaviour] = readLever(parameters,data.amplifierTime);
 [IntanBehaviour] = readLeverIntan(parameters,data.amplifierTime,data.analogChannels,data.digitalChannels,Behaviour);
+% Calculate ITI time for trials and reward/no reward sequence
+temp1 = arrayfun(@(x) x.LFPtime(1), IntanBehaviour.cueHitTrace);
+temp1 = vertcat(temp1,ones(1,IntanBehaviour.nCueHit)); %  write 1 for reward given
+temp2 = arrayfun(@(x) x.LFPtime(1), IntanBehaviour.cueMissTrace);
+temp2 = vertcat(temp2,zeros(1,IntanBehaviour.nCueMiss)); %  write 0 for no reward given
+temp = [temp1,temp2];
+[~,idx] = sort(temp(1,:)); %sort by occurance
+IntanBehaviour.ITI = temp(:,idx);
 %% Plot behaviour
 figure
 for i=1:IntanBehaviour.nCueHit
@@ -78,54 +86,218 @@ LFP.probe1.narrowband.hitLFP = bandFilter2(LFP.probe1.spectrogram.hitLFP,1000);
 LFP.probe2.narrowband.hitLFP = bandFilter2(LFP.probe2.spectrogram.hitLFP,1000);
 LFP.probe1.narrowband.missLFP = bandFilter2(LFP.probe1.spectrogram.missLFP,1000);
 LFP.probe2.narrowband.missLFP = bandFilter2(LFP.probe2.spectrogram.missLFP,1000);
+%% Calculate trial-trial narrow power using hilbert across electrode
+for electrode = 1:32
+    % Beta
+    [LFP.probe1.narrowband.hitLFP.betaPower(:,:,electrode),LFP.probe1.narrowband.missLFP.betaPower(:,:,electrode)]=...
+        calcBandPower(squeeze(LFP.probe1.narrowband.hitLFP.beta_band(electrode,:,:)),squeeze(LFP.probe1.narrowband.missLFP.beta_band(electrode,:,:)));
+    
+    % Gamma
+    [LFP.probe1.narrowband.hitLFP.gammaPower(:,:,electrode),LFP.probe1.narrowband.missLFP.gammaPower(:,:,electrode)] =...
+        calcBandPower(squeeze(LFP.probe1.narrowband.hitLFP.gamma_band(electrode,:,:)),squeeze(LFP.probe1.narrowband.missLFP.gamma_band(electrode,:,:)));
+end
 %% Calculate p-value of beta/gamma coupling for each electrode pair
-% Subtract mean power for each trial
-LFP.probe1.narrowband.hitLFP.betaPower = LFP.probe1.narrowband.hitLFP.betaPower-mean(LFP.probe1.narrowband.hitLFP.betaPower,2);
-LFP.probe1.narrowband.hitLFP.gammaPower = LFP.probe1.narrowband.hitLFP.gammaPower-mean(LFP.probe1.narrowband.hitLFP.gammaPower,2);
-
-for n = 1:size(LFP.probe1.narrowband.hitLFP.betaPower,1) % electrode
-    for nn = 1:size(LFP.probe1.narrowband.hitLFP.betaPower,2) %time point
-        LFP.probe1.narrowband.hitLFP.betaGammaPvalue(n,nn) = ranksum(squeeze(LFP.probe1.narrowband.hitLFP.betaPower(n,nn,:))...
-            ,squeeze(LFP.probe1.narrowband.hitLFP.gammaPower(n,nn,:)));
-        
-        LFP.probe1.narrowband.missLFP.betaGammaPvalue(n,nn) = ranksum(squeeze(LFP.probe1.narrowband.missLFP.betaPower(n,nn,:))...
-            ,squeeze(LFP.probe1.narrowband.missLFP.gammaPower(n,nn,:)));
+for nn = 1:size(LFP.probe1.narrowband.hitLFP.betaPower,3) %electrode
+    for n = 1:size(LFP.probe1.narrowband.hitLFP.betaPower,2) %time
+        LFP.probe1.narrowband.hitLFP.betaGammaPvalue(nn,n) = ranksum(LFP.probe1.narrowband.hitLFP.betaPower(:,n,nn),LFP.probe1.narrowband.hitLFP.gammaPower(:,n,nn));
+        LFP.probe1.narrowband.missLFP.betaGammaPvalue(nn,n) = ranksum(LFP.probe1.narrowband.missLFP.betaPower(:,n,nn),LFP.probe1.narrowband.missLFP.gammaPower(:,n,nn));
     end
 end
-%% Beta/Gamma coupling
-electrode = 3;
-figure,subplot(3,1,[1 2]),plot(-500:1500,smoothdata(squeeze(mean(LFP.probe1.narrowband.hitLFP.betaPower(electrode,:,:),3)),'gaussian',10),'k','LineWidth',2),hold on
-plot(-500:1500,smoothdata(squeeze(mean(LFP.probe1.narrowband.hitLFP.gammaPower(electrode,:,:),3)),'gaussian',10),'Color',[188/255 190/255 192/255],'LineWidth',2)
-legend('Beta','Gamma')
-box off,set(gca,'TickDir','out')
-set(gca,'xtick',[])
-set(gca,'FontSize',16)
-ylabel('Power')
-title('Hit Trials')
-subplot(3,1,3),plot(-500:1500,smoothdata(1-LFP.probe1.narrowband.hitLFP.betaGammaPvalue(electrode,:),'gaussian',10),'k','LineWidth',2),hold on
-box off,set(gca,'TickDir','out')
-set(gca,'FontSize',16)
-xlabel('Time from cue onset (ms)') 
-ylabel('1-p-val')
-
-figure,subplot(3,1,[1 2]),plot(-500:1500,smoothdata(mean(LFP.probe1.narrowband.missLFP.betaPower(electrode,:,:),3)),'gaussian',10),'k','LineWidth',2),hold on
-plot(-500:1500,smoothdata(mean(LFP.probe1.narrowband.missLFP.gammaPower(electrode,:,:),3)),'gaussian',10),'Color',[188/255 190/255 192/255],'LineWidth',2)
-legend('Beta','Gamma')
-box off,set(gca,'TickDir','out')
-set(gca,'xtick',[])
-set(gca,'FontSize',16)
-ylabel('Power')
-title('Miss Trials')
-subplot(3,1,3),plot(-500:1500,smoothdata(1-LFP.probe1.narrowband.missLFP.betaGammaPvalue(electrode,:),'gaussian',10),'k','LineWidth',2),hold on
-box off,set(gca,'TickDir','out')
-set(gca,'FontSize',16)
-xlabel('Time from cue onset (ms)') 
-ylabel('1-p-val')
-%% Depth-wise beta/gamma
+%% Beta vs Gamma Power
+plotBetaGammaPower(IntanBehaviour.parameters,LFP.probe1) %Reference probe here
+%% Plot Power by depth
+sz = size(LFP.probe1.narrowband.hitLFP.gammaPower);
+temp = smoothdata((squeeze(mean(LFP.probe1.narrowband.hitLFP.betaPower,1))),'gaussian',1);
 figure,
-for n = 1:87
-    plot(squeeze(mean(abs(LFP.probe1.narrowband.hitLFP.betaPower(n,:,[1:6,8:32])),2))),hold on
+imagesc(-IntanBehaviour.parameters.windowBeforeCue*1000:IntanBehaviour.parameters.windowAfterCue*1000,1:sz(3),temp'),colormap(hot)
+xlabel('Time from cue (ms)')
+ylabel('Depth')
+set(gca,'fontsize',16)
+%% Beta vs gamma phase synchonization p-value
+idxBeta = find(LFP.probe1.spectrogram.frex>12 & LFP.probe1.spectrogram.frex<30); %Frequency regime
+idxGamma = find(LFP.probe1.spectrogram.frex>30 & LFP.probe1.spectrogram.frex<80); %Frequency regime
+
+for nn = 1:size(LFP.probe1.spectrogram.tfhit,3) %electrode
+    for n = 1:size(LFP.probe1.spectrogram.tfhit,2) %timepoint
+        LFP.probe1.narrowband.hitLFP.phasebetaGammaPvalue(nn,n) = ...
+            ranksum(squeeze(LFP.probe1.spectrogram.tfhit(idxBeta,n,nn)),LFP.probe1.spectrogram.tfhit(idxGamma,n,nn));
+        LFP.probe1.narrowband.missLFP.phasebetaGammaPvalue(nn,n) = ...
+            ranksum(LFP.probe1.spectrogram.tfmiss(idxBeta,n,nn),LFP.probe1.spectrogram.tfmiss(idxGamma,n,nn));
+    end
 end
+%% plot ITPC across depth
+broadBandIdx = 7:62; %Broadband idx base on spectrogram.frex
+sz = size(LFP.probe1.spectrogram.tfhit);
+temp = smoothdata(squeeze(mean(LFP.probe1.spectrogram.tfhit(broadBandIdx,:,:),1)),'gaussian',10);
+figure,
+imagesc(-IntanBehaviour.parameters.windowBeforeCue*1000:IntanBehaviour.parameters.windowAfterCue*1000,1:sz(3),temp'),colormap(hot)
+xlabel('Time from cue (ms)')
+ylabel('Depth')
+set(gca,'fontsize',16)
+
+%% Prestim and post stim beta/gamma
+% Here we plot some sort of correlation map between precue response
+% dynamics and underlying reaction time for lever pull
+% Beta hit
+[LFP.probe1.narrowband.hitLFP.preBetastim,LFP.probe1.narrowband.hitLFP.postBetastim,LFP.probe1.narrowband.hitLFP.preBetastimIdx,LFP.probe1.narrowband.hitLFP.postBetastimIdx] =...
+    stimulusPower(LFP.probe1.narrowband.hitLFP.betaPower,IntanBehaviour);
+%Gamma hit
+[LFP.probe1.narrowband.hitLFP.preGammastim,LFP.probe1.narrowband.hitLFP.postGammastim,LFP.probe1.narrowband.hitLFP.preGammastimIdx,LFP.probe1.narrowband.hitLFP.postGammastimIdx] =...
+    stimulusPower(LFP.probe1.narrowband.hitLFP.gammaPower,IntanBehaviour);
+% Beta miss
+[LFP.probe1.narrowband.missLFP.preBetastim,LFP.probe1.narrowband.missLFP.postBetastim,LFP.probe1.narrowband.missLFP.preBetastimIdx,LFP.probe1.narrowband.missLFP.postBetastimIdx] =...
+    stimulusPower(LFP.probe1.narrowband.missLFP.betaPower,IntanBehaviour);
+% Gamma miss
+[LFP.probe1.narrowband.missLFP.preGammastim,LFP.probe1.narrowband.missLFP.postGammastim,LFP.probe1.narrowband.missLFP.preGammastimIdx,LFP.probe1.narrowband.missLFP.postGammastimIdx] =...
+    stimulusPower(LFP.probe1.narrowband.missLFP.gammaPower,IntanBehaviour);
+%% Phase amplitude coupling prestim and poststim/ hit and miss
+phas_freqs = 8:2:30;
+ampl_freqs = 30:4:80;
+count = 1;
+preCueHitphaseamp = [];
+postCueHitphaseamp = [];
+preCueMissphaseamp = [];
+postCueMissphaseamp = [];
+electrode = 32;
+for n = 1:196 %trial
+    preCueHitphaseamp(:,:,count) = phaseAmpCoupling(squeeze(compts(1,1:500,n)),1000,phas_freqs,ampl_freqs);
+    postCueHitphaseamp(:,:,count) = phaseAmpCoupling(squeeze(compts(1,501:2001,n)),1000,phas_freqs,ampl_freqs);
+%     preCueMissphaseamp(:,:,count) = phaseAmpCoupling(LFP.probe1.spectrogram.missLFP(electrode,1:500,n),1000,phas_freqs,ampl_freqs);
+%     postCueMissphaseamp(:,:,count) = phaseAmpCoupling(LFP.probe1.spectrogram.missLFP(electrode,501:2000,n),1000,phas_freqs,ampl_freqs);
+    count = count+1;
+end
+
+
+%%
+% z-score normalized to shuffled
+n_iter = 200;
+% bm = zeros(1,length(n_iter));
+for bi=1:n_iter
+    cutpoint = randsample(round(size(hitCuephaseamp,3)/10):round(size(hitCuephaseamp,3)*.9),6);
+    bm(:,:,bi) = mean(hitCuephaseamp(:,:,cutpoint),3);
+end
+temp = mean(hitCuephaseamp,3)-mean(bm,3)./std(bm,[],3);
+
+for bi=1:n_iter
+    cutpoint = randsample(round(size(missCuephaseamp,3)/10):round(size(missCuephaseamp,3)*.9),6);
+    bm(:,:,bi) = mean(missCuephaseamp(:,:,cutpoint),3);
+end
+temp = mean(missCuephaseamp,3)-mean(bm,3)./std(bm,[],3);
+
+
+%% Plot
+figure(1),clf,contourf(phas_freqs,ampl_freqs,preCueHitphaseamp(:,:,1)',140,'linecolor','none'),colormap(jet)
+set(gca,'clim',[-2.98 2.98]),colormap(jet)
+xlabel('Frequency for phase')
+ylabel('frequency for amplitude')
+title('Pre-Cue Hit phase-amplitude coupling')
+figure(2),clf,contourf(phas_freqs,ampl_freqs,mean(postCueHitphaseamp,3)',140,'linecolor','none'),colormap(jet)
+set(gca,'clim',[-.5 .5]),colormap(jet)
+xlabel('Frequency for phase')
+ylabel('frequency for amplitude')
+title('Post-cue Hit phase-amplitude coupling')
+figure(3),clf,contourf(phas_freqs,ampl_freqs,mean(preCueMissphaseamp,3)',140,'linecolor','none'),colormap(jet)
+set(gca,'clim',[-.5 .5]),colormap(jet)
+xlabel('Frequency for phase')
+ylabel('frequency for amplitude')
+title('Pre-cue Miss phase-amplitude coupling')
+figure(4),clf,contourf(phas_freqs,ampl_freqs,mean(postCueMissphaseamp,3)',140,'linecolor','none'),colormap(jet)
+set(gca,'clim',[-.5 .5]),colormap(jet)
+xlabel('Frequency for phase')
+ylabel('frequency for amplitude')
+title('Post-cue Miss phase-amplitude coupling')
+%% gedCFA
+% Calculate channel coherence
+rawData = LFP.probe1.LFP;
+Rdata = LFP.probe1.spectrogram.missLFP;
+Sdata = LFP.probe1.spectrogram.hitLFP;
+GED = genEigenDecomp(rawData,Rdata,Sdata);
+%% Now do the same analysis of LFP but using broadband GED LFP
+LFP.probe1.GED.comp1 = leverLFPAnalysis(GED.compts(1,:),IntanBehaviour);
+LFP.probe1.GED.comp2 = leverLFPAnalysis(GED.compts(2,:),IntanBehaviour);
+LFP.probe1.GED.comp3 = leverLFPAnalysis(GED.compts(3,:),IntanBehaviour);
+% ITPC by component
+broadBandIdx = 62:80; %Broadband idx base on spectrogram.frex
+sz = size(LFP.probe1.GED.comp1.tfhit);
+hit = smoothdata(squeeze(mean(LFP.probe1.GED.comp1.tfhit(broadBandIdx,:),1)));
+miss = smoothdata(squeeze(mean(LFP.probe1.GED.comp1.tfmiss(broadBandIdx,:),1)));
+figure,hold on
+plot(-499:1500,hit,'k','LineWidth',2)
+plot(-499:1500,miss,'Color',[188/255 190/255 192/255],'LineWidth',2)
+xlabel('Time from cue (ms)')
+set(gca,'fontsize',16)
+box off, set(gca,'TickDir','out')
+yline(1.65)
+yline(2.58)
+xline(mean(IntanBehaviour.reactionTime)*1000)
+%% Analyze as a function of phase locking
+%
+freq4phase = 15; % in Hz
+freq4power = 40; 
+
+% get phase values
+phasefilt = filterFGx(squeeze(LFP.probe1.GED.comp1.hitLFP(:,:,1)),1000,freq4phase,2);
+phase = angle(hilbert(phasefilt));
+
+% get power values (note: 'power' is a built-in function so we'll name this variable 'amp')
+ampfilt = filterFGx(squeeze(LFP.probe1.GED.comp1.hitLFP(:,:,1)),1000,freq4power,40,1);
+amp = abs(hilbert(ampfilt)).^2;
+
+% plot power and phase
+figure(2), clf
+plot(phase)
+hold on
+plot((amp-mean(amp))/std(amp),'r')
+% hint: zoom in on part of these data!
+
+% plot power as a function of phase
+figure(3), clf
+polarplot(phase,amp,'.')
+n_hist_bins = 30;
+
+phase_edges = linspace(min(phase),max(phase),n_hist_bins+1);
+amp_by_phases = zeros(1,n_hist_bins);
+
+for i=1:n_hist_bins-1
+    amp_by_phases(i) = mean(amp(phase>phase_edges(i) & phase<phase_edges(i+1)));
+end
+
+figure(4)
+bar(phase_edges(1:end-1),amp_by_phases,'histc');
+set(gca,'xlim',[-pi-.5 pi+.5])
+xlabel([ 'Phase at ' num2str(freq4phase) ' Hz (rad.)' ])
+ylabel([ 'Power at ' num2str(freq4power) ' Hz' ])
+box off,set(gca,'TickDir','out')
+set(gca,'fontsize',16)
+% significance through permutation testing 
+
+% compute amplitude-modulated phase
+observed_modulation = abs(mean(amp.*exp(1i*phase)));
+
+% now run permutation testing to see the significance of this interaction
+num_iterations = 10000;
+permuted_results = zeros(1,num_iterations);
+npnts = length(amp);
+
+for ni=1:num_iterations
+    % randomly resort power values
+    cutpoint = randsample(round(npnts/10):round(npnts*.9),1);
+    permuted_results(ni) = abs(mean(amp([ cutpoint:end 1:cutpoint-1 ]).*exp(1i*phase)));
+end
+
+% print value
+z_modulation = (observed_modulation-mean(permuted_results))/std(permuted_results);
+disp([ 'Z-modulation of ' num2str(freq4power) ' Hz power modulated by ' num2str(freq4phase) ' Hz phase is ' num2str(z_modulation) '.' ])
+
+% show histogram of permuted and real values
+figure(5), clf
+histogram(permuted_results,50);
+hold on
+plot([observed_modulation observed_modulation],get(gca,'ylim')/2,'m-p','linewi',4,'markersize',16);
+legend({'histogram of permuted values';'observed value'})
+xlabel('Absolute modulate (arb. units depending on power values)')
+ylabel('Count')
+
 
 %% Spikes analysis
 path = [data.fpath,'/kilosort3'];
@@ -137,7 +309,7 @@ Spikes.SpikeSamples = SpikeSamples;
 Spikes = clusterSort(Spikes);
 Spikes = ISI(Spikes,0.01,data.Fs,0); %Spikes, Interval, Fs
 % Calculate Depth profile
-load chanMap64F
+load chanMap64F2
 [spikeAmps, spikeDepths, templateDepths, tempAmps, tempsUnW, templateDuration, waveforms] =...
     spikeTemplatePosition(data.fpath,ycoords);
 for i = 1:length(tempAmps)
@@ -147,20 +319,15 @@ for i = 1:length(tempAmps)
     Spikes.Clusters(i).spikeDuration = templateDuration(i)/data.Fs*1000;
 end
 %% Calculate trial PSTH for lever
-Spikes = leverPSTH(Spikes,Behaviour);
+Spikes = leverPSTH(Spikes,IntanBehaviour);
 %% Neural Trajectory Analysis using GPFA
 Spikes = makeSpikeGPFA(Spikes);
-[result,seqTrain] = gpfaAnalysis(Spikes.GPFA.hit.dat);
-
-
-
-
-
-
-
-
+[result,seqTrain] = gpfaAnalysis(Spikes.GPFA.hit.dat,3); %Run index
 
 %% ----------------------- Some local function to make things easier ----------------------- %%
+
+
+
 % Hit trials
 function output = leverLFPAnalysis(linearProbe,Behaviour) % LFP of linear channel and Behaviour struct
 CSDoutputhit = [];waveletHit = [];waveletMiss = [];powerCWThit = [];CSDoutputmiss = []; hitLFP = [];missLFP = [];
@@ -224,13 +391,54 @@ output.Smiss = Smiss;
 output.Serrmiss = Serrmiss;
 end
 
-function power = calcBandPower(narrowBand)
-for n = 1:size(narrowBand,3)
-    temp  = mean(narrowBand(:,:,n),1);
-    power(n,:) = (abs(hilbert(temp)));
+function [ampHit,ampMiss] = calcBandPower(hitBand,missBand)
+narrowBand = [hitBand,missBand];
+n_iter = 1000;
+nhits = size(hitBand,2);
+ntotal = size(narrowBand,2);
+nullDistHit = zeros(size(narrowBand,1),n_iter);
+nullDistMiss = zeros(size(narrowBand,1),n_iter);
+for n = 1:ntotal %trial
+    temp  = narrowBand(:,n);
+    amp(:,n) = abs(hilbert(temp)).^2;
 end
-power = power-mean(power,'all'); % mean substract
+ampHit = amp(:,1:nhits);
+ampMiss = amp(:,nhits+1:end);
+fprintf('Shuffling with %d interations...',n_iter);
+for n = 1:n_iter
+    randIdx = randperm(ntotal);
+    hitRand = amp(:,randIdx(1:nhits));
+    missRand = amp(:,randIdx(nhits+1:end));
+    nullDistHit(:,n) = mean(hitRand,2);
+    nullDistMiss(:,n) = mean(missRand,2);
 end
+fprintf('done\n');
+% now use permutation testing to get Z-value
+% the value we use is the normalized distance away from the mean of
+% boot-strapped values
+ampHit = (ampHit-mean(nullDistHit,2))./std(nullDistHit,[],2);
+ampMiss = (ampMiss-mean(nullDistMiss,2))./std(nullDistMiss,[],2);
+ampHit = ampHit';
+ampMiss = ampMiss';
+end
+
+function [prestim,poststim,prestimIdx,poststimIdx] = stimulusPower(data,Behaviour)
+for n = 1:size(data,1) %trials
+    % Prestimulus
+    win = 1:Behaviour.parameters.windowBeforeCue*1000;
+    for nn = 1:size(data,3) %electrodes
+        prestim(n,nn) = squeeze(mean(data(n,win,nn),2));
+        [~,prestimIdx(n,nn)] = max(data(n,win,nn));
+    end
+    % post stimulus
+    win = 1+Behaviour.parameters.windowBeforeCue*1000:Behaviour.parameters.windowAfterCue*1000;
+    for nn = 1:size(data,3)
+        poststim(n,nn) = squeeze(mean(data(n,win,nn),2));
+        [~,poststimIdx(n,nn)] = max(data(n,win,nn));
+    end
+end
+end
+
 function [trials,win] = makeSpikeWin(Spikes,spikeId,Fs)
 %% Begin analysis across clusters
 winLen = 4;
@@ -437,4 +645,49 @@ output = output(window:input_length+window-1);
 if toggle_dims == 1,
     output = output';
 end
+end
+function plotBetaGammaPower(Behaviour,LFP)
+figure,hold on
+plotWin = -Behaviour.windowBeforeCue*1000:Behaviour.windowAfterCue*1000;
+nChan = size(LFP.LFP,1);
+for electrode = 1:nChan
+    subplot(3,1,[1 2]),plot(plotWin,smoothdata((squeeze(mean(LFP.narrowband.hitLFP.betaPower(:,:,electrode),1))),'gaussian',10),'k','LineWidth',1),hold on
+    plot(plotWin,smoothdata((squeeze(mean(LFP.narrowband.hitLFP.gammaPower(:,:,electrode),1))),'gaussian',10),'Color',[188/255 190/255 192/255],'LineWidth',1)
+end
+subplot(3,1,[1 2]),yline(2.58,'k--') % 99% cutoff
+subplot(3,1,[1 2]),yline(-2.58,'k--') % 99% cutoff
+subplot(3,1,[1 2]),yline(1.96,'k--') % 99% cutoff
+subplot(3,1,[1 2]),yline(-1.96,'k--') % 99% cutoff
+legend('Beta','Gamma')
+box off,set(gca,'TickDir','out')
+set(gca,'xtick',[])
+set(gca,'FontSize',16)
+ylabel('Power (Z)')
+title('Hit Trials')
+subplot(3,1,3),semilogy(plotWin,smoothdata(mean(LFP.narrowband.hitLFP.betaGammaPvalue,1),'gaussian',1),'k','LineWidth',1),hold on
+box off,set(gca,'TickDir','out')
+set(gca,'FontSize',16)
+xlabel('Time from cue onset (ms)')
+ylabel('P-value')
+
+figure,hold on
+for electrode = 1:nChan
+subplot(3,1,[1 2]),plot(plotWin,smoothdata(mean(LFP.narrowband.missLFP.betaPower(:,:,electrode),1),'gaussian',10),'k','LineWidth',1),hold on
+plot(plotWin,smoothdata(mean(LFP.narrowband.missLFP.gammaPower(:,:,electrode),1),'gaussian',10),'Color',[188/255 190/255 192/255],'LineWidth',1)
+end
+subplot(3,1,[1 2]),yline(2.58,'k--') % 99% cutoff
+subplot(3,1,[1 2]),yline(-2.58,'k--') % 99% cutoff
+subplot(3,1,[1 2]),yline(1.96,'k--') % 99% cutoff
+subplot(3,1,[1 2]),yline(-1.96,'k--') % 99% cutoff
+legend('Beta','Gamma')
+box off,set(gca,'TickDir','out')
+set(gca,'xtick',[])
+set(gca,'FontSize',16)
+ylabel('Power (Z)')
+title('Miss Trials')
+subplot(3,1,3),semilogy(plotWin,smoothdata(mean(LFP.narrowband.missLFP.betaGammaPvalue,1),'gaussian',1),'k','LineWidth',1),hold on
+box off,set(gca,'TickDir','out')
+set(gca,'FontSize',16)
+xlabel('Time from cue onset (ms)') 
+ylabel('P-value')
 end

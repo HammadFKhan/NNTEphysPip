@@ -1,4 +1,4 @@
-function [result,seqTrain] = gpfaAnalysis(dat)
+function [result,seqTrain] = gpfaAnalysis(dat,runIdx)
 % ====
 % GPFA Lever Task
 % ====
@@ -42,17 +42,16 @@ datFormat = 'spikes';
 
 % Results will be saved in mat_results/runXXX/, where XXX is runIdx.
 % Use a new runIdx for each dataset.
-runIdx = 8;
 
 % Select method to extract neural trajectories:
 % 'gpfa'   -- Gaussian-process factor analysis
 % 'fa'     -- Smooth and factor analysis
 % 'ppca'   -- Smooth and probabilistic principal components analysis
 % 'pca'    -- Smooth and principal components analysis
-method = 'pca';
+method = 'gpfa';
 
 % Select number of latent dimensions
-xDim = 8;
+xDim = 15;
 % NOTE: The optimal dimensionality should be found using 
 %       cross-validation (Section 2) below.
 

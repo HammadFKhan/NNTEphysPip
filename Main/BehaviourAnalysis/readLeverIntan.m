@@ -19,7 +19,7 @@ else
 end
 
 intanFs = 2000;
-
+IntanBehaviour.parameters = parameters;
 resting_position = 241*5/1024;
 flip = 1;
 nlengthBeforePull = round(parameters.windowAfterPull/parameters.ts);
