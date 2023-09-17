@@ -48,7 +48,7 @@ end
 Behaviour.B = B(2:end,:);
 
 %% Getting hit and miss timings
-hitIndex = find(diff(B(:,3)) == 1) + 1;
+hitIndex = find(diff(B(:,3)) == 1);
 hitTime = Behaviour.time(hitIndex);
 if expFlag == 1
     hitLFPIndex = zeros(Behaviour.nHit,1);
@@ -64,7 +64,7 @@ end
 
 
 
-missIndex = find(diff(B(:,4)) == 1) + 1;
+missIndex = find(diff(B(:,4)) == 1);
 missTime = Behaviour.time(missIndex);
 if expFlag == 1
     missLFPIndex = zeros(Behaviour.nMiss,1);
