@@ -33,7 +33,6 @@ n_iter = 500;
 for i = 1:trials
     data(:,i) = lfp(ceil(timestamps(i,1)):ceil(timestamps(i,2)));
 end
-
 % FFT of data (doesn't change on frequency iteration)
 dataX = fft( reshape(data,[],1) ,nConv)';
 
@@ -65,7 +64,7 @@ for fi=1:num_frex
     % the value we use is the normalized distance away from the mean of
     % boot-strapped values
     tf(fi,:) = (tftemp-mean(bm,2))./std(bm,[],2);
-    %     tf(fi,:) = tftemp;
+%         tf(fi,:) = tftemp;
 end
 
 %% plot results
