@@ -58,6 +58,8 @@ for n = 1:IntanBehaviour.nCueMiss
     IntanBehaviour.AvgMissTrace(n,:) = IntanBehaviour.cueMissTrace(n).trace;
 end
 IntanBehaviour.AvgMissTrace = mean(IntanBehaviour.AvgMissTrace,1);
+IntanBehaviour.AvgHitTrace = mean(IntanBehaviour.AvgHitTrace,1);
+
 %% LFP probe setup for 64F and analysis
 % Since there are two probes we want to seperate everything into linear
 % maps for CSD and depthwise LFP analysis and then we do filtering
@@ -134,7 +136,7 @@ end
 %% plot ITPC across depth
 broadBandIdx = 7:62; %Broadband idx base on spectrogram.frex
 sz = size(LFP.probe1.spectrogram.tfhit);
-temp = smoothdata(squeeze(mean(LFP.probe1.spectrogram.tfmiss(broadBandIdx,:,:),1)),'gaussian',10);
+temp = smoothdata(squeeze(mean(LFP.probe1.spectrogram.tfhit(broadBandIdx,:,:),1)),'gaussian',10);
 temp = smoothdata(temp,2);
 figure,
 imagesc(-IntanBehaviour.parameters.windowBeforeCue*1000:IntanBehaviour.parameters.windowAfterCue*1000,1:sz(3),temp'),colormap(hot)
@@ -215,8 +217,8 @@ title('Post-cue Miss phase-amplitude coupling')
 %% gedCFA
 % Calculate channel coherence
 rawData = LFP.probe1.LFP(:,:);
-Rdata = LFP.probe1.spectrogram.missLFP(:,:,:);
-Sdata = LFP.probe1.spectrogram.hitLFP(:,:,:);
+Rdata = LFP.probe1.spectrogram.hitLFP(:,1:1500,:);
+Sdata = LFP.probe1.spectrogram.hitLFP(:,1501:3000,:);
 GED = genEigenDecomp(rawData,Rdata,Sdata);
 %% Calculate generalize phase for compts
 xo = bandpass_filter(GED.compts,5,40,1000); %x,f1,f2,Fs
@@ -253,23 +255,25 @@ figure,
 subplot(131),plotSpectrogram(LFP.probe1.GED.comp1.tfhit,-1499:1500,LFP.probe1.GED.comp1.frex,'contourf'); caxis([-3 3])
 subplot(132),plotSpectrogram(LFP.probe1.GED.comp2.tfhit,-1499:1500,LFP.probe1.GED.comp1.frex,'contourf'); caxis([-3 3])
 subplot(133),plotSpectrogram(LFP.probe1.GED.comp3.tfhit,-1499:1500,LFP.probe1.GED.comp1.frex,'contourf'); caxis([-3 3])
-figure,
-figure,plot(-1499:1500,LFP.probe1.GED.itpc.comp1.hit)
+figure,subplot(131),plot(-1499:1500,LFP.probe1.GED.itpc.comp1.hit)
 subplot(132),plot(-1499:1500,LFP.probe1.GED.itpc.comp2.hit)
 subplot(133),plot(-1499:1500,LFP.probe1.GED.itpc.comp3.hit)
 % %%% Statistically pool 
 % [val,idx] = max(LFP.probe1.GED.itpc.comp1.hit);
 % idx = idx-500;
 %%
+hit = LFP.probe1.GED.itpc.comp3.hit;
+miss = LFP.probe1.GED.itpc.comp3.miss;
 figure,hold on
-plot(-499:1500,hit,'k','LineWidth',2)
-plot(-499:1500,miss,'Color',[188/255 190/255 192/255],'LineWidth',2)
+plot(-1499:1500,hit,'k','LineWidth',2)
+plot(-1499:1500,miss,'Color',[188/255 190/255 192/255],'LineWidth',2)
 xlabel('Time from cue (ms)')
 set(gca,'fontsize',16)
 box off, set(gca,'TickDir','out')
 yline(1.98)
-yline(2.58)
 xline(mean(IntanBehaviour.reactionTime)*1000)
+xline(0)
+xlim([-500 1500])
 %% Analyze as a function of phase locking
 %
 freq4phase = 15; % in Hz
@@ -345,6 +349,7 @@ path = [data.fpath,'/kilosort3'];
 % Read in kilosort data for matlab analysis
 SpikeClusters = readNPY(fullfile(path, 'spike_clusters.npy'));
 SpikeSamples = readNPY(fullfile(path, 'spike_times.npy'));
+SpikeChannel = readNPY(fullfile(path,'channel_positions.npy'));
 Spikes.SpikeClusters = SpikeClusters; %Add one because of 0 index from python
 Spikes.SpikeSamples = SpikeSamples;
 Spikes = clusterSort(Spikes);
@@ -359,11 +364,82 @@ for i = 1:length(tempAmps)
     Spikes.Clusters(i).waveforms = waveforms(i,:);
     Spikes.Clusters(i).spikeDuration = templateDuration(i)/data.Fs*1000;
 end
+
 %% Calculate trial PSTH for lever
 Spikes = leverPSTH(Spikes,IntanBehaviour);
+%% Plot out Spikes
+%% norm spike rates
+temp = smoothdata(Spikes.PSTH.missspikeRates,2,'gaussian',10);
+normSpikeRate = (temp-min(temp,[],2))./(max(temp,[],2)-min(temp,[],2));
+for n = 1:64
+    [~,idx(n)] = max(normSpikeRate(n,:));
+end
+[~,idxc] = sort(idx);
+figure,imagesc(-500:1500,1:64,normSpikeRate(idxc,:)),hold on
+colormap(flip(gray))
+colorbar
+set(gca,'fontsize',16)
+caxis([0.5 1])
+RT = mean(IntanBehaviour.reactionTime)*1000;
+xline(0);
+xline(RT);
+plot((idx(idxc))-500,1:64,'r','LineWidth',1)
+%% Jitter response
+figure,plot(flip(idxhit)-500,1:64,'k','LineWidth',2),hold on
+plot(flip(idxmiss)-500,1:64,'Color',[188/255 190/255 192/255],'LineWidth',2)
+box off,set(gca,'TickDir','out'),set(gca,'FontSize',16),ylabel('Neuron'),xlabel('Time from cue')
+figure,bar(1,1-std(idxhit)/1000,'FaceColor',[188/255 190/255 192/255]),hold on
+errorbar(1,1-std(idxhit)/1000,std(idxhit)/sqrt(64)/1000,'k')
+bar(2,1-std(idxmiss)/1000,'FaceColor',[188/255 190/255 192/255]),hold on
+errorbar(2,1-std(idxmiss)/1000,std(idxmiss)/1000/sqrt(64),'k')
+box off
+set(gca,'tickdir','out')
+set(gca,'fontsize',16)
+ylabel('Patterned Stability')
+ylim([0 1])
+%%
+figure,hold on
+for n = 1
+subplot(2,1,[1]),Show_Spikes(Spikes.PSTH.hit{n}),axis off
+subplot(2,1,[2]),bar(-500:1500,smoothdata(Spikes.PSTH.hitspikeRates(n,:)),'FaceColor',[28/255 117/255 188/255],'EdgeColor','none')
+axis tight, box off, set(gca,'TickDir','out')
+set(gca,'fontsize',16')
+xline(0)
+xline(mean(IntanBehaviour.reactionTime)*1000)
+end
+%%
+figure,hold on
+for n = 3
+subplot(2,1,[1]),Show_Spikes(Spikes.PSTH.hit{n}),axis off
+subplot(2,1,[2]),bar(-500:1500,smoothdata(Spikes.PSTH.hitspikeRates(n,:)),'FaceColor',[169/255 79/255 25/255],'EdgeColor','none')
+axis tight, box off, set(gca,'TickDir','out')
+set(gca,'fontsize',16')
+xline(0)
+xline(mean(IntanBehaviour.reactionTime)*1000)
+end
+%%
+figure,hold on
+for n = 4
+subplot(2,1,[1]),Show_Spikes(Spikes.PSTH.hit{n}),axis off
+subplot(2,1,[2]),bar(-500:1500,smoothdata(Spikes.PSTH.hitspikeRates(n,:)),'FaceColor',[190/255 30/255 45/255],'EdgeColor','none')
+axis tight, box off, set(gca,'TickDir','out')
+set(gca,'fontsize',16')
+xline(0)
+xline(mean(IntanBehaviour.reactionTime)*1000)
+end
+%%
+figure,hold on
+for n = 33
+subplot(2,1,[1]),Show_Spikes(Spikes.PSTH.hit{n}),axis off
+subplot(2,1,[2]),bar(-500:1500,smoothdata(Spikes.PSTH.hitspikeRates(n,:)),'FaceColor',[43/255 57/255 144/255],'EdgeColor','none')
+axis tight, box off, set(gca,'TickDir','out')
+set(gca,'fontsize',16')
+xline(0)
+xline(mean(IntanBehaviour.reactionTime)*1000)
+end
 %% Neural Trajectory Analysis using GPFA
 Spikes = makeSpikeGPFA(Spikes);
-[result,seqTrain] = gpfaAnalysis(Spikes.GPFA.hit.dat,3); %Run index
+[result,seqTrain] = gpfaAnalysis(Spikes.GPFA.hit.dat,0); %Run index
 
 %% ----------------------- Some local function to make things easier ----------------------- %%
 % Hit trials
