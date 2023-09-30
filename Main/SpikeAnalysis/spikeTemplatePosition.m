@@ -1,5 +1,6 @@
 
-function [spikeAmps, spikeDepths, templateDepths, tempAmps, tempsUnW, templateDuration, waveforms] = spikeTemplatePosition(fpath,ycoords)
+function [spikeAmps, spikeDepths, templateDepths, tempAmps, tempsUnW, templateDuration, waveforms,max_site]...
+    = spikeTemplatePosition(fpath,ycoords,invertflag)
 % function [spikeAmps, spikeDepths, templateDepths, tempAmps, tempsUnW, templateDuration, waveforms] = templatePositionsAmplitudes(temps, winv, ycoords, spikeTemplates, tempScalingAmps)
 %
 % Compute some basic things about spikes and templates
@@ -22,6 +23,14 @@ function [spikeAmps, spikeDepths, templateDepths, tempAmps, tempsUnW, templateDu
 % - spikeTemplates, which template each spike came from (nSpikes x 1)
 % - tempScalingAmps, the amount by which the template was scaled to extract
 % each spike (nSpikes x 1)
+% - invert, if this option is set, the spikes are inverted for depth as the
+% reference is set from the bottom of the probe. This is done for brevity.
+
+if ~isempty(invertflag) && strcmp(invertflag,'invert')
+    invertflag = 1;
+else 
+    invertflag = 0;
+end
 
 path = [fpath,'/kilosort3'];
 % Read in kilosort data for matlab analysis
@@ -52,11 +61,10 @@ threshVals = tempAmpsUnscaled*0.3;
 tempChanAmps(bsxfun(@lt, tempChanAmps, threshVals)) = 0;
 
 % ... in order to compute the depth as a center of mass
-try 
-    templateDepths = sum(bsxfun(@times,tempChanAmps,ycoords),2)./sum(tempChanAmps,2);
-catch
-    templateDepths = 0;
-end
+if invertflag,ycoords = flip(ycoords);end
+templateDepths = sum(bsxfun(@times,tempChanAmps,ycoords),2)./sum(tempChanAmps,2);
+
+
 
 % assign all spikes the amplitude of their template multiplied by their
 % scaling amplitudes (templates are zero-indexed)
@@ -70,10 +78,9 @@ tempAmps(tids+1) = ta; % because ta only has entries for templates that had at l
 tempAmps = tempAmps'; % for consistency, make first dimension template number
 
 % Each spike's depth is the depth of its template
-spikeDepths = [];
-if templateDepths~=0
-    spikeDepths = templateDepths(spikeTemplates+1);
-end
+% here we just grab the assigned channel
+spikeDepths = templateDepths(spikeTemplates+1);
+
 
 % Get channel with largest amplitude, take that as the waveform
 [~,max_site] = max(max(abs(temps),[],2),[],3);
@@ -81,6 +88,9 @@ templates_max = nan(size(temps,1),size(temps,2));
 for curr_template = 1:size(temps,1)
     templates_max(curr_template,:) = ...
         temps(curr_template,:,max_site(curr_template));
+end
+if invertflag
+    max_site = abs(max_site-64)+1;
 end
 waveforms = templates_max;
 
