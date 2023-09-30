@@ -9,8 +9,8 @@
 % memory management
 function ds_filename = intanPreprocessing2
 addpath(genpath('Main'));
-% chanMapFile = 'UCLA_chanmap_64F2.mat';
-chanMapFile = 'UCLA_chanmap_fixed.mat'; %UCLA Sharp
+chanMapFile = 'UCLA_chanmap_64F2.mat';
+% chanMapFile = 'UCLA_chanmap_fixed.mat'; %UCLA Sharp
 disp(['Using ' chanMapFile ' as electrode map'])
 pause(1)
 load(chanMapFile)
@@ -43,7 +43,8 @@ Intan.t_amplifier = Intan.t_amplifier(:,data.Fs*intanOffset:size(Intan.t_amplifi
 
 % running kilosort prep file
 if ~exist(kilosort_filename,'file')
-    kilosortPrep2(Intan.amplifier_data,path)
+    temp = Intan.amplifier_data(s.sorted_electrodes,:); % sort electrodes since we use sorted electrodes in kilosort
+    kilosortPrep2(temp,path)
 else
     warning('An existing kilosort.bin file exists! Deleting existing kilosort version')
     pause(1)
@@ -79,7 +80,8 @@ for idx = 2:L
             Intan.board_adc_data = Intan.board_adc_data(:,1:(size(Intan.board_adc_data,2)-data.Fs*intanOffset));
         end
     end
-    kilosortPrep2(Intan.amplifier_data,path)
+    temp = Intan.amplifier_data(s.sorted_electrodes,:);
+    kilosortPrep2(temp,path)
     amplifierData{idx} = resample(Intan.amplifier_data',targetedFs,data.Fs)';
     amplifierTime{idx} = downsample(Intan.t_amplifier',round(data.Fs/targetedFs),1)';
     if exist('digitalChannels','var')
