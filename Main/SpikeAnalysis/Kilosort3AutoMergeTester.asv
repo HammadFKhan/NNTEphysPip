@@ -13,11 +13,7 @@ Xsim = Xsim - diag(diag(Xsim));
 for n = 1:length(Xsim)
     mergeCan = (find(Xsim(n,:)>0.85)); %%% 85% similarity
     for nn = 1:length(mergeCan) % Parse through indexs that meet criteria
-        if mergeCan(nn)>n
-            SpikeClusterssample(SpikeClusterssample==mergeCan(nn)) = n;
-        else
-            break;
-        end
+        SpikeClusterssample(SpikeClusterssample==mergeCan(nn)) = n; 
     end
 end
 % now apply adjusted cluster properties to variables

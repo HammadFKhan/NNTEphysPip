@@ -6,11 +6,11 @@ function Spikes = makeSpikeGPFA(Spikes)
 if ~isfield(Spikes,'PSTH'), error('Run leverPSTH.m first!');end
 
 if isfield(Spikes.PSTH,'hit')
-    output = organizeSpikes(Spikes.PSTH.hit);
+    output = organizeSpikes(Spikes.PSTH.hit.spks);
 end
 Spikes.GPFA.hit.dat = output;
 if isfield(Spikes.PSTH,'miss')
-    output = organizeSpikes(Spikes.PSTH.miss);
+    output = organizeSpikes(Spikes.PSTH.miss.spks);
 end
 Spikes.GPFA.miss.dat = output;
 %% ------------functions---------

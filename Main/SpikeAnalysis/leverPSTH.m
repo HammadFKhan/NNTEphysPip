@@ -14,7 +14,7 @@ if isfield(Behaviour,'nCueHit')
             for i = 1:Behaviour.nCueHit
                 st = Behaviour.cueHitTrace(i).LFPtime(1);
                 stp = Behaviour.cueHitTrace(i).LFPtime(end);
-                temp = zeros(1,length(0:0.001:(stp-st)));
+                temp = zeros(1,length(0:0.001:round((stp-st),3)));
                 spiketm = Spikes.Clusters(ii).spikeTime(Spikes.Clusters(ii).spikeTime>=st & Spikes.Clusters(ii).spikeTime<=stp);
                 spiked = discretize(spiketm,st:0.001:stp); % 0.001 bin for 1 ms
                 if ~isnan(spiked)
@@ -24,15 +24,15 @@ if isfield(Behaviour,'nCueHit')
                 
             end
         else
-            continue
+            trials{count} = [];
         end
         count = count+1;
     end
     %%
     output = make_nice_mean_raster(trials,20,0);
     %%
-    Spikes.PSTH.hit = trials;
-    Spikes.PSTH.hitspikeRates = output;
+    Spikes.PSTH.hit.spks = trials;
+    Spikes.PSTH.hit.spkRates = output;
 end
 %% Analyze for miss trials
 if isfield(Behaviour,'nCueMiss')
@@ -53,13 +53,13 @@ if isfield(Behaviour,'nCueMiss')
                 trials{count}(i,:) = temp;
             end
         else
-            continue
+            trials{count} = [];
         end
         count = count+1;
     end
     output = make_nice_mean_raster(trials,20,0);
-    Spikes.PSTH.miss = trials;
-    Spikes.PSTH.missspikeRates = output;
+    Spikes.PSTH.miss.spks = trials;
+    Spikes.PSTH.miss.spkRates = output;
 end
 %% Basic functions
     function output = make_nice_mean_raster(spmat,smooth_window,showplot)
@@ -71,7 +71,6 @@ end
         else
             colo = jet(numconds);
         end
-        
         for k = 1:numconds
             spud = spmat{k};
             numtrials = size(spud,1);
