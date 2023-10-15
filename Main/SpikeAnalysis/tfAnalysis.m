@@ -197,8 +197,8 @@ tf.gammaLFP = gamma;
 tf.fullLFP = bandpass;
 
 %% ITPC of velocity triggered Frequency
-disp('Calculating Electrode ITPC')
-phaseSync = itpc(LFP,timestamps,10);
+% disp('Calculating Electrode ITPC')
+% phaseSync = itpc(LFP,timestamps,10);
 %% Oscillators Analysis using Chronux
 % Phase to Phase of Theta and Beta
 disp('Calculating LFP Phase Coupling')
@@ -232,7 +232,7 @@ end
 disp('Analyzing Theta Band...')
 params.fpass = [4 10];
 % [tf.theta.X,tf.t,tf.theta.f]= mtspecgramc(LFPTrig,movingwin,params); 
-[tf.theta.C,tf.theta.phi,S12,S1,S2,t2,tf.theta.f,zerosp]=cohgramcpt(LFPTrig,spike,movingwin,params);
+[tf.theta.C,tf.theta.phi,S12,S1,S2,t2,tf.theta.f,zerosp]=cohgramcpt(squeeze(LFPTrig),spike,movingwin,params);
 % tf.mtheta = mean(tf.theta.X,3);
 % tf.metheta = median(tf.theta.X,3);
 
