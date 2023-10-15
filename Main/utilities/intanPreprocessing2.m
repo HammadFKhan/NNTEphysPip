@@ -9,8 +9,8 @@
 % memory management
 function ds_filename = intanPreprocessing2
 addpath(genpath('Main'));
-chanMapFile = 'UCLA_chanmap_64F2.mat';
-% chanMapFile = 'UCLA_chanmap_fixed.mat'; %UCLA Sharp
+% chanMapFile = 'UCLA_chanmap_64F2.mat';
+chanMapFile = 'UCLA_chanmap_fixed.mat'; %UCLA Sharp
 disp(['Using ' chanMapFile ' as electrode map'])
 pause(1)
 load(chanMapFile)
