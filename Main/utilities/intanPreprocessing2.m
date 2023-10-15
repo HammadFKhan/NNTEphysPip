@@ -24,7 +24,7 @@ L = length(directory);
 ds_filename = fullfile(pathname,'intan_ds_data.mat'); % check incremented file name for image
 kilosort_filename = fullfile(pathname,'kilosort.bin');
 if exist(ds_filename,'file') %check if downsampled data file already exists
-    error('Preprocessed file already exists! Please remove from directory')
+    warning('Preprocessed file already exists! Data will now be overrided')
 end
 
 data = matfile(ds_filename,'Writable',true);
