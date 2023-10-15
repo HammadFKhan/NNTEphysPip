@@ -64,37 +64,37 @@ IntanBehaviour.AvgHitTrace = mean(IntanBehaviour.AvgHitTrace,1);
 % Since there are two probes we want to seperate everything into linear
 % maps for CSD and depthwise LFP analysis and then we do filtering
 data = matfile(ds_filename);
-load UCLA_chanMap_64F2
-% load UCLA_chanmap_fixed.mat
+% load UCLA_chanMap_64F2
+load UCLA_chanmap_fixed.mat
 if ~exist('lfp','var'),lfp = data.amplifierData;end
 %TODO check if the field orientation during insertion is reversed (ie. probe 1 is lateral to probe 2)
-% probe1 = lfp(s.sorted_probe_wiring(:,5)==1,:);
-% probe2 = lfp(s.sorted_probe_wiring(:,5)==2,:);
-% chanProbe1 = s.sorted_probe_wiring(s.sorted_probe_wiring(:,5)==1,:); %needed for linear channel mapping later
-% chanProbe2 = s.sorted_probe_wiring(s.sorted_probe_wiring(:,5)==2,:); 
+probe1 = lfp(s.sorted_probe_wiring(:,5)==1,:);
+probe2 = lfp(s.sorted_probe_wiring(:,5)==2,:);
+chanProbe1 = s.sorted_probe_wiring(s.sorted_probe_wiring(:,5)==1,:); %needed for linear channel mapping later
+chanProbe2 = s.sorted_probe_wiring(s.sorted_probe_wiring(:,5)==2,:); 
 % clear lfp
 probe1 = lfp;
 % LFP filter
 set(0,'DefaultFigureWindowStyle','normal')
 LFP.probe1= fastpreprocess_filtering(probe1,data.targetedFs);
 LFP.probe1 = bestLFP(LFP.probe1);
-% LFP.probe1 = bandFilter(LFP.probe1,'depth'); % Extract LFPs based on 'depth' or 'single'
-% LFP.probe2 = fastpreprocess_filtering(probe2,data.targetedFs);
-% LFP.probe2 = bestLFP(LFP.probe2);
-% % LFP.probe2 = bandFilter(LFP.probe2,'depth'); % Extract LFPs based on 'depth' or 'single'
-% % Build linear channels (should be four from the 64F)
-% LFP.probe1.chan1 = find(chanProbe1(:,2)>10);
-% LFP.probe1.chan2 = find(chanProbe1(:,2)==-10);
-% LFP.probe2.chan1 = find(chanProbe2(:,2)==290.1);
-% LFP.probe2.chan2 = find(chanProbe2(:,2)==310.1);
+LFP.probe1 = bandFilter(LFP.probe1,'depth'); % Extract LFPs based on 'depth' or 'single'
+LFP.probe2 = fastpreprocess_filtering(probe2,data.targetedFs);
+LFP.probe2 = bestLFP(LFP.probe2);
+LFP.probe2 = bandFilter(LFP.probe2,'depth'); % Extract LFPs based on 'depth' or 'single'
+% Build linear channels (should be four from the 64F)
+LFP.probe1.chan1 = find(chanProbe1(:,2)>10);
+LFP.probe1.chan2 = find(chanProbe1(:,2)==-10);
+LFP.probe2.chan1 = find(chanProbe2(:,2)==290.1);
+LFP.probe2.chan2 = find(chanProbe2(:,2)==310.1);
 %% CSD and spectrogram
 LFP.probe1.spectrogram = leverLFPAnalysis(LFP.probe1.LFP,IntanBehaviour);
 % LFP.probe2.spectrogram = leverLFPAnalysis(LFP.probe2.LFP,IntanBehaviour);
 %% Now we used the segmented LFPs to do statistical analysis across narrowbands
 LFP.probe1.narrowband.hitLFP = bandFilter2(LFP.probe1.spectrogram.hitLFP,1000);
-% LFP.probe2.narrowband.hitLFP = bandFilter2(LFP.probe2.spectrogram.hitLFP,1000);
+LFP.probe2.narrowband.hitLFP = bandFilter2(LFP.probe2.spectrogram.hitLFP,1000);
 LFP.probe1.narrowband.missLFP = bandFilter2(LFP.probe1.spectrogram.missLFP,1000);
-% LFP.probe2.narrowband.missLFP = bandFilter2(LFP.probe2.spectrogram.missLFP,1000);
+LFP.probe2.narrowband.missLFP = bandFilter2(LFP.probe2.spectrogram.missLFP,1000);
 %% Calculate trial-trial narrow power using hilbert across electrode
 for electrode = 1:32
     % Beta
@@ -134,9 +134,9 @@ for nn = 1:size(LFP.probe1.spectrogram.tfhit,3) %electrode
     end
 end
 %% plot ITPC across depth
-broadBandIdx = 7:62; %Broadband idx base on spectrogram.frex
+broadBandIdx = 30:45; %Broadband idx base on spectrogram.frex
 sz = size(LFP.probe1.spectrogram.tfhit);
-temp = smoothdata(squeeze(mean(LFP.probe1.spectrogram.tfhit(broadBandIdx,:,:),1)),'gaussian',10);
+temp = smoothdata(squeeze(mean(LFP.probe1.spectrogram.tfmiss(broadBandIdx,:,:),1)),'gaussian',10);
 temp = smoothdata(temp,2);
 figure,
 imagesc(-IntanBehaviour.parameters.windowBeforeCue*1000:IntanBehaviour.parameters.windowAfterCue*1000,1:sz(3),temp'),colormap(hot)
@@ -217,8 +217,8 @@ title('Post-cue Miss phase-amplitude coupling')
 %% gedCFA
 % Calculate channel coherence
 rawData = LFP.probe1.LFP(:,:);
-Rdata = LFP.probe1.spectrogram.hitLFP(:,1:1500,:);
-Sdata = LFP.probe1.spectrogram.hitLFP(:,1501:3000,:);
+Rdata = LFP.probe1.spectrogram.missLFP(:,:,1:42);
+Sdata = LFP.probe1.spectrogram.hitLFP(:,:,:);
 GED = genEigenDecomp(rawData,Rdata,Sdata);
 %% Calculate generalize phase for compts
 xo = bandpass_filter(GED.compts,5,40,1000); %x,f1,f2,Fs
@@ -251,13 +251,14 @@ LFP.probe1.GED.comp2 = leverLFPAnalysis(GED.compts(2,:),IntanBehaviour);
 LFP.probe1.GED.comp3 = leverLFPAnalysis(GED.compts(3,:),IntanBehaviour);
 %% ITPC by component
 LFP.probe1.GED.itpc = GEDITPC(LFP.probe1.GED);
+%%
 figure,
-subplot(131),plotSpectrogram(LFP.probe1.GED.comp1.tfhit,-1499:1500,LFP.probe1.GED.comp1.frex,'contourf'); caxis([-3 3])
-subplot(132),plotSpectrogram(LFP.probe1.GED.comp2.tfhit,-1499:1500,LFP.probe1.GED.comp1.frex,'contourf'); caxis([-3 3])
-subplot(133),plotSpectrogram(LFP.probe1.GED.comp3.tfhit,-1499:1500,LFP.probe1.GED.comp1.frex,'contourf'); caxis([-3 3])
-figure,subplot(131),plot(-1499:1500,LFP.probe1.GED.itpc.comp1.hit)
-subplot(132),plot(-1499:1500,LFP.probe1.GED.itpc.comp2.hit)
-subplot(133),plot(-1499:1500,LFP.probe1.GED.itpc.comp3.hit)
+subplot(131),plotSpectrogram(LFP.probe1.GED.comp1.tfhit,-499:1500,LFP.probe1.GED.comp1.frex,'contourf'); caxis([-3 3])
+subplot(132),plotSpectrogram(LFP.probe1.GED.comp2.tfhit,-499:1500,LFP.probe1.GED.comp1.frex,'contourf'); caxis([-3 3])
+subplot(133),plotSpectrogram(LFP.probe1.GED.comp3.tfhit,-499:1500,LFP.probe1.GED.comp1.frex,'contourf'); caxis([-3 3])
+figure,subplot(131),plot(-499:1500,LFP.probe1.GED.itpc.comp1.hit)
+subplot(132),plot(-499:1500,LFP.probe1.GED.itpc.comp2.hit)
+subplot(133),plot(-499:1500,LFP.probe1.GED.itpc.comp3.hit)
 % %%% Statistically pool 
 % [val,idx] = max(LFP.probe1.GED.itpc.comp1.hit);
 % idx = idx-500;
@@ -265,15 +266,17 @@ subplot(133),plot(-1499:1500,LFP.probe1.GED.itpc.comp3.hit)
 hit = LFP.probe1.GED.itpc.comp3.hit;
 miss = LFP.probe1.GED.itpc.comp3.miss;
 figure,hold on
-plot(-1499:1500,hit,'k','LineWidth',2)
-plot(-1499:1500,miss,'Color',[188/255 190/255 192/255],'LineWidth',2)
+plot(-499:1500,hit(1,:),'k','LineWidth',2)
+plot(-499:1500,miss(1,:),'Color',[188/255 190/255 192/255],'LineWidth',2)
 xlabel('Time from cue (ms)')
 set(gca,'fontsize',16)
 box off, set(gca,'TickDir','out')
 yline(1.98)
-xline(mean(IntanBehaviour.reactionTime)*1000)
+% xline(mean(IntanBehaviour.reactionTime)*1000)
 xline(0)
 xlim([-500 1500])
+%% now do stats for GED and save to struct
+itpcstats = itpcGEDstats(hit,miss);
 %% Analyze as a function of phase locking
 %
 freq4phase = 15; % in Hz
@@ -424,6 +427,18 @@ end
 Spikes = makeSpikeGPFA(Spikes);
 [result,seqTrain] = gpfaAnalysis(Spikes.GPFA.hit.dat,0); %Run index
 
+
+
+
+
+
+
+
+
+
+
+
+
 %% ----------------------- Some local function to make things easier ----------------------- %%
 % Hit trials
 function output = leverLFPAnalysis(linearProbe,Behaviour) % LFP of linear channel and Behaviour struct
@@ -536,33 +551,34 @@ for n = 1:size(data,1) %trials
 end
 end
 function output = GEDITPC(GED)
-broadBandIdx = 30:54; %Broadband idx base on spectrogram.frex (35:40),30:35 low Beta, 55:60 gamma
+broadBandIdx = 26:54; %Broadband idx base on spectrogram.frex (35:40),30:35 low Beta, 55:60 gamma
 temp = GED.comp1;
 %Search freq space and note maximal response for beta
 betatfhit = temp.tfhit(broadBandIdx,:);
-[~,idx] = max(betatfhit,[],1);
-idx = round(mean(idx));
-tFreq = broadBandIdx(idx);
-output.comp1.hit = smoothdata(squeeze(mean(temp.tfhit(tFreq-1:tFreq+1,:),1)));
-output.comp1.miss = smoothdata(squeeze(mean(temp.tfmiss(tFreq-1:tFreq+1,:),1)));
+[~,idx] = max(betatfhit(:,1:500),[],1);
+[n,bin] = hist(idx,unique(idx));
+[~,idx] = sort(-n);
+tFreq = broadBandIdx(bin(idx(1:10)));
+output.comp1.hit = smoothdata(squeeze(temp.tfhit(tFreq,:)),2);
+output.comp1.miss = smoothdata(squeeze(temp.tfmiss(tFreq,:)),2);
 
-broadBandIdx = 30:54; %Broadband idx base on spectrogram.frex (35:40),30:35 low Beta, 55:60 gamma
 temp = GED.comp2;
 betatfhit = temp.tfhit(broadBandIdx,:);
-[~,idx] = max(betatfhit,[],1);
-idx = round(mean(idx));
-tFreq = broadBandIdx(idx);
-output.comp2.hit = smoothdata(squeeze(mean(temp.tfhit(tFreq-1:tFreq+1,:),1)));
-output.comp2.miss = smoothdata(squeeze(mean(temp.tfmiss(tFreq-1:tFreq+1,:),1)));
+[~,idx] = max(betatfhit(:,500:1000),[],1);
+[n,bin] = hist(idx,unique(idx));
+[~,idx] = sort(-n);
+tFreq = broadBandIdx(bin(idx(1:10)));
+output.comp2.hit = smoothdata(squeeze(temp.tfhit(tFreq,:)),2);
+output.comp2.miss = smoothdata(squeeze(temp.tfmiss(tFreq,:)),2);
 
-broadBandIdx = 30:54; %Broadband idx base on spectrogram.frex (35:40),30:35 low Beta, 55:60 gamma
 temp = GED.comp3;
 betatfhit = temp.tfhit(broadBandIdx,:);
-[~,idx] = max(betatfhit,[],1);
-idx = round(mean(idx));
-tFreq = broadBandIdx(idx);
-output.comp3.hit = smoothdata(squeeze(mean(temp.tfhit(tFreq-1:tFreq+1,:),1)));
-output.comp3.miss = smoothdata(squeeze(mean(temp.tfmiss(tFreq-1:tFreq+1,:),1)));
+[~,idx] = max(betatfhit(:,:),[],1);
+[n,bin] = hist(idx,unique(idx));
+[~,idx] = sort(-n);
+tFreq = broadBandIdx(bin(idx(1:10)));
+output.comp3.hit = smoothdata(squeeze(temp.tfhit(tFreq,:)),2);
+output.comp3.miss = smoothdata(squeeze(temp.tfmiss(tFreq,:)),2);
 end
 
 function [trials,win] = makeSpikeWin(Spikes,spikeId,Fs)
@@ -831,4 +847,35 @@ box off,set(gca,'TickDir','out')
 set(gca,'FontSize',16)
 xlabel('Time from cue onset (ms)') 
 ylabel('P-value')
+end
+function output = itpcGEDstats(hit,miss)
+
+hitprecue = max(hit(:,1:500),[],2);
+hitpostcue = max(hit(:,500:1000),[],2);
+hitpostRW = max(hit(:,1000:2000),[],2);
+missprecue = max(miss(:,100:500),[],2);
+misspostcue = max(miss(:,500:1000),[],2);
+misspostRW = max(miss(:,1000:2000),[],2);
+% plot
+output.hitmprecue = mean(hitprecue);
+output.hiteprecue = std(hitprecue)/sqrt(10);
+output.hitmpostcue = mean(hitpostcue);
+output.hitepostcue = std(hitpostcue)/sqrt(10);
+output.hitmpostRW = mean(hitpostRW);
+output.hitepostRW = std(hitpostRW)/sqrt(10);
+
+output.missmprecue = mean(missprecue);
+output.misseprecue = std(missprecue)/sqrt(10);
+output.missmpostcue = mean(misspostcue);
+output.missepostcue = std(misspostcue)/sqrt(10);
+output.missmpostRW = mean(misspostRW);
+output.missepostRW = std(misspostRW)/sqrt(10);
+
+
+figure,errorbar(1:3,[output.hitmprecue,output.hitmpostcue,output.hitmpostRW],[output.hiteprecue,output.hitepostcue,output.hitepostRW],'b');hold on
+errorbar(1:3,[output.missmprecue,output.missmpostcue,output.missmpostRW],[output.misseprecue,output.missepostcue,output.missepostRW],'k');
+xlim([0 4]),ylim([0 3]),set(gca,'fontsize',16),box off
+set(gca,'tickdir','out')
+ylabel('Phase Synchonization (Z)')
+legend('hit','miss')
 end
