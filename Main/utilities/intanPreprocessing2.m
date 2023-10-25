@@ -52,7 +52,7 @@ else
     kilosortPrep2(Intan.amplifier_data,path)
 end
 % Now downsample data for LFP
-amplifierData{idx} = resample(Intan.amplifier_data',targetedFs,data.Fs)';
+amplifierData{idx} = resample(Intan.amplifier_data(33:96,:)',targetedFs,data.Fs)';
 amplifierTime{idx} = downsample(Intan.t_amplifier',round(data.Fs/targetedFs),1)';
 
 if ~isempty(Intan.board_dig_in_data) % Checks for digital traces
@@ -82,7 +82,7 @@ for idx = 2:L
     end
     temp = Intan.amplifier_data(s.sorted_electrodes,:);
     kilosortPrep2(temp,path)
-    amplifierData{idx} = resample(Intan.amplifier_data',targetedFs,data.Fs)';
+    amplifierData{idx} = resample(Intan.amplifier_data(33:96,:)',targetedFs,data.Fs)';
     amplifierTime{idx} = downsample(Intan.t_amplifier',round(data.Fs/targetedFs),1)';
     if exist('digitalChannels','var')
         digitalChannels{idx} = downsample(Intan.board_dig_in_data',round(data.Fs/targetedFs),1)';
