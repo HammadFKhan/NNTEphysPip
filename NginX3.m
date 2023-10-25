@@ -11,7 +11,7 @@ ds_filename = intanPreprocessing2; %% double check file type
 % load only neccessary variables from memory mapped file
 data = matfile(ds_filename);
 fpath = data.fpath;
-Kilosort264FTestcode
+% Kilosort264FTestcode
 savepath = fullfile(fpath,['loadme','.mat']);
 save(savepath,'ds_filename');
 clearvars -except ds_filename
@@ -21,15 +21,15 @@ parameters.experiment = 'cue'; % self - internally generated, cue - cue initiate
 parameters.opto = 0; % 1 - opto ON , 0 - opto OFF
 parameters.windowBeforePull = 1; % in seconds
 parameters.windowAfterPull = 1; % in seconds
-parameters.windowBeforeCue = 0.5; % in seconds
+parameters.windowBeforeCue = 1.5; % in seconds
 parameters.windowAfterCue = 1.5; % in seconds
 parameters.Fs = 1000; % Eventual downsampled data
 parameters.ts = 1/parameters.Fs;
 [Behaviour] = readLever(parameters,data.amplifierTime);
 if size(data.digitalChannels,1)>3
-    [IntanBehaviour] = readLeverIntan(parameters,data.amplifierTime,data.analogChannels,data.digitalChannels(2:end,:),Behaviour);
+    [IntanBehaviour] = readLeverIntan(parameters,data.amplifierTime,data.analogChannels(1,:),data.digitalChannels(2:end,:),Behaviour);
 else
-    [IntanBehaviour] = readLeverIntan(parameters,data.amplifierTime,data.analogChannels,data.digitalChannels,Behaviour);
+    [IntanBehaviour] = readLeverIntan(parameters,data.amplifierTime,data.analogChannels(1,:),data.digitalChannels,Behaviour);
 end
 % Calculate ITI time for trials and reward/no reward sequence
 temp1 = arrayfun(@(x) x.LFPtime(1), IntanBehaviour.cueHitTrace);
@@ -42,7 +42,7 @@ IntanBehaviour.ITI = temp(:,idx);
 %% Plot behaviour
 figure
 for i=1:IntanBehaviour.nCueHit
-    plot(0:2000,smoothdata(IntanBehaviour.cueHitTrace(i).trace),'Color',[0 0 0 0.2],'LineWidth',1.5);
+    plot(0:3000,smoothdata(IntanBehaviour.cueHitTrace(i).trace),'Color',[0 0 0 0.2],'LineWidth',1.5);
     hold on;
     try
         hitTrace(i,:) = smoothdata(IntanBehaviour.cueHitTrace(i).rawtrace);
@@ -72,16 +72,15 @@ probe1 = lfp(s.sorted_probe_wiring(:,5)==1,:);
 probe2 = lfp(s.sorted_probe_wiring(:,5)==2,:);
 chanProbe1 = s.sorted_probe_wiring(s.sorted_probe_wiring(:,5)==1,:); %needed for linear channel mapping later
 chanProbe2 = s.sorted_probe_wiring(s.sorted_probe_wiring(:,5)==2,:); 
-% clear lfp
-probe1 = lfp;
+clear lfp
 % LFP filter
 set(0,'DefaultFigureWindowStyle','normal')
 LFP.probe1= fastpreprocess_filtering(probe1,data.targetedFs);
 LFP.probe1 = bestLFP(LFP.probe1);
 LFP.probe1 = bandFilter(LFP.probe1,'depth'); % Extract LFPs based on 'depth' or 'single'
-LFP.probe2 = fastpreprocess_filtering(probe2,data.targetedFs);
+LFP.probe2 = fastpreprocess_filtering(probe2*1000,data.targetedFs);
 LFP.probe2 = bestLFP(LFP.probe2);
-LFP.probe2 = bandFilter(LFP.probe2,'depth'); % Extract LFPs based on 'depth' or 'single'
+LFP.probe2 = bandFilter(LFP.probe2,'single'); % Extract LFPs based on 'depth' or 'single'
 % Build linear channels (should be four from the 64F)
 LFP.probe1.chan1 = find(chanProbe1(:,2)>10);
 LFP.probe1.chan2 = find(chanProbe1(:,2)==-10);
@@ -134,14 +133,14 @@ for nn = 1:size(LFP.probe1.spectrogram.tfhit,3) %electrode
     end
 end
 %% plot ITPC across depth
-broadBandIdx = 30:45; %Broadband idx base on spectrogram.frex
+broadBandIdx = 30:50; %Broadband idx base on spectrogram.frex
 sz = size(LFP.probe1.spectrogram.tfhit);
-temp = smoothdata(squeeze(mean(LFP.probe1.spectrogram.tfmiss(broadBandIdx,:,:),1)),'gaussian',10);
+temp = smoothdata(squeeze(mean(LFP.probe1.spectrogram.tfhit(broadBandIdx,:,:),1)),'gaussian',10);
 temp = smoothdata(temp,2);
 figure,
 imagesc(-IntanBehaviour.parameters.windowBeforeCue*1000:IntanBehaviour.parameters.windowAfterCue*1000,1:sz(3),temp'),colormap(hot)
 xlabel('Time from cue (ms)')
-ylabel('Depth')
+ylabel('Electrodes')
 set(gca,'fontsize',16)
 %% Prestim and post stim beta/gamma
 % Here we plot some sort of correlation map between precue response
@@ -217,34 +216,50 @@ title('Post-cue Miss phase-amplitude coupling')
 %% gedCFA
 % Calculate channel coherence
 rawData = LFP.probe1.LFP(:,:);
-Rdata = LFP.probe1.spectrogram.missLFP(:,:,1:42);
+Rdata = LFP.probe1.spectrogram.missLFP(:,:,:);
 Sdata = LFP.probe1.spectrogram.hitLFP(:,:,:);
 GED = genEigenDecomp(rawData,Rdata,Sdata);
 %% Calculate generalize phase for compts
-xo = bandpass_filter(GED.compts,5,40,1000); %x,f1,f2,Fs
+xo = bandpass_filter(LFP.probe1.LFP,5,40,1000); %x,f1,f2,Fs
 sz = size(xo);
 xo = reshape(xo,sz(1),1,sz(2));
-[xgp,wt] = generalized_phase(xo, 1000, 0 );
+[xgp,wt] = generalized_phase(xo(linearProbe,:,:), 1000, 0 );
 %%
 for i = 1:IntanBehaviour.nCueHit
     disp(['Analyzing trial: ' num2str(i)])
     hitWin = floor(IntanBehaviour.cueHitTrace(i).LFPtime*1000); %multiply by Fs;
     hitxgp{i} = xgp(:,hitWin);
 end
-for i = 1:80
+for i = 1:IntanBehaviour.nCueMiss
     disp(['Analyzing trial: ' num2str(i)])
     missWin = floor(IntanBehaviour.cueMissTrace(i).LFPtime*1000);
     missxgp{i} = xgp(:,missWin);
 end
 
+%%% Motion Intiated
+for i = 1:length(IntanBehaviour.MIHitTrace)
+    disp(['Analyzing trial: ' num2str(i)])
+    MIhitWin = floor(IntanBehaviour.MIHitTrace(i).LFPtime*1000); %multiply by Fs;
+    MIhitxgp{i} = xgp(:,MIhitWin);
+end
+
+for i = 1:length(IntanBehaviour.MIFATrace)
+    disp(['Analyzing trial: ' num2str(i)])
+    MIFAWin = floor(IntanBehaviour.MIFATrace(i).LFPtime*1000);
+    MIFAxgp{i} = xgp(:,MIFAWin);
+end
+
 %%
-hitxgp = cellfun(@(x) reshape(x,3,1,[]),hitxgp,'UniformOutput',false);
-missxgp = cellfun(@(x) reshape(x,3,1,[]),missxgp,'UniformOutput',false);
+hitxgp = cellfun(@(x) reshape(x,22,1,[]),hitxgp,'UniformOutput',false);
+missxgp = cellfun(@(x) reshape(x,22,1,[]),missxgp,'UniformOutput',false);
+MIhitxgp = cellfun(@(x) reshape(x,22,1,[]),MIhitxgp,'UniformOutput',false);
+MIFAxgp = cellfun(@(x) reshape(x,22,1,[]),MIFAxgp,'UniformOutput',false);
 %%
-[PA] = calPhaseAlignment(missxgp);
-figure,plot((squeeze(PA)'),'LineWidth',2);
-cmap = (gray(4));
+[PA] = calPhaseAlignment(MIFAxgp);
+figure,plot((squeeze(PA)'),'LineWidth',1);
+cmap = (gray(22));
 set(gca(),'ColorOrder',cmap)
+figure,imagesc(squeeze(PA)),colormap(hot)
 %% Now do the same analysis of LFP but using broadband GED LFP
 LFP.probe1.GED.comp1 = leverLFPAnalysis(GED.compts(1,:),IntanBehaviour);
 LFP.probe1.GED.comp2 = leverLFPAnalysis(GED.compts(2,:),IntanBehaviour);
@@ -253,28 +268,28 @@ LFP.probe1.GED.comp3 = leverLFPAnalysis(GED.compts(3,:),IntanBehaviour);
 LFP.probe1.GED.itpc = GEDITPC(LFP.probe1.GED);
 %%
 figure,
-subplot(131),plotSpectrogram(LFP.probe1.GED.comp1.tfhit,-499:1500,LFP.probe1.GED.comp1.frex,'contourf'); caxis([-3 3])
-subplot(132),plotSpectrogram(LFP.probe1.GED.comp2.tfhit,-499:1500,LFP.probe1.GED.comp1.frex,'contourf'); caxis([-3 3])
-subplot(133),plotSpectrogram(LFP.probe1.GED.comp3.tfhit,-499:1500,LFP.probe1.GED.comp1.frex,'contourf'); caxis([-3 3])
-figure,subplot(131),plot(-499:1500,LFP.probe1.GED.itpc.comp1.hit)
-subplot(132),plot(-499:1500,LFP.probe1.GED.itpc.comp2.hit)
-subplot(133),plot(-499:1500,LFP.probe1.GED.itpc.comp3.hit)
+subplot(131),plotSpectrogram(LFP.probe1.GED.comp1.tfMIFA,-1499:1500,LFP.probe1.GED.comp1.frex,'contourf'); caxis([-3 3])
+subplot(132),plotSpectrogram(LFP.probe1.GED.comp2.tfMIFA,-1499:1500,LFP.probe1.GED.comp1.frex,'contourf'); caxis([-3 3])
+subplot(133),plotSpectrogram(LFP.probe1.GED.comp3.tfMIFA,-1499:1500,LFP.probe1.GED.comp1.frex,'contourf'); caxis([-3 3])
+% figure,subplot(131),plot(-499:1500,LFP.probe1.GED.itpc.comp1.hit)
+% subplot(132),plot(-499:1500,LFP.probe1.GED.itpc.comp2.hit)
+% subplot(133),plot(-499:1500,LFP.probe1.GED.itpc.comp3.hit)
 % %%% Statistically pool 
 % [val,idx] = max(LFP.probe1.GED.itpc.comp1.hit);
 % idx = idx-500;
 %%
-hit = LFP.probe1.GED.itpc.comp3.hit;
-miss = LFP.probe1.GED.itpc.comp3.miss;
+hit = LFP.probe1.GED.itpc.comp1.hit;
+miss = LFP.probe1.GED.itpc.comp1.miss;
 figure,hold on
-plot(-499:1500,hit(1,:),'k','LineWidth',2)
-plot(-499:1500,miss(1,:),'Color',[188/255 190/255 192/255],'LineWidth',2)
+plot(-1499:1500,sum(hit(:,:))/5,'k','LineWidth',2)
+plot(-1499:1500,sum(miss(:,:))/5,'Color',[188/255 190/255 192/255],'LineWidth',2)
 xlabel('Time from cue (ms)')
 set(gca,'fontsize',16)
 box off, set(gca,'TickDir','out')
 yline(1.98)
-% xline(mean(IntanBehaviour.reactionTime)*1000)
+%xline(mean(IntanBehaviour.reactionTime)*1000)
 xline(0)
-xlim([-500 1500])
+xlim([-1500 1500])
 %% now do stats for GED and save to struct
 itpcstats = itpcGEDstats(hit,miss);
 %% Analyze as a function of phase locking
@@ -349,23 +364,25 @@ ylabel('Count')
 
 %% Spikes analysis
 data = matfile(ds_filename);
+path = [data.fpath,'/kilosort3/'];
+Kilosort3AutoMergeTester
 path = [data.fpath,'/kilosort3/merged'];
+
 %%% Spike preprocessing (includes merging (optional) and channel info
 %%% return)
 % Read in kilosort data for matlab analysis
 SpikeClusters = readNPY(fullfile(path, 'spike_clusters.npy'));
 SpikeSamples = readNPY(fullfile(path, 'spike_times.npy'));
 SpikeChannel = readNPY(fullfile(path,'channel_positions.npy'));
-% Kilosort3AutoMergeTester
 Spikes.SpikeClusters = SpikeClusters; 
 Spikes.SpikeSamples = SpikeSamples;
 Spikes = clusterSort(Spikes);
 Spikes = ISI(Spikes,0.01,data.Fs,0); %Spikes, Interval, Fs
 % Calculate Depth profile
-load chanMap64F2
-% load UCLA_chanMap
+% load chanMap64F2
+load UCLA_chanMap
 [spikeAmps, spikeDepths, templateDepths, tempAmps, tempsUnW, templateDuration, waveforms, max_site] =...
-    spikeTemplatePosition(data.fpath,ycoords,'invert');
+    spikeTemplatePosition(data.fpath,ycoords,[]);
 for i = 1:length(tempAmps)
     Spikes.Clusters(i).spikeDepth = templateDepths(i);
     Spikes.Clusters(i).channelDepth = max_site(i);
@@ -378,55 +395,51 @@ temp = arrayfun(@(x) isempty(x.cluster), Spikes.Clusters);
 Spikes.Clusters(temp) = []; 
 %% Calculate trial PSTH for lever
 Spikes = leverPSTH(Spikes,IntanBehaviour);
+%%% save spike output data to load into gui
+savepath = fullfile(path,['spks4sorting','.mat']);
+save(savepath,'Spikes')
+ManualSpikeCurateGUI
 %% Basic spike analysis
 % z-score spike rates
+if exist('goodSpkComponents','var')
+    Spikes.goodSpkComponents = unique(goodSpkComponents);
+end
 [Spikes] = sortSpkLever(Spikes,IntanBehaviour);
 %% Make it layer specific TODO:Gamma GED/Spike coherence
-Spikes = layerspikeSort(Spikes);
+Spikes = layerspikeAnalysis(Spikes,LFP);
 %%
 figure,hold on
-for n = 61
+for n = 20
 subplot(2,1,[1]),Show_Spikes(Spikes.PSTH.hit.spks{n}),axis off
-subplot(2,1,[2]),bar(-500:1500,smoothdata(Spikes.PSTH.hit.spkRates(n,:)),'FaceColor',[28/255 117/255 188/255],'EdgeColor','none')
+subplot(2,1,[2]),bar(-1500:1500,smoothdata(Spikes.PSTH.hit.spkRates(n,:)),'FaceColor',[28/255 117/255 188/255],'EdgeColor','none')
 axis tight, box off, set(gca,'TickDir','out')
 set(gca,'fontsize',16)
 xline(0)
 xline(mean(IntanBehaviour.reactionTime)*1000)
 end
 %%
-figure,hold on
-for n = 3
-subplot(2,1,[1]),Show_Spikes(Spikes.PSTH.hit{n}),axis off
-subplot(2,1,[2]),bar(-1500:500,smoothdata(Spikes.PSTH.hitspikeRates(n,:)),'FaceColor',[169/255 79/255 25/255],'EdgeColor','none')
-axis tight, box off, set(gca,'TickDir','out')
-set(gca,'fontsize',16')
-xline(0)
-xline(mean(IntanBehaviour.reactionTime)*1000)
-end
-%%
-figure,hold on
-for n = 4
-subplot(2,1,[1]),Show_Spikes(Spikes.PSTH.hit{n}),axis off
-subplot(2,1,[2]),bar(-500:1500,smoothdata(Spikes.PSTH.hitspikeRates(n,:)),'FaceColor',[190/255 30/255 45/255],'EdgeColor','none')
-axis tight, box off, set(gca,'TickDir','out')
-set(gca,'fontsize',16')
-xline(0)
-xline(mean(IntanBehaviour.reactionTime)*1000)
-end
-%%
-figure,hold on
-for n = 33
-subplot(2,1,[1]),Show_Spikes(Spikes.PSTH.hit{n}),axis off
-subplot(2,1,[2]),bar(-500:1500,smoothdata(Spikes.PSTH.hitspikeRates(n,:)),'FaceColor',[43/255 57/255 144/255],'EdgeColor','none')
-axis tight, box off, set(gca,'TickDir','out')
-set(gca,'fontsize',16')
-xline(0)
-xline(mean(IntanBehaviour.reactionTime)*1000)
-end
+figure,subplot(121),imagesc(-IntanBehaviour.parameters.windowBeforeCue*1000:IntanBehaviour.parameters.windowAfterCue*1000,...
+    1:size(Spikes.PSTH.hit.normSpk(Spikes.PSTH.hit.spkIdx),1),Spikes.PSTH.hit.normSpk(Spikes.PSTH.hit.spkIdx,:)),hold on
+colormap(flip(gray))
+colorbar
+set(gca,'fontsize',16)
+caxis([0.0 2.56])
+subplot(122),imagesc(-IntanBehaviour.parameters.windowBeforeCue*1000:IntanBehaviour.parameters.windowAfterCue*1000,...
+    1:size(Spikes.PSTH.miss.normSpk(Spikes.PSTH.miss.spkIdx),1),Spikes.PSTH.miss.normSpk(Spikes.PSTH.hit.spkIdx,:)),hold on
+colormap(flip(gray))
+colorbar
+set(gca,'fontsize',16)
+caxis([0.0 2.56])
 %% Neural Trajectory Analysis using GPFA
 Spikes = makeSpikeGPFA(Spikes);
-[result,seqTrain] = gpfaAnalysis(Spikes.GPFA.hit.dat,0); %Run index
-
+[result,seqTrain] = gpfaAnalysis(Spikes.GPFA.MIFA.dat,13); %Run index
+%%
+figure,
+for n = 1:50
+    subplot(131),plot(-74*20:20:20*75,seqTrain(n).xorth(2,:),'Color',[0 0 0 0.5]),hold on,box off,set(gca,'fontsize',18),xlim([-1500 1500]),ylim([-1 2])
+    subplot(132),plot(-74*20:20:20*75,seqTrain(n).xorth(3,:),'Color',[0 0 0 0.5]),hold on,box off,set(gca,'fontsize',18),xlim([-1500 1500]),ylim([-1 2])
+    subplot(133),plot(-74*20:20:20*75,seqTrain(n).xorth(1,:),'Color',[0 0 0 0.5]),hold on,box off,set(gca,'fontsize',18),xlim([-1500 1500]),ylim([-1 3])
+end
 
 
 
@@ -470,10 +483,33 @@ for i = 1:Behaviour.nCueMiss
     powerCWTmiss(:,:,i) = mean(temp,3);
     %     [CSDoutputmiss(:,:,i)]  = CSD(missLFP(:,:,i)'/1E6,1000,20E-6);
 end
+%%% Motion Initiated Analysis for FA
+for i = 1:length(Behaviour.MIHitTrace)
+    disp(['Analyzing trial: ' num2str(i)])
+    timestampMIHit(i,:) = [Behaviour.MIHitTrace(i).LFPtime(1),Behaviour.MIHitTrace(i).LFPtime(end)]; %taken in seconds
+    MIHitWin = floor(Behaviour.MIHitTrace(i).LFPtime*1000);
+    MIHitLFP(:,:,i) = linearProbe(:,MIHitWin);
+    for n = 1:size(missLFP,1)
+        [temp(:,:,n), fwt] = calCWTSpectogram(MIHitLFP(n,:,i),1:timpnts,1000,10,[10 40],0,1);
+    end
+    powerCWTMIHit(:,:,i) = mean(temp,3);
+end
+for i = 1:length(Behaviour.MIFATrace)
+    disp(['Analyzing trial: ' num2str(i)])
+    timestampMIFA(i,:) = [Behaviour.MIFATrace(i).LFPtime(1),Behaviour.MIFATrace(i).LFPtime(end)]; %taken in seconds
+    MIFAWin = floor(Behaviour.MIFATrace(i).LFPtime*1000);
+    MIFALFP(:,:,i) = linearProbe(:,MIFAWin);
+    for n = 1:size(missLFP,1)
+        [temp(:,:,n), fwt] = calCWTSpectogram(MIFALFP(n,:,i),1:timpnts,1000,10,[10 40],0,1);
+    end
+    powerCWTMIFA(:,:,i) = mean(temp,3);
+end
 for i = 1:size(linearProbe,1)
     disp(['Analyzing electrode: ' num2str(i)])
     tfmiss(:,:,i) = itpc(linearProbe(i,:),timestampmiss,1000,0);
     [tfhit(:,:,i),frex,pnts] = itpc(linearProbe(i,:),timestamphit,1000,0);
+    [tfMIhit(:,:,i),frex,pnts] = itpc(linearProbe(i,:),timestampMIHit,1000,0);
+    [tfMIFA(:,:,i),frex,pnts] = itpc(linearProbe(i,:),timestampMIFA,1000,0);
 end
 % figure(), clf
 % contourf(1:pnts,frex,mean(tfhit,3),10,'linecolor','none')
@@ -501,6 +537,15 @@ output.powerCWTmiss = powerCWTmiss;
 output.tfmiss = tfmiss;
 output.Smiss = Smiss;
 output.Serrmiss = Serrmiss;
+
+output.MIHitLFP = MIHitLFP;
+output.powerCWTMIHit = powerCWTMIHit;
+output.tfMIhit = tfMIhit;
+
+output.MIFALFP = MIFALFP;
+output.powerCWTMIFA = powerCWTMIFA;
+output.tfMIFA = tfMIFA;
+
 end
 
 function [ampHit,ampMiss] = calcBandPower(hitBand,missBand)
@@ -555,21 +600,25 @@ broadBandIdx = 26:54; %Broadband idx base on spectrogram.frex (35:40),30:35 low 
 temp = GED.comp1;
 %Search freq space and note maximal response for beta
 betatfhit = temp.tfhit(broadBandIdx,:);
-[~,idx] = max(betatfhit(:,1:500),[],1);
+[~,idx] = max(betatfhit(:,:),[],1);
 [n,bin] = hist(idx,unique(idx));
 [~,idx] = sort(-n);
 tFreq = broadBandIdx(bin(idx(1:10)));
 output.comp1.hit = smoothdata(squeeze(temp.tfhit(tFreq,:)),2);
 output.comp1.miss = smoothdata(squeeze(temp.tfmiss(tFreq,:)),2);
+output.comp1.MIhit = smoothdata(squeeze(temp.tfMIhit(tFreq,:)),2);
+output.comp1.MIFA = smoothdata(squeeze(temp.tfMIFA(tFreq,:)),2);
 
 temp = GED.comp2;
 betatfhit = temp.tfhit(broadBandIdx,:);
-[~,idx] = max(betatfhit(:,500:1000),[],1);
+[~,idx] = max(betatfhit(:,:),[],1);
 [n,bin] = hist(idx,unique(idx));
 [~,idx] = sort(-n);
 tFreq = broadBandIdx(bin(idx(1:10)));
 output.comp2.hit = smoothdata(squeeze(temp.tfhit(tFreq,:)),2);
 output.comp2.miss = smoothdata(squeeze(temp.tfmiss(tFreq,:)),2);
+output.comp2.MIhit = smoothdata(squeeze(temp.tfMIhit(tFreq,:)),2);
+output.comp2.MIFA = smoothdata(squeeze(temp.tfMIFA(tFreq,:)),2);
 
 temp = GED.comp3;
 betatfhit = temp.tfhit(broadBandIdx,:);
@@ -579,6 +628,8 @@ betatfhit = temp.tfhit(broadBandIdx,:);
 tFreq = broadBandIdx(bin(idx(1:10)));
 output.comp3.hit = smoothdata(squeeze(temp.tfhit(tFreq,:)),2);
 output.comp3.miss = smoothdata(squeeze(temp.tfmiss(tFreq,:)),2);
+output.comp3.MIhit = smoothdata(squeeze(temp.tfMIhit(tFreq,:)),2);
+output.comp3.MIFA = smoothdata(squeeze(temp.tfMIFA(tFreq,:)),2);
 end
 
 function [trials,win] = makeSpikeWin(Spikes,spikeId,Fs)
@@ -605,6 +656,7 @@ filter_order = 4;
 [b,a] = butter( filter_order, ct );
 % proceed with filtering
 for rr = 1:size(x,1) % electrode
+    disp(['Electrode: ' num2str(rr)])
         if ~all( isnan(squeeze(x(rr,:))) )
             xo(rr,:) = filtfilt( b, a, squeeze(x(rr,:)) );
         end
