@@ -63,8 +63,8 @@ for fi=1:num_frex
     
     % the value we use is the normalized distance away from the mean of
     % boot-strapped values
-    tf(fi,:) = (tftemp-mean(bm,2))./std(bm,[],2);
-%         tf(fi,:) = tftemp;
+        tf(fi,:) = (tftemp-mean(bm,2))./std(bm,[],2);
+%     tf(fi,:) = tftemp;
 end
 
 %% plot results
