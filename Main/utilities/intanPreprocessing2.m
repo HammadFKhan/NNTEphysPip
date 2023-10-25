@@ -49,6 +49,7 @@ else
     warning('An existing kilosort.bin file exists! Deleting existing kilosort version')
     pause(1)
     delete(kilosort_filename)
+    temp = Intan.amplifier_data(s.sorted_electrodes,:)
     kilosortPrep2(Intan.amplifier_data,path)
 end
 % Now downsample data for LFP
