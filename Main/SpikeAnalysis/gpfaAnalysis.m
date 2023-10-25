@@ -48,7 +48,7 @@ datFormat = 'spikes';
 % 'fa'     -- Smooth and factor analysis
 % 'ppca'   -- Smooth and probabilistic principal components analysis
 % 'pca'    -- Smooth and principal components analysis
-method = 'gpfa';
+method = 'pca';
 
 % Select number of latent dimensions
 xDim = 15;
@@ -57,7 +57,7 @@ xDim = 15;
 
 % If using a two-stage method ('fa', 'ppca', or 'pca'), select
 % standard deviation (in msec) of Gaussian smoothing kernel.
-kernSD = 30;
+kernSD = 80;
 % NOTE: The optimal kernel width should be found using 
 %       cross-validation (Section 2) below.
 
