@@ -61,6 +61,60 @@ if isfield(Behaviour,'nCueMiss')
     Spikes.PSTH.miss.spks = trials;
     Spikes.PSTH.miss.spkRates = output;
 end
+
+if isfield(Behaviour,'MIHitTrace')
+    fprintf('Analyzing MI Hit trials...\n')
+    count = 1;
+    trials = {};
+    for ii = 1:length(Spikes.Clusters)
+        if ~isempty(Spikes.Clusters(ii).spikeTime)
+            for i = 1:length(Behaviour.MIHitTrace)
+                st = floor(Behaviour.MIHitTrace(i).LFPtime(1));
+                stp = floor(Behaviour.MIHitTrace(i).LFPtime(end));
+                temp = zeros(1,length(0:0.001:(stp-st)));
+                spiketm = Spikes.Clusters(ii).spikeTime(Spikes.Clusters(ii).spikeTime>=st & Spikes.Clusters(ii).spikeTime<=stp);
+                spiked = discretize(spiketm,st:0.001:stp); % 0.001 bin for 1 ms
+                if ~isnan(spiked)
+                    temp(spiked) = 1;
+                end
+                trials{count}(i,:) = temp;
+            end
+        else
+            trials{count} = [];
+        end
+        count = count+1;
+    end
+    output = make_nice_mean_raster(trials,20,0);
+    Spikes.PSTH.MIHit.spks = trials;
+    Spikes.PSTH.MIHit.spkRates = output;
+end
+
+if isfield(Behaviour,'MIFATrace')
+    fprintf('Analyzing MI false alarm trials...\n')
+    count = 1;
+    trials = {};
+    for ii = 1:length(Spikes.Clusters)
+        if ~isempty(Spikes.Clusters(ii).spikeTime)
+            for i = 1:length(Behaviour.MIFATrace)
+                st = floor(Behaviour.MIFATrace(i).LFPtime(1));
+                stp = floor(Behaviour.MIFATrace(i).LFPtime(end));
+                temp = zeros(1,length(0:0.001:(stp-st)));
+                spiketm = Spikes.Clusters(ii).spikeTime(Spikes.Clusters(ii).spikeTime>=st & Spikes.Clusters(ii).spikeTime<=stp);
+                spiked = discretize(spiketm,st:0.001:stp); % 0.001 bin for 1 ms
+                if ~isnan(spiked)
+                    temp(spiked) = 1;
+                end
+                trials{count}(i,:) = temp;
+            end
+        else
+            trials{count} = [];
+        end
+        count = count+1;
+    end
+    output = make_nice_mean_raster(trials,20,0);
+    Spikes.PSTH.MIFA.spks = trials;
+    Spikes.PSTH.MIFA.spkRates = output;
+end
 %% Basic functions
     function output = make_nice_mean_raster(spmat,smooth_window,showplot)
         %*********** spmat1 and spmat2 are spike matrices of two conditions you wish to compare
