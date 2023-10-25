@@ -6,13 +6,23 @@ function Spikes = makeSpikeGPFA(Spikes)
 if ~isfield(Spikes,'PSTH'), error('Run leverPSTH.m first!');end
 
 if isfield(Spikes.PSTH,'hit')
-    output = organizeSpikes(Spikes.PSTH.hit.spks);
+    output = organizeSpikes(Spikes.PSTH.hit.spks(Spikes.goodSpkComponents));
 end
 Spikes.GPFA.hit.dat = output;
 if isfield(Spikes.PSTH,'miss')
-    output = organizeSpikes(Spikes.PSTH.miss.spks);
+    output = organizeSpikes(Spikes.PSTH.miss.spks(Spikes.goodSpkComponents));
 end
 Spikes.GPFA.miss.dat = output;
+
+if isfield(Spikes.PSTH,'MIHit')
+    output = organizeSpikes(Spikes.PSTH.MIHit.spks(Spikes.goodSpkComponents));
+end
+Spikes.GPFA.MIHit.dat = output;
+
+if isfield(Spikes.PSTH,'MIFA')
+    output = organizeSpikes(Spikes.PSTH.MIFA.spks(Spikes.goodSpkComponents));
+end
+Spikes.GPFA.MIFA.dat = output;
 %% ------------functions---------
     function output = organizeSpikes(spk)
         output = struct();
