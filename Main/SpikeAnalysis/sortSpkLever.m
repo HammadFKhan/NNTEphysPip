@@ -1,17 +1,24 @@
 function [Spikes] = sortSpkLever(Spikes,Behaviour)
 showplot = 1;
 %%% zscore normalize
-temp = smoothdata(Spikes.PSTH.hit.spkRates,2,'gaussian',25); %template plus smoothing
-%%
+% hits
+temp = smoothdata(Spikes.PSTH.hit.spkRates(Spikes.goodSpkComponents,:),2,'gaussian',40); %template plus smoothing
 [hitnormSpk,hittimIdx,hitspkIdx] = spknorm(temp);
-%%
-temp = smoothdata(Spikes.PSTH.miss.spkRates,2,'gaussian',25); %template plus smoothing
+% misses
+temp = smoothdata(Spikes.PSTH.miss.spkRates(Spikes.goodSpkComponents,:),2,'gaussian',40); %template plus smoothing
 [missnormSpk,misstimIdx,missspkIdx] = spknorm(temp);
-
+% MI hits
+temp = smoothdata(Spikes.PSTH.MIHit.spkRates(Spikes.goodSpkComponents,:),2,'gaussian',40); %template plus smoothing
+[MIhitnormSpk,MIhittimIdx,MIhitspkIdx] = spknorm(temp);
+% MI false alarms
+temp = smoothdata(Spikes.PSTH.MIFA.spkRates(Spikes.goodSpkComponents,:),2,'gaussian',40); %template plus smoothing
+[MIFAnormSpk,MIFAtimIdx,MIFAspkIdx] = spknorm(temp);
 
 %%% jitter response and stability
 hitPath = hittimIdx(hitspkIdx);
 missPath = misstimIdx(missspkIdx);
+MIhitPath = MIhittimIdx(MIhitspkIdx);
+MIFAPath = MIFAtimIdx(MIFAspkIdx);
 hitJitter = diff(hitPath);
 missJitter = diff(missPath);
 %%% Spike Depth Assignment TODO: Gamma GED spike coherence
@@ -49,6 +56,29 @@ if showplot
     xline(RT);
     subplot(122),plot((missPath)-Behaviour.parameters.windowBeforeCue*1000,1:size(missnormSpk,1),'r','LineWidth',1)
     
+    %%% Motion Initiated
+    
+     figure,subplot(121),imagesc(-Behaviour.parameters.windowBeforeCue*1000:Behaviour.parameters.windowAfterCue*1000,...
+        1:size(MIhitnormSpk,1),MIhitnormSpk(MIhitspkIdx,:)),hold on
+    colormap(flip(gray))
+    colorbar
+    set(gca,'fontsize',16)
+    caxis([0.0 2.56])
+    xline(0);
+    subplot(121),plot((MIhitPath)-Behaviour.parameters.windowBeforeCue*1000,1:size(MIhitnormSpk,1),'r','LineWidth',1)
+    subplot(122),imagesc(-Behaviour.parameters.windowBeforeCue*1000:Behaviour.parameters.windowAfterCue*1000,...
+        1:size(MIFAnormSpk,1),MIFAnormSpk(MIFAspkIdx,:)),hold on
+    colormap(flip(gray))
+    colorbar
+    set(gca,'fontsize',16)
+    caxis([0.0 2.56])
+%     RT = mean(Behaviour.reactionTime)*1000;
+    xline(0);
+    xline(RT);
+    subplot(122),plot((MIFAPath)-Behaviour.parameters.windowBeforeCue*1000,1:size(MIFAnormSpk,1),'r','LineWidth',1)
+    
+    
+    
     % Jitter response
     figure,bar(1,mean(hitJitter),'FaceColor',[188/255 190/255 192/255]),hold on
     errorbar(1,mean(hitJitter),std(hitJitter)/sqrt(length(hitJitter)),'k')
@@ -72,6 +102,10 @@ Spikes.PSTH.miss.spkIdx = missspkIdx;
 % Spikes.PSTH.miss.l23spkidx = missl23spkidx;
 % Spikes.PSTH.hit.l5spkidx = hitl5spkidx;
 % Spikes.PSTH.miss.l5spkidx = missl5spkidx;
+Spikes.PSTH.MIhit.normSpk = MIhitnormSpk;
+Spikes.PSTH.MIhit.spkIdx = MIhitspkIdx;
+Spikes.PSTH.MIFA.normSpk = MIFAnormSpk;
+Spikes.PSTH.MIFA.spkIdx = MIFAspkIdx;
 end
 
 function output = findLayer(spkIdx,idx)
