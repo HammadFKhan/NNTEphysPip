@@ -255,11 +255,11 @@ missxgp = cellfun(@(x) reshape(x,22,1,[]),missxgp,'UniformOutput',false);
 MIhitxgp = cellfun(@(x) reshape(x,22,1,[]),MIhitxgp,'UniformOutput',false);
 MIFAxgp = cellfun(@(x) reshape(x,22,1,[]),MIFAxgp,'UniformOutput',false);
 %%
-[PA] = calPhaseAlignment(MIFAxgp);
-figure,plot((squeeze(PA)'),'LineWidth',1);
-cmap = (gray(22));
-set(gca(),'ColorOrder',cmap)
-figure,imagesc(squeeze(PA)),colormap(hot)
+[PA] = calPhaseAlignment(hitxgp);
+% figure,plot((squeeze(PA)'),'LineWidth',1);
+% cmap = (gray(22));
+% set(gca(),'ColorOrder',cmap)
+figure,imagesc(-1500:1500,1:22,squeeze(PA)),colormap(hot)
 %% Now do the same analysis of LFP but using broadband GED LFP
 LFP.probe1.GED.comp1 = leverLFPAnalysis(GED.compts(1,:),IntanBehaviour);
 LFP.probe1.GED.comp2 = leverLFPAnalysis(GED.compts(2,:),IntanBehaviour);
