@@ -7,9 +7,9 @@ function [tf,frex,pnts] = itpc(lfp,timestamps,Fs,showplot)
 %     numelectrode = 64;
 % end
 % wavelet parameters
-num_frex = 80; % Frequency resolution
+num_frex = 60; % Frequency resolution
 min_freq =  4; % Lower frequency bound
-max_freq = 80; % Upper frequency bound
+max_freq = 50; % Upper frequency bound
 timestamps = floor(timestamps.*Fs);
 pnts = timestamps(1,2)-timestamps(1,1); % Sample size of each trial
 trials = length(timestamps); % Running event trials
@@ -27,11 +27,16 @@ half_wave_size = (length(time)-1)/2;
 nWave = length(time);
 nData = pnts*trials; %total size of data (sample points x trials)
 nConv = nWave+nData-1;
-n_iter = 500;
+n_iter = 1;
 %%
 % build data format time x trials
+data = zeros(3001,trials);
 for i = 1:trials
-    data(:,i) = lfp(ceil(timestamps(i,1)):ceil(timestamps(i,2)));
+    try
+        data(:,i) = lfp(ceil(timestamps(i,1)):ceil(timestamps(i,2)));
+    catch
+        continue
+    end
 end
 % FFT of data (doesn't change on frequency iteration)
 dataX = fft( reshape(data,[],1) ,nConv)';
@@ -63,8 +68,8 @@ for fi=1:num_frex
     
     % the value we use is the normalized distance away from the mean of
     % boot-strapped values
-        tf(fi,:) = (tftemp-mean(bm,2))./std(bm,[],2);
-%     tf(fi,:) = tftemp;
+%     tf(fi,:) = (tftemp-mean(bm,2))./std(bm,[],2);
+    tf(fi,:) = tftemp;
 end
 
 %% plot results
