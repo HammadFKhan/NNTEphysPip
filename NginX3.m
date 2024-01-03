@@ -1,7 +1,7 @@
 % clear; clc; 
 % close all;
 addpath(genpath('Main'));
-addpath(genpath('chronux'));
+% addpath(genpath('chronux'));
 % addpath(genpath('Kilosort'));
 addpath(genpath('npy-matlab'));
 addpath(genpath('spikes-master'));
@@ -11,7 +11,8 @@ ds_filename = intanPreprocessing2; %% double check file type
 % load only neccessary variables from memory mapped file
 data = matfile(ds_filename);
 fpath = data.fpath;
-% Kilosort264FTestcode
+Kilosort264FTestcode
+% Kilosort264SharpTestcode
 savepath = fullfile(fpath,['loadme','.mat']);
 save(savepath,'ds_filename');
 clearvars -except ds_filename
