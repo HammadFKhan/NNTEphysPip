@@ -9,8 +9,8 @@
 % memory management
 function ds_filename = intanPreprocessing2
 addpath(genpath('Main'));
-% chanMapFile = 'UCLA_chanmap_64F2.mat';
-chanMapFile = 'UCLA_chanmap_fixed.mat'; %UCLA Sharp
+chanMapFile = 'UCLA_chanmap_64F2.mat';
+% chanMapFile = 'UCLA_chanmap_fixed.mat'; %UCLA Sharp
 disp(['Using ' chanMapFile ' as electrode map'])
 pause(1)
 load(chanMapFile)
@@ -49,11 +49,11 @@ else
     warning('An existing kilosort.bin file exists! Deleting existing kilosort version')
     pause(1)
     delete(kilosort_filename)
-    temp = Intan.amplifier_data(s.sorted_electrodes,:)
+    temp = Intan.amplifier_data(s.sorted_electrodes,:);
     kilosortPrep2(Intan.amplifier_data,path)
 end
 % Now downsample data for LFP
-amplifierData{idx} = resample(Intan.amplifier_data(33:96,:)',targetedFs,data.Fs)';
+amplifierData{idx} = resample(Intan.amplifier_data',targetedFs,data.Fs)';
 amplifierTime{idx} = downsample(Intan.t_amplifier',round(data.Fs/targetedFs),1)';
 
 if ~isempty(Intan.board_dig_in_data) % Checks for digital traces
@@ -83,7 +83,7 @@ for idx = 2:L
     end
     temp = Intan.amplifier_data(s.sorted_electrodes,:);
     kilosortPrep2(temp,path)
-    amplifierData{idx} = resample(Intan.amplifier_data(33:96,:)',targetedFs,data.Fs)';
+    amplifierData{idx} = resample(Intan.amplifier_data',targetedFs,data.Fs)';
     amplifierTime{idx} = downsample(Intan.t_amplifier',round(data.Fs/targetedFs),1)';
     if exist('digitalChannels','var')
         digitalChannels{idx} = downsample(Intan.board_dig_in_data',round(data.Fs/targetedFs),1)';
@@ -103,8 +103,12 @@ amplifierData = amplifierData(s.sorted_electrodes,:);
 data.amplifierData = amplifierData;
 fprintf('Saving everything else...')
 data.chanMapFile = chanMapFile;
-data.digitalChannels = horzcat(digitalChannels{:});
-data.analogChannels = horzcat(analogChannels{:});
+if exist('digitalChannels','var')
+    data.digitalChannels = horzcat(digitalChannels{:});
+end
+if exist('analogChannels','var')
+    data.analogChannels = horzcat(analogChannels{:});
+end
 data.amplifierTime = horzcat(amplifierTime{:});
 fprintf('done\n')
 data.targetedFs = targetedFs;
