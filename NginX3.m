@@ -20,8 +20,8 @@ clearvars -except ds_filename
 data = matfile(ds_filename);
 parameters.experiment = 'cue'; % self - internally generated, cue - cue initiated
 parameters.opto = 0; % 1 - opto ON , 0 - opto OFF
-parameters.windowBeforePull = 1; % in seconds
-parameters.windowAfterPull = 1; % in seconds
+parameters.windowBeforePull = 1.5; % in seconds
+parameters.windowAfterPull = 1.5; % in seconds
 parameters.windowBeforeCue = 1.5; % in seconds
 parameters.windowAfterCue = 1.5; % in seconds
 parameters.Fs = 1000; % Eventual downsampled data
@@ -136,7 +136,7 @@ end
 %% plot ITPC across depth
 broadBandIdx = 30:50; %Broadband idx base on spectrogram.frex
 sz = size(LFP.probe1.spectrogram.tfhit);
-temp = smoothdata(squeeze(mean(LFP.probe1.spectrogram.tfhit(broadBandIdx,:,:),1)),'gaussian',10);
+temp = smoothdata(squeeze(mean(LFP.probe1.spectrogram.tfmiss(broadBandIdx,:,:),1)),'gaussian',10);
 temp = smoothdata(temp,2);
 figure,
 imagesc(-IntanBehaviour.parameters.windowBeforeCue*1000:IntanBehaviour.parameters.windowAfterCue*1000,1:sz(3),temp'),colormap(hot)
@@ -256,11 +256,11 @@ missxgp = cellfun(@(x) reshape(x,22,1,[]),missxgp,'UniformOutput',false);
 MIhitxgp = cellfun(@(x) reshape(x,22,1,[]),MIhitxgp,'UniformOutput',false);
 MIFAxgp = cellfun(@(x) reshape(x,22,1,[]),MIFAxgp,'UniformOutput',false);
 %%
-[PA] = calPhaseAlignment(hitxgp);
+[PA] = calPhaseAlignment(MIFAxgp);
 % figure,plot((squeeze(PA)'),'LineWidth',1);
 % cmap = (gray(22));
 % set(gca(),'ColorOrder',cmap)
-figure,imagesc(-1500:1500,1:22,squeeze(PA)),colormap(hot)
+figure,imagesc(-1500:1500,1:22,squeeze((PA(:,:,1:3001)))),colormap(hot)
 %% Now do the same analysis of LFP but using broadband GED LFP
 LFP.probe1.GED.comp1 = leverLFPAnalysis(GED.compts(1,:),IntanBehaviour);
 LFP.probe1.GED.comp2 = leverLFPAnalysis(GED.compts(2,:),IntanBehaviour);
@@ -269,9 +269,9 @@ LFP.probe1.GED.comp3 = leverLFPAnalysis(GED.compts(3,:),IntanBehaviour);
 LFP.probe1.GED.itpc = GEDITPC(LFP.probe1.GED);
 %%
 figure,
-subplot(131),plotSpectrogram(LFP.probe1.GED.comp1.tfMIFA,-1499:1500,LFP.probe1.GED.comp1.frex,'contourf'); caxis([-3 3])
-subplot(132),plotSpectrogram(LFP.probe1.GED.comp2.tfMIFA,-1499:1500,LFP.probe1.GED.comp1.frex,'contourf'); caxis([-3 3])
-subplot(133),plotSpectrogram(LFP.probe1.GED.comp3.tfMIFA,-1499:1500,LFP.probe1.GED.comp1.frex,'contourf'); caxis([-3 3])
+subplot(131),plotSpectrogram(LFP.probe1.GED.comp1.tfhit,-1499:1500,LFP.probe1.GED.comp1.frex,'contourf'); caxis([-3 3])
+subplot(132),plotSpectrogram(LFP.probe1.GED.comp2.tfhit,-1499:1500,LFP.probe1.GED.comp1.frex,'contourf'); caxis([-3 3])
+subplot(133),plotSpectrogram(LFP.probe1.GED.comp3.tfhit,-1499:1500,LFP.probe1.GED.comp1.frex,'contourf'); caxis([-3 3])
 % figure,subplot(131),plot(-499:1500,LFP.probe1.GED.itpc.comp1.hit)
 % subplot(132),plot(-499:1500,LFP.probe1.GED.itpc.comp2.hit)
 % subplot(133),plot(-499:1500,LFP.probe1.GED.itpc.comp3.hit)
@@ -293,76 +293,6 @@ xline(0)
 xlim([-1500 1500])
 %% now do stats for GED and save to struct
 itpcstats = itpcGEDstats(hit,miss);
-%% Analyze as a function of phase locking
-%
-freq4phase = 15; % in Hz
-freq4power = 40; 
-for n = 1:100
-% get phase values
-phasefilt = filterFGx(squeeze(LFP.probe1.GED.comp1.hitLFP(:,:,n)),1000,freq4phase,2);
-phase(n,:) = angle(hilbert(phasefilt));
-
-% get power values (note: 'power' is a built-in function so we'll name this variable 'amp')
-ampfilt = filterFGx(squeeze(LFP.probe1.GED.comp1.hitLFP(:,:,1)),1000,freq4power,40,0);
-amp(n,:) = abs(hilbert(ampfilt)).^2;
-
-% % plot power and phase
-% figure(2), clf
-% plot(phase)
-% hold on
-% plot((amp-mean(amp))/std(amp),'r')
-% hint: zoom in on part of these data!
-
-%plot power as a function of phase
-figure(3), 
-polarplot(mean(phase,1),mean(amp,1),'.')
-n_hist_bins = 30;
-
-% phase_edges = linspace(min(phase),max(phase),n_hist_bins+1);
-% amp_by_phases = zeros(1,n_hist_bins);
-% 
-% for i=1:n_hist_bins-1
-%     amp_by_phases(i) = mean(amp(phase>phase_edges(i) & phase<phase_edges(i+1)));
-% end
-
-% figure(4),hold on
-% bar(phase_edges(1:end-1),amp_by_phases,'histc');
-% set(gca,'xlim',[-pi-.5 pi+.5])
-% xlabel([ 'Phase at ' num2str(freq4phase) ' Hz (rad.)' ])
-% ylabel([ 'Power at ' num2str(freq4power) ' Hz' ])
-% box off,set(gca,'TickDir','out')
-% set(gca,'fontsize',16)
-end
-% significance through permutation testing 
-
-%% compute amplitude-modulated phase
-observed_modulation = abs(mean(amp.*exp(1i*phase)));
-
-% now run permutation testing to see the significance of this interaction
-num_iterations = 10000;
-permuted_results = zeros(1,num_iterations);
-npnts = length(amp);
-
-for ni=1:num_iterations
-    % randomly resort power values
-    cutpoint = randsample(round(npnts/10):round(npnts*.9),1);
-    permuted_results(ni) = abs(mean(amp([ cutpoint:end 1:cutpoint-1 ]).*exp(1i*phase)));
-end
-
-% print value
-z_modulation = (observed_modulation-mean(permuted_results))/std(permuted_results);
-disp([ 'Z-modulation of ' num2str(freq4power) ' Hz power modulated by ' num2str(freq4phase) ' Hz phase is ' num2str(z_modulation) '.' ])
-
-% show histogram of permuted and real values
-figure(5), clf
-histogram(permuted_results,50);
-hold on
-plot([observed_modulation observed_modulation],get(gca,'ylim')/2,'m-p','linewi',4,'markersize',16);
-legend({'histogram of permuted values';'observed value'})
-xlabel('Absolute modulate (arb. units depending on power values)')
-ylabel('Count')
-
-
 %% Spikes analysis
 data = matfile(ds_filename);
 path = [data.fpath,'/kilosort3/'];
@@ -395,7 +325,7 @@ end
 temp = arrayfun(@(x) isempty(x.cluster), Spikes.Clusters);
 Spikes.Clusters(temp) = []; 
 %% Calculate trial PSTH for lever
-Spikes = leverPSTH(Spikes,IntanBehaviour);
+Spikes = leverPSTH(Spikes,IntanBehaviour1);
 %%% save spike output data to load into gui
 savepath = fullfile(path,['spks4sorting','.mat']);
 save(savepath,'Spikes')
@@ -405,9 +335,9 @@ ManualSpikeCurateGUI
 if exist('goodSpkComponents','var')
     Spikes.goodSpkComponents = unique(goodSpkComponents);
 end
-[Spikes] = sortSpkLever(Spikes,IntanBehaviour);
+[Spikes] = sortSpkLever(Spikes,IntanBehaviour1);
 %% Make it layer specific TODO:Gamma GED/Spike coherence
-Spikes = layerspikeAnalysis(Spikes,LFP);
+Spikes = layerspikeAnalysis(Spikes,IntanBehaviour1,LFP);
 %%
 figure,hold on
 for n = 20
@@ -431,15 +361,34 @@ colormap(flip(gray))
 colorbar
 set(gca,'fontsize',16)
 caxis([0.0 2.56])
-%% Neural Trajectory Analysis using GPFA
+%% Neural Trajectory Segementation using GPFA
+% Note that we concatenate trial conditions as to apply the same models for
+% statistical comparison (ie. hit vs miss, hit vs FA, opto vs no opto)
 Spikes = makeSpikeGPFA(Spikes);
-[result,seqTrain] = gpfaAnalysis(Spikes.GPFA.MIFA.dat,13); %Run index
+Spikes.GPFA.HitMiss.dat = [Spikes.GPFA.hit.dat,Spikes.GPFA.miss.dat];
+for n = IntanBehaviour.nCueHit+1:length(Spikes.GPFA.HitMiss.dat) %fix trials
+    Spikes.GPFA.HitMiss.dat(n).trialId = n;
+end
+Spikes.GPFA.MIHitFA.dat = [Spikes.GPFA.MIHit.dat,Spikes.GPFA.MIFA.dat];
+for n = length(IntanBehaviour.MIHitTrace)+1:length(Spikes.GPFA.MIHitFA.dat) %fix trials
+    Spikes.GPFA.MIHitFA.dat(n).trialId = n;
+end
+%%
+if exist('mat_results','dir'),rmdir('mat_results','s'),end
+[Spikes.GPFA.resultHit,Spikes.GPFA.seqTrainHit] = gpfaAnalysis(Spikes.GPFA.hit.dat,1); %Run index
+[Spikes.GPFA.resultMiss,Spikes.GPFA.seqTrainMiss] = gpfaAnalysis(Spikes.GPFA.miss.dat,2); %Run index
+[Spikes.GPFA.resultMIHit,Spikes.GPFA.seqTrainMIHit] = gpfaAnalysis(Spikes.GPFA.MIHit.dat,3); %Run index
+[Spikes.GPFA.resultMIFA,Spikes.GPFA.seqTrainMIFA] = gpfaAnalysis(Spikes.GPFA.MIFA.dat,4); %Run index
+[Spikes.GPFA.resultHitMiss,Spikes.GPFA.seqTrainHitMiss] = gpfaAnalysis(Spikes.GPFA.HitMiss.dat,5); %Run index
+[Spikes.GPFA.resultMIHitFA,Spikes.GPFA.seqTrainMIHitFA] = gpfaAnalysis(Spikes.GPFA.MIHitFA.dat,6); %Run index
+%% Neural Trajectory Analysis
+neuralTrajAnalysis(Spikes,Waves1,IntanBehaviour1)
 %%
 figure,
-for n = 1:50
-    subplot(131),plot(-74*20:20:20*75,seqTrain(n).xorth(2,:),'Color',[0 0 0 0.5]),hold on,box off,set(gca,'fontsize',18),xlim([-1500 1500]),ylim([-1 2])
-    subplot(132),plot(-74*20:20:20*75,seqTrain(n).xorth(3,:),'Color',[0 0 0 0.5]),hold on,box off,set(gca,'fontsize',18),xlim([-1500 1500]),ylim([-1 2])
-    subplot(133),plot(-74*20:20:20*75,seqTrain(n).xorth(1,:),'Color',[0 0 0 0.5]),hold on,box off,set(gca,'fontsize',18),xlim([-1500 1500]),ylim([-1 3])
+for n = 1:111
+    subplot(131),plot(-74*20:20:20*75,Spikes.GPFA.seqTrainHit(n).xorth(1,:),'Color',[0 0 0 0.4]),hold on,box off,set(gca,'fontsize',18),xlim([-1500 1500]),ylim([-1 2])
+    subplot(132),plot(-74*20:20:20*75,Spikes.GPFA.seqTrainHit(n).xorth(2,:),'Color',[0 0 0 0.4]),hold on,box off,set(gca,'fontsize',18),xlim([-1500 1500]),ylim([-1 2])
+    subplot(133),plot(-74*20:20:20*75,Spikes.GPFA.seqTrainHit(n).xorth(3,:),'Color',[0 0 0 0.4]),hold on,box off,set(gca,'fontsize',18),xlim([-1500 1500]),ylim([-1 3])
 end
 
 
