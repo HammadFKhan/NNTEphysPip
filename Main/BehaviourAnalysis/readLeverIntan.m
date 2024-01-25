@@ -17,7 +17,6 @@ if parameters.opto == 1
 else
     disp('Experiment has no opto trials.');
 end
-
 intanFs = 2000;
 IntanBehaviour.parameters = parameters;
 resting_position = 241*5/1024;
@@ -40,7 +39,6 @@ if parameters.opto == 1
     optoIndex = find(diff(IntanBehaviour.optoTrace)==1)+1;
     IntanBehaviour.nOpto = size(optoIndex,2);
 end
-
 
 IntanBehaviour.nCueHit = size(rewardIndex,2);
 IntanBehaviour.nCueMiss = Behaviour.nCueMiss;
