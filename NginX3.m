@@ -11,8 +11,8 @@ ds_filename = intanPreprocessing2; %% double check file type
 % load only neccessary variables from memory mapped file
 data = matfile(ds_filename);
 fpath = data.fpath;
-Kilosort264FTestcode
-% Kilosort264SharpTestcode
+% Kilosort264FTestcode
+Kilosort264SharpTestcode
 savepath = fullfile(fpath,['loadme','.mat']);
 save(savepath,'ds_filename');
 clearvars -except ds_filename
@@ -28,9 +28,9 @@ parameters.Fs = 1000; % Eventual downsampled data
 parameters.ts = 1/parameters.Fs;
 [Behaviour] = readLever(parameters,data.amplifierTime);
 if size(data.digitalChannels,1)>3
-    [IntanBehaviour] = readLeverIntan(parameters,data.amplifierTime,data.analogChannels(1,:),data.digitalChannels(2:end,:),Behaviour);
+    [IntanBehaviour] = readLeverIntan(parameters,data.amplifierTime,data.analogChannels(2,:),data.digitalChannels(2:end,:),Behaviour);
 else
-    [IntanBehaviour] = readLeverIntan(parameters,data.amplifierTime,data.analogChannels(1,:),data.digitalChannels,Behaviour);
+    [IntanBehaviour] = readLeverIntan(parameters,data.amplifierTime,data.analogChannels(2,:),data.digitalChannels,Behaviour);
 end
 % Calculate ITI time for trials and reward/no reward sequence
 temp1 = arrayfun(@(x) x.LFPtime(1), IntanBehaviour.cueHitTrace);
@@ -40,6 +40,15 @@ temp2 = vertcat(temp2,zeros(1,IntanBehaviour.nCueMiss)); %  write 0 for no rewar
 temp = [temp1,temp2];
 [~,idx] = sort(temp(1,:)); %sort by occurance
 IntanBehaviour.ITI = temp(:,idx);
+%% For Cooling 
+temperature = data.analogChannels(1,:);
+temperature = (temperature-1.25)/0.005;
+IntanBehaviour.temperature = resample(temperature,parameters.Fs,2000);
+clear temperature
+%%
+for n = 1:IntanBehaviour.nCueHit
+    hitTemp(n,1) = IntanBehaviour.temperature(IntanBehaviour.cueHit(n,1));
+end
 %% Plot behaviour
 figure
 for i=1:IntanBehaviour.nCueHit
