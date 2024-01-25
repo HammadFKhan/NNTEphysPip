@@ -22,14 +22,23 @@ MIFAPath = MIFAtimIdx(MIFAspkIdx);
 hitJitter = diff(hitPath);
 missJitter = diff(missPath);
 %%% Spike Depth Assignment TODO: Gamma GED spike coherence
-% l23idx = arrayfun(@(x) x.spikeDepth<400,Spikes.Clusters,'UniformOutput',false); % L23
-% l5idx = arrayfun(@(x) x.spikeDepth>=400,Spikes.Clusters,'UniformOutput',false); % L5
-% l23idx = find(cell2mat(l23idx)==1);
-% l5idx = find(cell2mat(l5idx)==1);
-% hitl23spkidx = findLayer(Spikes.PSTH.hit.spkIdx,l23idx);
-% missl23spkidx = findLayer(Spikes.PSTH.miss.spkIdx,l23idx);
-% hitl5spkidx = findLayer(Spikes.PSTH.hit.spkIdx,l5idx);
-% missl5spkidx = findLayer(Spikes.PSTH.miss.spkIdx,l5idx);
+l23idx = arrayfun(@(x) x.spikeDepth<400,Spikes.Clusters,'UniformOutput',false); % L23
+l5idx = arrayfun(@(x) x.spikeDepth>=400,Spikes.Clusters,'UniformOutput',false); % L5
+l23idx = find(cell2mat(l23idx)==1);
+l5idx = find(cell2mat(l5idx)==1);
+hitL23spkIdx = findLayer(Spikes.PSTH.hit.spkIdx,l23idx);
+missL23spkIdx = findLayer(Spikes.PSTH.miss.spkIdx,l23idx);
+hitL5spkIdx = findLayer(Spikes.PSTH.hit.spkIdx,l5idx);
+missL5spkIdx = findLayer(Spikes.PSTH.miss.spkIdx,l5idx);
+
+MIhitL23spkIdx = findLayer(Spikes.PSTH.MIHit.spkIdx,l23idx);
+MIFAL23spkIdx = findLayer(Spikes.PSTH.MIFA.spkIdx,l23idx);
+MIhitL5spkIdx = findLayer(Spikes.PSTH.MIHit.spkIdx,l5idx);
+MIFAL5spkIdx = findLayer(Spikes.PSTH.MIFA.spkIdx,l5idx);
+MIhitL23Path = MIhittimIdx(MIhitL23spkIdx);
+MIhitL5Path = MIhittimIdx(MIhitL5spkIdx);
+MIFAL23Path = MIFAtimIdx(MIFAL23spkIdx);
+MIFAL5Path = MIFAtimIdx(MIFAL5spkIdx);
 
 %%% plot it out
 % cell map
@@ -59,15 +68,15 @@ if showplot
     %%% Motion Initiated
     
      figure,subplot(121),imagesc(-Behaviour.parameters.windowBeforeCue*1000:Behaviour.parameters.windowAfterCue*1000,...
-        1:size(MIhitnormSpk,1),MIhitnormSpk(MIhitspkIdx,:)),hold on
+        1:size(MIhitnormSpk(MIhitL23spkIdx),1),interp2(MIhitnormSpk(MIhitL23spkIdx,:))),hold on
     colormap(flip(gray))
     colorbar
     set(gca,'fontsize',16)
     caxis([0.0 2.56])
     xline(0);
-    subplot(121),plot((MIhitPath)-Behaviour.parameters.windowBeforeCue*1000,1:size(MIhitnormSpk,1),'r','LineWidth',1)
+    subplot(121),plot((MIhitL23Path)-Behaviour.parameters.windowBeforeCue*1000,1:size(MIhitnormSpk(MIhitL23spkIdx),1),'r','LineWidth',1)
     subplot(122),imagesc(-Behaviour.parameters.windowBeforeCue*1000:Behaviour.parameters.windowAfterCue*1000,...
-        1:size(MIFAnormSpk,1),MIFAnormSpk(MIFAspkIdx,:)),hold on
+        1:size(MIFAnormSpk(MIFAL23spkIdx),1),MIFAnormSpk(MIFAL23spkIdx,:)),hold on
     colormap(flip(gray))
     colorbar
     set(gca,'fontsize',16)
@@ -75,7 +84,7 @@ if showplot
 %     RT = mean(Behaviour.reactionTime)*1000;
     xline(0);
     xline(RT);
-    subplot(122),plot((MIFAPath)-Behaviour.parameters.windowBeforeCue*1000,1:size(MIFAnormSpk,1),'r','LineWidth',1)
+    subplot(122),plot((MIFAL23Path)-Behaviour.parameters.windowBeforeCue*1000,1:size(MIFAnormSpk(MIFAL23spkIdx),1),'r','LineWidth',1)
     
     
     
@@ -102,8 +111,8 @@ Spikes.PSTH.miss.spkIdx = missspkIdx;
 % Spikes.PSTH.miss.l23spkidx = missl23spkidx;
 % Spikes.PSTH.hit.l5spkidx = hitl5spkidx;
 % Spikes.PSTH.miss.l5spkidx = missl5spkidx;
-Spikes.PSTH.MIhit.normSpk = MIhitnormSpk;
-Spikes.PSTH.MIhit.spkIdx = MIhitspkIdx;
+Spikes.PSTH.MIHit.normSpk = MIhitnormSpk;
+Spikes.PSTH.MIHit.spkIdx = MIhitspkIdx;
 Spikes.PSTH.MIFA.normSpk = MIFAnormSpk;
 Spikes.PSTH.MIFA.spkIdx = MIFAspkIdx;
 end
