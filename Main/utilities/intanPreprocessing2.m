@@ -17,7 +17,7 @@ load(chanMapFile)
 pathname = uigetdir(pwd,'Input Directory');
 pathname = fullfile(pathname);
 directory = dir(fullfile(pathname,'*.rhd')); %Parses RHD files
-targetedFs = 2000;
+targetedFs = 5000;
 L = length(directory);
 % Now we build the memory map file if file doesnt exist % only for LFP/behaviour
 % data. Spikes are sent to .bin files for kilosort
