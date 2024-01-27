@@ -12,7 +12,7 @@ ds_filename = intanPreprocessing2; %% double check file type
 data = matfile(ds_filename);
 fpath = data.fpath;
 % Kilosort264FTestcode
-Kilosort264SharpTestcode
+% Kilosort264SharpTestcode
 savepath = fullfile(fpath,['loadme','.mat']);
 save(savepath,'ds_filename');
 clearvars -except ds_filename
@@ -20,18 +20,17 @@ clearvars -except ds_filename
 data = matfile(ds_filename);
 parameters.experiment = 'cue'; % self - internally generated, cue - cue initiated
 parameters.opto = 0; % 1 - opto ON , 0 - opto OFF
+parameters.cool = 0; % No Cool 
 parameters.windowBeforePull = 1.5; % in seconds
 parameters.windowAfterPull = 1.5; % in seconds
 parameters.windowBeforeCue = 1.5; % in seconds
 parameters.windowAfterCue = 1.5; % in seconds
+parameters.windowBeforeMI = 1.5; % in seconds 
+parameters.windowAfterMI = 1.5; % in seconds 
 parameters.Fs = 1000; % Eventual downsampled data
 parameters.ts = 1/parameters.Fs;
 [Behaviour] = readLever(parameters,data.amplifierTime);
-if size(data.digitalChannels,1)>3
-    [IntanBehaviour] = readLeverIntan(parameters,data.amplifierTime,data.analogChannels(2,:),data.digitalChannels(2:end,:),Behaviour);
-else
-    [IntanBehaviour] = readLeverIntan(parameters,data.amplifierTime,data.analogChannels(2,:),data.digitalChannels,Behaviour);
-end
+[IntanBehaviour] = readLeverIntan(parameters,data.amplifierTime,data.analogChannels(1,:),data.digitalChannels,Behaviour,1);
 % Calculate ITI time for trials and reward/no reward sequence
 temp1 = arrayfun(@(x) x.LFPtime(1), IntanBehaviour.cueHitTrace);
 temp1 = vertcat(temp1,ones(1,IntanBehaviour.nCueHit)); %  write 1 for reward given
@@ -88,9 +87,11 @@ set(0,'DefaultFigureWindowStyle','normal')
 LFP.probe1= fastpreprocess_filtering(probe1,data.targetedFs);
 LFP.probe1 = bestLFP(LFP.probe1);
 LFP.probe1 = bandFilter(LFP.probe1,'depth'); % Extract LFPs based on 'depth' or 'single'
-LFP.probe2 = fastpreprocess_filtering(probe2*1000,data.targetedFs);
-LFP.probe2 = bestLFP(LFP.probe2);
-LFP.probe2 = bandFilter(LFP.probe2,'single'); % Extract LFPs based on 'depth' or 'single'
+if ~isempty(probe2)
+    LFP.probe2 = fastpreprocess_filtering(probe2,data.targetedFs);
+    LFP.probe2 = bestLFP(LFP.probe2);
+    LFP.probe2 = bandFilter(LFP.probe2,'depth'); % Extract LFPs based on 'depth' or 'single'
+end
 % Build linear channels (should be four from the 64F)
 LFP.probe1.chan1 = find(chanProbe1(:,2)>10);
 LFP.probe1.chan2 = find(chanProbe1(:,2)==-10);
@@ -233,6 +234,7 @@ GED = genEigenDecomp(rawData,Rdata,Sdata);
 xo = bandpass_filter(LFP.probe1.LFP,5,40,1000); %x,f1,f2,Fs
 sz = size(xo);
 xo = reshape(xo,sz(1),1,sz(2));
+linearProbe = find(s.sorted_probe_wiring(:,2)==20);
 [xgp,wt] = generalized_phase(xo(linearProbe,:,:), 1000, 0 );
 %%
 for i = 1:IntanBehaviour.nCueHit
@@ -269,7 +271,8 @@ MIFAxgp = cellfun(@(x) reshape(x,22,1,[]),MIFAxgp,'UniformOutput',false);
 % figure,plot((squeeze(PA)'),'LineWidth',1);
 % cmap = (gray(22));
 % set(gca(),'ColorOrder',cmap)
-figure,imagesc(-1500:1500,1:22,squeeze((PA(:,:,1:3001)))),colormap(hot)
+cmap = colormap_redblackblue();
+figure,imagesc(-1500:1500,1:22,squeeze((PA(:,:,1:3001)))),colormap(cmap(128:end,:))
 %% Now do the same analysis of LFP but using broadband GED LFP
 LFP.probe1.GED.comp1 = leverLFPAnalysis(GED.compts(1,:),IntanBehaviour);
 LFP.probe1.GED.comp2 = leverLFPAnalysis(GED.compts(2,:),IntanBehaviour);
