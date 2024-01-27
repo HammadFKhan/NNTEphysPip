@@ -7,7 +7,7 @@ if ~isempty(varargin) && (strcmp(varargin{1},'Scatter') || strcmp(varargin{1},'s
         scatterOn = 0;
     end
 else
-    scatterOn = 1;
+    scatterOn = 0;
 end
 % Parse input
 if length(size(data))>1
