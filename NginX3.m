@@ -6,16 +6,24 @@ addpath(genpath('Main'));
 addpath(genpath('npy-matlab'));
 addpath(genpath('spikes-master'));
 % IntanConcatenate legacy version
-ds_filename = intanPreprocessing2; %% double check file type
+ds_filename = intanPreprocessing2(0); %IntanDs flag  %% double check file type
+%% Combine intan data if needed
+fpath = kilosortbinCombine();
+%%
 % Run Kilosort3 
 % load only neccessary variables from memory mapped file
 data = matfile(ds_filename);
 fpath = data.fpath;
 % Kilosort264FTestcode
-% Kilosort264SharpTestcode
+Kilosort264SharpTestcode
 savepath = fullfile(fpath,['loadme','.mat']);
 save(savepath,'ds_filename');
 clearvars -except ds_filename
+%% New load me
+[fname,fpath] = uigetfile();
+savepath = fullfile(fpath,['loadme','.mat']);
+ds_filename = fullfile(fpath,fname);
+save(savepath,'ds_filename');
 %% Parameters for behaviour
 data = matfile(ds_filename);
 parameters.experiment = 'cue'; % self - internally generated, cue - cue initiated
