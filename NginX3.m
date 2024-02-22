@@ -29,8 +29,9 @@ parameters.windowBeforeMI = 1.5; % in seconds
 parameters.windowAfterMI = 1.5; % in seconds 
 parameters.Fs = 1000; % Eventual downsampled data
 parameters.ts = 1/parameters.Fs;
+parameters.IntanFs = data.targetedFs;
 [Behaviour] = readLever(parameters,data.amplifierTime);
-[IntanBehaviour] = readLeverIntan(parameters,data.amplifierTime,data.analogChannels(1,:),data.digitalChannels,Behaviour,1);
+[IntanBehaviour] = readLeverIntan(parameters,data.amplifierTime,data.analogChannels(2,:),data.digitalChannels,Behaviour,1);
 % Calculate ITI time for trials and reward/no reward sequence
 temp1 = arrayfun(@(x) x.LFPtime(1), IntanBehaviour.cueHitTrace);
 temp1 = vertcat(temp1,ones(1,IntanBehaviour.nCueHit)); %  write 1 for reward given
@@ -42,7 +43,7 @@ IntanBehaviour.ITI = temp(:,idx);
 %% For Cooling 
 temperature = data.analogChannels(1,:);
 temperature = (temperature-1.25)/0.005;
-IntanBehaviour.temperature = resample(temperature,parameters.Fs,2000);
+IntanBehaviour.temperature = resample(temperature,parameters.Fs,5000);
 clear temperature
 %%
 for n = 1:IntanBehaviour.nCueHit
@@ -85,20 +86,21 @@ clear lfp
 % LFP filter
 set(0,'DefaultFigureWindowStyle','normal')
 LFP.probe1= fastpreprocess_filtering(probe1,data.targetedFs);
-LFP.probe1 = bestLFP(LFP.probe1);
-LFP.probe1 = bandFilter(LFP.probe1,'depth'); % Extract LFPs based on 'depth' or 'single'
+% LFP.probe1 = bestLFP(LFP.probe1);
+% LFP.probe1 = bandFilter(LFP.probe1,'depth'); % Extract LFPs based on 'depth' or 'single'
 if ~isempty(probe2)
     LFP.probe2 = fastpreprocess_filtering(probe2,data.targetedFs);
     LFP.probe2 = bestLFP(LFP.probe2);
     LFP.probe2 = bandFilter(LFP.probe2,'depth'); % Extract LFPs based on 'depth' or 'single'
 end
 % Build linear channels (should be four from the 64F)
-LFP.probe1.chan1 = find(chanProbe1(:,2)>10);
-LFP.probe1.chan2 = find(chanProbe1(:,2)==-10);
-LFP.probe2.chan1 = find(chanProbe2(:,2)==290.1);
-LFP.probe2.chan2 = find(chanProbe2(:,2)==310.1);
+% LFP.probe1.chan1 = find(chanProbe1(:,2)>10);
+% LFP.probe1.chan2 = find(chanProbe1(:,2)==-10);
+% LFP.probe2.chan1 = find(chanProbe2(:,2)==290.1);
+% LFP.probe2.chan2 = find(chanProbe2(:,2)==310.1);
 %% CSD and spectrogram
-LFP.probe1.spectrogram = leverLFPAnalysis(LFP.probe1.LFP,IntanBehaviour);
+linearProbe = find(s.sorted_probe_wiring(:,2)==0);
+LFP.probe1.spectrogram = leverLFPAnalysis(LFP.probe1.LFP(linearProbe,:),IntanBehaviour);
 % LFP.probe2.spectrogram = leverLFPAnalysis(LFP.probe2.LFP,IntanBehaviour);
 %% Now we used the segmented LFPs to do statistical analysis across narrowbands
 LFP.probe1.narrowband.hitLFP = bandFilter2(LFP.probe1.spectrogram.hitLFP,1000);
@@ -234,18 +236,21 @@ GED = genEigenDecomp(rawData,Rdata,Sdata);
 xo = bandpass_filter(LFP.probe1.LFP,5,40,1000); %x,f1,f2,Fs
 sz = size(xo);
 xo = reshape(xo,sz(1),1,sz(2));
+%%
 linearProbe = find(s.sorted_probe_wiring(:,2)==20);
-[xgp,wt] = generalized_phase(xo(linearProbe,:,:), 1000, 0 );
+[xgp,wt] = generalized_phase(xo, 1000, 0 );
 %%
 for i = 1:IntanBehaviour.nCueHit
     disp(['Analyzing trial: ' num2str(i)])
     hitWin = floor(IntanBehaviour.cueHitTrace(i).LFPtime*1000); %multiply by Fs;
     hitxgp{i} = xgp(:,hitWin);
+    hitLFP{i} = xo(:,hitWin);
 end
 for i = 1:IntanBehaviour.nCueMiss
     disp(['Analyzing trial: ' num2str(i)])
     missWin = floor(IntanBehaviour.cueMissTrace(i).LFPtime*1000);
     missxgp{i} = xgp(:,missWin);
+    missLFP{i} = xo(:,missWin);
 end
 
 %%% Motion Intiated
@@ -253,26 +258,29 @@ for i = 1:length(IntanBehaviour.MIHitTrace)
     disp(['Analyzing trial: ' num2str(i)])
     MIhitWin = floor(IntanBehaviour.MIHitTrace(i).LFPtime*1000); %multiply by Fs;
     MIhitxgp{i} = xgp(:,MIhitWin);
+    MIhitLFP{i} = xo(:,MIhitWin);
 end
 
 for i = 1:length(IntanBehaviour.MIFATrace)
     disp(['Analyzing trial: ' num2str(i)])
     MIFAWin = floor(IntanBehaviour.MIFATrace(i).LFPtime*1000);
     MIFAxgp{i} = xgp(:,MIFAWin);
+    MIFALFP{i} = xo(:,MIFAWin);
 end
 
 %%
-hitxgp = cellfun(@(x) reshape(x,22,1,[]),hitxgp,'UniformOutput',false);
-missxgp = cellfun(@(x) reshape(x,22,1,[]),missxgp,'UniformOutput',false);
-MIhitxgp = cellfun(@(x) reshape(x,22,1,[]),MIhitxgp,'UniformOutput',false);
-MIFAxgp = cellfun(@(x) reshape(x,22,1,[]),MIFAxgp,'UniformOutput',false);
+hitxgp = cellfun(@(x) reshape(x,64,1,[]),hitxgp,'UniformOutput',false);
+missxgp = cellfun(@(x) reshape(x,64,1,[]),missxgp,'UniformOutput',false);
+MIhitxgp = cellfun(@(x) reshape(x,64,1,[]),MIhitxgp,'UniformOutput',false);
+MIFAxgp = cellfun(@(x) reshape(x,64,1,[]),MIFAxgp,'UniformOutput',false);
 %%
+load myMap
 [PA] = calPhaseAlignment(MIFAxgp);
 % figure,plot((squeeze(PA)'),'LineWidth',1);
 % cmap = (gray(22));
 % set(gca(),'ColorOrder',cmap)
-cmap = colormap_redblackblue();
-figure,imagesc(-1500:1500,1:22,squeeze((PA(:,:,1:3001)))),colormap(cmap(128:end,:))
+% cmap = colormap_redblackblue();
+figure,imagesc(-1500:1500,1:22,squeeze((PA(:,:,1:3001)))),colormap(myMap)
 %% Now do the same analysis of LFP but using broadband GED LFP
 LFP.probe1.GED.comp1 = leverLFPAnalysis(GED.compts(1,:),IntanBehaviour);
 LFP.probe1.GED.comp2 = leverLFPAnalysis(GED.compts(2,:),IntanBehaviour);
@@ -308,8 +316,9 @@ itpcstats = itpcGEDstats(hit,miss);
 %% Spikes analysis
 data = matfile(ds_filename);
 path = [data.fpath,'/kilosort3/'];
+mergename = 'merged2';
 Kilosort3AutoMergeTester
-path = [data.fpath,'/kilosort3/merged'];
+path = [data.fpath,'/kilosort3/' mergename];
 
 %%% Spike preprocessing (includes merging (optional) and channel info
 %%% return)
@@ -337,7 +346,7 @@ end
 temp = arrayfun(@(x) isempty(x.cluster), Spikes.Clusters);
 Spikes.Clusters(temp) = []; 
 %% Calculate trial PSTH for lever
-Spikes = leverPSTH(Spikes,IntanBehaviour1);
+Spikes = leverPSTH(Spikes,IntanBehaviour);
 %%% save spike output data to load into gui
 savepath = fullfile(path,['spks4sorting','.mat']);
 save(savepath,'Spikes')
@@ -347,9 +356,9 @@ ManualSpikeCurateGUI
 if exist('goodSpkComponents','var')
     Spikes.goodSpkComponents = unique(goodSpkComponents);
 end
-[Spikes] = sortSpkLever(Spikes,IntanBehaviour1);
+[Spikes] = sortSpkLever(Spikes,IntanBehaviour);
 %% Make it layer specific TODO:Gamma GED/Spike coherence
-Spikes = layerspikeAnalysis(Spikes,IntanBehaviour1,LFP);
+Spikes = layerspikeAnalysis(Spikes,IntanBehaviour,LFP);
 %%
 figure,hold on
 for n = 20
@@ -432,7 +441,7 @@ for i = 1:Behaviour.nCueHit
         [temp(:,:,n), fwt] = calCWTSpectogram(hitLFP(n,:,i),1:timpnts,1000,10,[10 40],0,1);
     end
     powerCWThit(:,:,i) = mean(temp,3);
-%     [CSDoutputhit(:,:,i)]  = CSD(hitLFP(:,:,i)/1E6,1000,50E-6);
+    [CSDoutputhit(:,:,i)]  = CSD(hitLFP(:,:,i)'/1E6,1000,50E-6);
 end
 for i = 1:Behaviour.nCueMiss
     disp(['Analyzing trial: ' num2str(i)])
@@ -443,7 +452,7 @@ for i = 1:Behaviour.nCueMiss
         [temp(:,:,n), fwt] = calCWTSpectogram(missLFP(n,:,i),1:timpnts,1000,10,[10 40],0,1);
     end
     powerCWTmiss(:,:,i) = mean(temp,3);
-    %     [CSDoutputmiss(:,:,i)]  = CSD(missLFP(:,:,i)'/1E6,1000,20E-6);
+    [CSDoutputmiss(:,:,i)]  = CSD(missLFP(:,:,i)'/1E6,1000,20E-6);
 end
 %%% Motion Initiated Analysis for FA
 for i = 1:length(Behaviour.MIHitTrace)
@@ -451,10 +460,12 @@ for i = 1:length(Behaviour.MIHitTrace)
     timestampMIHit(i,:) = [Behaviour.MIHitTrace(i).LFPtime(1),Behaviour.MIHitTrace(i).LFPtime(end)]; %taken in seconds
     MIHitWin = floor(Behaviour.MIHitTrace(i).LFPtime*1000);
     MIHitLFP(:,:,i) = linearProbe(:,MIHitWin);
-    for n = 1:size(missLFP,1)
+    for n = 1:size(MIHitLFP,1)
         [temp(:,:,n), fwt] = calCWTSpectogram(MIHitLFP(n,:,i),1:timpnts,1000,10,[10 40],0,1);
     end
     powerCWTMIHit(:,:,i) = mean(temp,3);
+    [CSDoutputMIHit(:,:,i)]  = CSD(MIHitLFP(:,:,i)'/1E6,1000,20E-6);
+
 end
 for i = 1:length(Behaviour.MIFATrace)
     disp(['Analyzing trial: ' num2str(i)])
@@ -465,6 +476,7 @@ for i = 1:length(Behaviour.MIFATrace)
         [temp(:,:,n), fwt] = calCWTSpectogram(MIFALFP(n,:,i),1:timpnts,1000,10,[10 40],0,1);
     end
     powerCWTMIFA(:,:,i) = mean(temp,3);
+    [CSDoutputMIFA(:,:,i)]  = CSD(MIFALFP(:,:,i)'/1E6,1000,20E-6);
 end
 for i = 1:size(linearProbe,1)
     disp(['Analyzing electrode: ' num2str(i)])
