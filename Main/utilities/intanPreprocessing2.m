@@ -7,7 +7,7 @@
 % output should be a downsampled amplifer data to 5000 Hz, deleted Intan
 % amplifier data and kilosort prepped data file. Then data is send to memory mapped file. This allows for proper
 % memory management
-function ds_filename = intanPreprocessing2
+function ds_filename = intanPreprocessing2(intandsFlag)
 addpath(genpath('Main'));
 % chanMapFile = 'UCLA_chanmap_64F2.mat';
 chanMapFile = 'UCLA_chanmap_fixed.mat'; %UCLA Sharp
@@ -38,17 +38,19 @@ data.path = path;
 intanOffset = 1;
 % Removing first second of data6
 disp(['Adjusting for ' num2str(intanOffset) ' second offset']);
-Intan.amplifier_data = Intan.amplifier_data(:,data.Fs*intanOffset:size(Intan.amplifier_data,2));
+Intan.amplifier_data = Intan.amplifier_data(1:64,data.Fs*intanOffset:size(Intan.amplifier_data,2));
 Intan.t_amplifier = Intan.t_amplifier(:,data.Fs*intanOffset:size(Intan.t_amplifier,2));
 
 % running kilosort prep file
 if ~exist(kilosort_filename,'file')
+    Intan.amplifier_data = Intan.amplifier_data(1:64,:);
     temp = Intan.amplifier_data(s.sorted_electrodes,:); % sort electrodes since we use sorted electrodes in kilosort
     kilosortPrep2(temp,path)
 else
     warning('An existing kilosort.bin file exists! Deleting existing kilosort version')
     pause(1)
     delete(kilosort_filename)
+    Intan.amplifier_data = Intan.amplifier_data(1:64,:);
     temp = Intan.amplifier_data(s.sorted_electrodes,:);
     kilosortPrep2(Intan.amplifier_data,path)
 end
@@ -70,9 +72,9 @@ for idx = 2:L
     path = directory(idx).folder;
     file = directory(idx).name;
     Intan = read_Intan_RHD2000_file(path,file);
-    if idx==L %subtract the last second off the recording
+    if idx== L %subtract the last second off the recording
         disp(['Adjusting for ' num2str(intanOffset) ' second offset']);
-        Intan.amplifier_data = Intan.amplifier_data(:,1:(size(Intan.amplifier_data,2)-data.Fs*intanOffset));
+        Intan.amplifier_data = Intan.amplifier_data(1:64,1:(size(Intan.amplifier_data,2)-data.Fs*intanOffset));
         Intan.t_amplifier = Intan.t_amplifier(:,1:(size(Intan.t_amplifier,2)-data.Fs*intanOffset));
         if exist('digitalChannels','var')
             Intan.board_dig_in_data = Intan.board_dig_in_data(:,1:(size(Intan.board_dig_in_data,2)-data.Fs*intanOffset));
@@ -81,6 +83,7 @@ for idx = 2:L
             Intan.board_adc_data = Intan.board_adc_data(:,1:(size(Intan.board_adc_data,2)-data.Fs*intanOffset));
         end
     end
+    Intan.amplifier_data = Intan.amplifier_data(1:64,:);
     temp = Intan.amplifier_data(s.sorted_electrodes,:);
     kilosortPrep2(temp,path)
     amplifierData{idx} = resample(Intan.amplifier_data',targetedFs,data.Fs)';
@@ -94,23 +97,25 @@ for idx = 2:L
         
 end
 % Combine cells and save into data
-fprintf('Compressing data...')
-amplifierData = horzcat(amplifierData{:});
-fprintf('done\n')
-% sort electrodes
-fprintf('Saving amplifier data...')
-amplifierData = amplifierData(s.sorted_electrodes,:); 
-data.amplifierData = amplifierData;
-fprintf('Saving everything else...')
-data.chanMapFile = chanMapFile;
-if exist('digitalChannels','var')
-    data.digitalChannels = horzcat(digitalChannels{:});
+if intandsFlag % If we want to make an intan file (save time for hdd loading
+    fprintf('Compressing data...')
+    amplifierData = horzcat(amplifierData{:});
+    fprintf('done\n')
+    % sort electrodes
+    fprintf('Saving amplifier data...')
+    amplifierData = amplifierData(s.sorted_electrodes,:);
+    data.amplifierData = amplifierData;
+    fprintf('Saving everything else...')
+    data.chanMapFile = chanMapFile;
+    if exist('digitalChannels','var')
+        data.digitalChannels = horzcat(digitalChannels{:});
+    end
+    if exist('analogChannels','var')
+        data.analogChannels = horzcat(analogChannels{:});
+    end
+    data.amplifierTime = horzcat(amplifierTime{:});
+    fprintf('done\n')
 end
-if exist('analogChannels','var')
-    data.analogChannels = horzcat(analogChannels{:});
-end
-data.amplifierTime = horzcat(amplifierTime{:});
-fprintf('done\n')
 data.targetedFs = targetedFs;
 data.fpath = Intan.path;
 clearvars -except ds_filename
