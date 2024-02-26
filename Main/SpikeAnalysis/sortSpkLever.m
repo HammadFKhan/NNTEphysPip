@@ -26,19 +26,19 @@ l23idx = arrayfun(@(x) x.spikeDepth<400,Spikes.Clusters,'UniformOutput',false); 
 l5idx = arrayfun(@(x) x.spikeDepth>=400,Spikes.Clusters,'UniformOutput',false); % L5
 l23idx = find(cell2mat(l23idx)==1);
 l5idx = find(cell2mat(l5idx)==1);
-hitL23spkIdx = findLayer(Spikes.PSTH.hit.spkIdx,l23idx);
-missL23spkIdx = findLayer(Spikes.PSTH.miss.spkIdx,l23idx);
-hitL5spkIdx = findLayer(Spikes.PSTH.hit.spkIdx,l5idx);
-missL5spkIdx = findLayer(Spikes.PSTH.miss.spkIdx,l5idx);
-
-MIhitL23spkIdx = findLayer(Spikes.PSTH.MIHit.spkIdx,l23idx);
-MIFAL23spkIdx = findLayer(Spikes.PSTH.MIFA.spkIdx,l23idx);
-MIhitL5spkIdx = findLayer(Spikes.PSTH.MIHit.spkIdx,l5idx);
-MIFAL5spkIdx = findLayer(Spikes.PSTH.MIFA.spkIdx,l5idx);
-MIhitL23Path = MIhittimIdx(MIhitL23spkIdx);
-MIhitL5Path = MIhittimIdx(MIhitL5spkIdx);
-MIFAL23Path = MIFAtimIdx(MIFAL23spkIdx);
-MIFAL5Path = MIFAtimIdx(MIFAL5spkIdx);
+% hitL23spkIdx = findLayer(Spikes.PSTH.hit.spkIdx,l23idx);
+% missL23spkIdx = findLayer(Spikes.PSTH.miss.spkIdx,l23idx);
+% hitL5spkIdx = findLayer(Spikes.PSTH.hit.spkIdx,l5idx);
+% missL5spkIdx = findLayer(Spikes.PSTH.miss.spkIdx,l5idx);
+% 
+% MIhitL23spkIdx = findLayer(Spikes.PSTH.MIHit.spkIdx,l23idx);
+% MIFAL23spkIdx = findLayer(Spikes.PSTH.MIFA.spkIdx,l23idx);
+% MIhitL5spkIdx = findLayer(Spikes.PSTH.MIHit.spkIdx,l5idx);
+% MIFAL5spkIdx = findLayer(Spikes.PSTH.MIFA.spkIdx,l5idx);
+% MIhitL23Path = MIhittimIdx(MIhitL23spkIdx);
+% MIhitL5Path = MIhittimIdx(MIhitL5spkIdx);
+% MIFAL23Path = MIFAtimIdx(MIFAL23spkIdx);
+% MIFAL5Path = MIFAtimIdx(MIFAL5spkIdx);
 
 %%% plot it out
 % cell map
@@ -54,6 +54,7 @@ if showplot
     xline(0);
     xline(RT);
     subplot(121),plot((hitPath)-Behaviour.parameters.windowBeforeCue*1000,1:size(hitnormSpk,1),'r','LineWidth',1)
+    title('Cue Hit')
     subplot(122),imagesc(-Behaviour.parameters.windowBeforeCue*1000:Behaviour.parameters.windowAfterCue*1000,...
         1:size(missnormSpk,1),missnormSpk(missspkIdx,:)),hold on
     colormap(flip(gray))
@@ -64,27 +65,31 @@ if showplot
     xline(0);
     xline(RT);
     subplot(122),plot((missPath)-Behaviour.parameters.windowBeforeCue*1000,1:size(missnormSpk,1),'r','LineWidth',1)
-    
+    title('Cue Miss')
     %%% Motion Initiated
     
      figure,subplot(121),imagesc(-Behaviour.parameters.windowBeforeCue*1000:Behaviour.parameters.windowAfterCue*1000,...
-        1:size(MIhitnormSpk(MIhitL23spkIdx),1),interp2(MIhitnormSpk(MIhitL23spkIdx,:))),hold on
+        1:size(MIhitnormSpk,1),MIhitnormSpk(MIhitspkIdx,:)),hold on
     colormap(flip(gray))
     colorbar
     set(gca,'fontsize',16)
     caxis([0.0 2.56])
     xline(0);
-    subplot(121),plot((MIhitL23Path)-Behaviour.parameters.windowBeforeCue*1000,1:size(MIhitnormSpk(MIhitL23spkIdx),1),'r','LineWidth',1)
+    subplot(121),plot(MIhitPath-Behaviour.parameters.windowBeforeCue*1000,1:size(MIhitnormSpk(MIhitspkIdx),1),'r','LineWidth',1)
+    title('MI Hit')
+    
     subplot(122),imagesc(-Behaviour.parameters.windowBeforeCue*1000:Behaviour.parameters.windowAfterCue*1000,...
-        1:size(MIFAnormSpk(MIFAL23spkIdx),1),MIFAnormSpk(MIFAL23spkIdx,:)),hold on
+        1:size(MIFAnormSpk,1),MIFAnormSpk(MIFAspkIdx,:)),hold on
     colormap(flip(gray))
     colorbar
     set(gca,'fontsize',16)
     caxis([0.0 2.56])
+    
 %     RT = mean(Behaviour.reactionTime)*1000;
     xline(0);
     xline(RT);
-    subplot(122),plot((MIFAL23Path)-Behaviour.parameters.windowBeforeCue*1000,1:size(MIFAnormSpk(MIFAL23spkIdx),1),'r','LineWidth',1)
+    subplot(122),plot(MIFAPath-Behaviour.parameters.windowBeforeCue*1000,1:size(MIFAnormSpk(MIFAspkIdx),1),'r','LineWidth',1)
+    title('MI False Alarm')
     
     
     
