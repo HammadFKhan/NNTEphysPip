@@ -11,7 +11,7 @@ if isfield(Behaviour,'nCueHit')
     trials = {};
     for ii = 1:length(Spikes.Clusters)
         if ~isempty(Spikes.Clusters(ii).spikeTime)
-            for i = 1:Behaviour.nCueHit
+            for i = 1:length(Behaviour.cueHitTrace)
                 st = Behaviour.cueHitTrace(i).LFPtime(1);
                 stp = Behaviour.cueHitTrace(i).LFPtime(end);
                 temp = zeros(1,length(0:0.001:round((stp-st),3)));
@@ -41,7 +41,7 @@ if isfield(Behaviour,'nCueMiss')
     trials = {};
     for ii = 1:length(Spikes.Clusters)
         if ~isempty(Spikes.Clusters(ii).spikeTime)
-            for i = 1:Behaviour.nCueMiss
+            for i = 1:length(Behaviour.cueMissTrace)
                 st = floor(Behaviour.cueMissTrace(i).LFPtime(1));
                 stp = floor(Behaviour.cueMissTrace(i).LFPtime(end));
                 temp = zeros(1,length(0:0.001:(stp-st)));
