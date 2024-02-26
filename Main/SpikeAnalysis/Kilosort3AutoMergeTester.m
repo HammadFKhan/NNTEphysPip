@@ -27,21 +27,21 @@ mergeId = double(unique(SpikeClusterssample)); % identify new ids
 % tempsind = tempsind(ismember(initClust,mergeId),:,:);
 % simIndx = simIndx(ismember(initClust,mergeId),ismember(initClust,mergeId));
 % make new folder and rewrite spike files for phy2
-if ~exist([path '/merged'],'dir')
-    mkdir([path '/merged']);
+if ~exist([path,mergename],'dir')
+    mkdir([path,mergename]);
 end
-writeNPY(uint32(SpikeClusterssample-1), fullfile([path '\merged'], 'spike_clusters.npy')); % -1 for zero indexing
-writeNPY(uint32(SpikeClusterssample-1), fullfile([path '\merged'], 'spike_templates.npy')); % -1 for zero indexing
-writeNPY(single(Xsim), fullfile([path '\merged'], 'similar_templates.npy'));
-copyfile([path,'/params.py'],[path,'/merged']);
-copyfile([path,'/amplitudes.npy'],[path,'/merged']);
-copyfile([path,'/channel_map.npy'],[path,'/merged']);
-copyfile([path,'/channel_positions.npy'],[path,'/merged']);
-copyfile([path,'/spike_times.npy'],[path,'/merged']);
-copyfile([path,'/templates.npy'],[path,'/merged']);
-copyfile([path,'/templates_ind.npy'],[path,'/merged']);
-copyfile([path,'/whitening_mat.npy'],[path,'/merged']);
-copyfile([path,'/whitening_mat_inv.npy'],[path,'/merged']);
+writeNPY(uint32(SpikeClusterssample-1), fullfile([path, '/',mergename], 'spike_clusters.npy')); % -1 for zero indexing
+writeNPY(uint32(SpikeClusterssample-1), fullfile([path, '/',mergename], 'spike_templates.npy')); % -1 for zero indexing
+writeNPY(single(Xsim), fullfile([path '/',mergename], 'similar_templates.npy'));
+copyfile([path,'/params.py'],[path,'/',mergename]);
+copyfile([path,'/amplitudes.npy'],[path,'/',mergename]);
+copyfile([path,'/channel_map.npy'],[path,'/',mergename]);
+copyfile([path,'/channel_positions.npy'],[path,'/',mergename]);
+copyfile([path,'/spike_times.npy'],[path,'/',mergename]);
+copyfile([path,'/templates.npy'],[path,'/',mergename]);
+copyfile([path,'/templates_ind.npy'],[path,'/',mergename]);
+copyfile([path,'/whitening_mat.npy'],[path,'/',mergename]);
+copyfile([path,'/whitening_mat_inv.npy'],[path,'/',mergename]);
 
 
 
