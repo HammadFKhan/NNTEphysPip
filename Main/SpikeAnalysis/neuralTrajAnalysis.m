@@ -40,7 +40,7 @@ rawreactionTime = arrayfun(@(x) x.reactionTime,Behaviour.cueHitTrace);
 mreactionTime = interp1(t,1:length(t),mean(rawreactionTime),'nearest');
 reactionTime = interp1(t,1:length(t),rawreactionTime,'nearest');
 reactionTime(isnan(reactionTime)) = length(t);
-if exist('Waves','var')
+if ~isempty(Waves)
     rawWaveDensityhit = arrayfun(@(x) vertcat(x.wavePresent),Waves.wavesHit,'UniformOutput',false);rawWaveDensityhit= vertcat(rawWaveDensityhit{:});
     rawWavePGDhit = arrayfun(@(x) vertcat(x.PGD), Waves.wavesHit,'UniformOutput',false);rawWavePGDhit = vertcat(rawWavePGDhit{:});
     rawWaveSpeedhit = arrayfun(@(x) vertcat(x.s), Waves.wavesHit,'UniformOutput',false);rawWaveSpeedhit = vertcat(rawWaveSpeedhit{:});
@@ -207,22 +207,33 @@ plot(-74*20:20:20*75,[0,rprime3],'LineWidth',2),box off,set(gca,'FontSize',16),s
 %% Overlaying traveling wave dynamics across neural trajectories
 % TODO: Plotting the data like this makes the rendering all messed up; need
 % to adapt from Lyles GP phase code for plotting....
-figure
 x = rh(:,1);
 y = rh(:,2);
-p = plot(x,y,'r', 'LineWidth',2);
-% modified jet-colormap
-% cd = [uint8(jet(150)*255) uint8(ones(150,1))].';
-drawnow
-set(p.Edge, 'ColorBinding','interpolated', 'ColorData',uint8(cd1))
-%% index PGD
-cd = [uint8(jet(150)*255) uint8(ones(150,1))].';
+cd = [uint8((jet(150))*255) uint8(ones(150,1))].';
 n = 150;
-col = mean(waveDensityhit)';
+t = mean(waveSpeedhit);
+col = [0;smoothdata(diff(t),'movmean',10)'];
+%col = smoothdata(t,'movmean',10);
+% Interp to make the line smoother
+xin = interp1(1:150,x,1:0.1:150);
+yin = interp1(1:150,y,1:0.1:150);
+col = interp1(1:150,col,1:0.1:150);
 col_map = (col - min(col))/(max(col)-min(col)) * (n-1) + 1;
-for n = 1:150
+for n = 1:length(col)
     cd1(:,n) = cd(:,floor(col_map(n)));
 end
+figure,
+for n = 2:length(col)
+plot(xin(n-1:n),yin(n-1:n),'color',double(cd1(1:3,n))/255, 'LineWidth',2);hold on %cline( time, xf, [], angle(xgp) );
+end
+box off, axis off
+% modified jet-colormap
+% cd = [uint8(jet(150)*255) uint8(ones(150,1))].';
+%% Use Cline so we can make the colorbar
+figure,
+h4 = cline( xin, yin, [], col);
+colormap((jet))
+set( h4, 'linestyle', '-', 'linewidth', 2  );axis off
 
 end
 
