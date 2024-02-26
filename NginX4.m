@@ -6,8 +6,10 @@ addpath(genpath('Main'));
 addpath(genpath('npy-matlab'));
 addpath(genpath('spikes-master'));
 % IntanConcatenate legacy version
-ds_filename = intanPreprocessing2; %% double check file type
-% Run Kilosort3 
+ds_filename = intanPreprocessing2(1); %IntanDs flag  %% double check file type
+%% Combine intan data if needed
+fpath = kilosortbinCombine();
+%% Run Kilosort3 
 % load only neccessary variables from memory mapped file
 data = matfile(ds_filename);
 fpath = data.fpath;
@@ -105,70 +107,96 @@ if ~isempty(probe2)
     LFP.probe2 = bestLFP(LFP.probe2);
     LFP.probe2 = bandFilter(LFP.probe2,'depth'); % Extract LFPs based on 'depth' or 'single'
 end
-%% Calculate generalize phase for electrodes
-addpath(genpath('generalized-phase-main'));
+%%% Calculate generalize phase for electrodes
+addpath(genpath('C:\Users\khan332\Documents\GitHub\generalized-phase'));
 xo = bandpass_filter(LFP.probe1.LFP,5,40,1000); %x,f1,f2,Fs
 sz = size(xo);
 xo = reshape(xo,sz(1),1,sz(2));
 linearProbe = find(s.sorted_probe_wiring(:,2)==20);
 [xgp,wt] = generalized_phase(xo, 1000, 0 );
+LFP.probe1.xgp = xgp;
+LFP.probe1.xo = xo;
+%%% Save data
+[fpath,name,exts] = fileparts(ds_filename);
+sessionName = [fpath,'/','LFP.mat'];
+% save(sessionName,"IntanBehaviour","fpath","parameters","-v7.3");
+save(sessionName,"IntanBehaviour","parameters","LFP","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
+%%
 for i = 1:IntanBehaviour.nCueHit
     disp(['Analyzing trial: ' num2str(i)])
     hitWin = floor(IntanBehaviour.cueHitTrace(i).LFPtime*1000); %multiply by Fs;
-    hitxgp{i} = xgp(:,hitWin);
-    hitLFP{i} = xo(:,hitWin);
+    hitxgp{i} = LFP.probe1.xgp(:,hitWin);
+    hitLFP{i} = LFP.probe1.xo(:,hitWin);
 end
 for i = 1:IntanBehaviour.nCueMiss
     disp(['Analyzing trial: ' num2str(i)])
     missWin = floor(IntanBehaviour.cueMissTrace(i).LFPtime*1000);
-    missxgp{i} = xgp(:,missWin);
-    missLFP{i} = xo(:,missWin);
+    missxgp{i} = LFP.probe1.xgp(:,missWin);
+    missLFP{i} = LFP.probe1.xo(:,missWin);
 end
 
 %%% Motion Intiated
 for i = 1:length(IntanBehaviour.MIHitTrace)
     disp(['Analyzing trial: ' num2str(i)])
     MIhitWin = floor(IntanBehaviour.MIHitTrace(i).LFPtime*1000); %multiply by Fs;
-    MIhitxgp{i} = xgp(:,MIhitWin);
-    MIhitLFP{i} = xo(:,MIhitWin);
+    MIhitxgp{i} = LFP.probe1.xgp(:,MIhitWin);
+    MIhitLFP{i} = LFP.probe1.xo(:,MIhitWin);
 end
 
 for i = 1:length(IntanBehaviour.MIFATrace)
     disp(['Analyzing trial: ' num2str(i)])
     MIFAWin = floor(IntanBehaviour.MIFATrace(i).LFPtime*1000);
-    MIFAxgp{i} = xgp(:,MIFAWin);
-    MIFALFP{i} = xo(:,MIFAWin);
+    MIFAxgp{i} = LFP.probe1.xgp(:,MIFAWin);
+    MIFALFP{i} = LFP.probe1.xo(:,MIFAWin);
 end
 hitxgp = cellfun(@(x) reshape(x,64,1,[]),hitxgp,'UniformOutput',false);
 missxgp = cellfun(@(x) reshape(x,64,1,[]),missxgp,'UniformOutput',false);
 MIhitxgp = cellfun(@(x) reshape(x,64,1,[]),MIhitxgp,'UniformOutput',false);
 MIFAxgp = cellfun(@(x) reshape(x,64,1,[]),MIFAxgp,'UniformOutput',false);
-LFP.probe1.xgp = xgp;
-LFP.probe1.xo = xo;
-
-%% Save data
-[fpath,name,exts] = fileparts(ds_filename);
-sessionName = [fpath,'/','LFP.mat'];
-% save(sessionName,"IntanBehaviour","fpath","parameters","-v7.3");
-save(sessionName,"IntanBehaviour","parameters","LFP","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
-
 %%
 load myMap
-[hitPA] = calPhaseAlignment(hitxgp);
-[missPA] = calPhaseAlignment(missxgp);
-[MIhitPA] = calPhaseAlignment(MIhitxgp);
-[MIFAPA] = calPhaseAlignment(MIFAxgp);
+[hitPA,hitPA_angle] = calPhaseAlignment(hitxgp);
+[missPA,missPA_angle] = calPhaseAlignment(missxgp);
+[MIhitPA,MIhitPA_angle] = calPhaseAlignment(MIhitxgp);
+[MIFAPA,MIFAPA_angle] = calPhaseAlignment(MIFAxgp);
 % figure,plot((squeeze(PA)'),'LineWidth',1);
 % cmap = (gray(22));
 % set(gca(),'ColorOrder',cmap)
 % cmap = colormap_redblackblue();
-%%
+%% PA plotting
 linearProbe = find(s.sorted_probe_wiring(:,2)==20);
 figure,
-subplot(131),imagesc(-1500:1500,1:64,squeeze((hitPA(linearProbe,:,1:3001)))),xlim([-500 1500]),colormap(myMap),colorbar,title('Hit')
-subplot(132),imagesc(-1500:1500,1:64,squeeze((missPA(linearProbe,:,1:3001)))),xlim([-500 1500]),colormap(myMap),colorbar,title('Miss')
-%subplot(133),imagesc(-1500:1500,1:22,squeeze((MIhitPA(linearProbe,:,1:3001)))),xlim([-500 1500]),colormap(myMap),colorbar,title('MI Hit')
-subplot(133),imagesc(-1500:1500,1:64,squeeze((MIFAPA(linearProbe,:,1:3001)))),xlim([-500 1500]),colormap(myMap),colorbar,title('MI FA')
+subplot(311),imagesc(-1500:1500,1:22,squeeze((hitPA(linearProbe,:,1:3001)))),xlim([-500 1500]),colormap(myMap),colorbar,title('Hit')
+subplot(312),imagesc(-1500:1500,1:22,squeeze((missPA(linearProbe,:,1:3001)))),xlim([-500 1500]),colormap(myMap),colorbar,title('Miss')
+% subplot(313),imagesc(-1500:1500,1:22,squeeze((MIhitPA(linearProbe,:,1:3001)))),xlim([-500 1500]),colormap(myMap),colorbar,title('MI Hit')
+subplot(313),imagesc(-1500:1500,1:22,squeeze((MIFAPA(linearProbe,:,1:3001)))),xlim([-500 1500]),colormap(myMap),colorbar,title('MI FA')
+%% Alternative way of ploting PA w/angle
+figure,
+shuf = hitPA_angle(:);
+t = squeeze(hitPA_angle);
+subplot(331),histogram(t,-pi:pi/8:pi,'normalization','probability'),set(gca,'TickDir','out'),set(gca,'fontsize',12),box off
+t = squeeze(missPA_angle);
+subplot(334),histogram(t,-pi:pi/8:pi,'normalization','probability'),set(gca,'TickDir','out'),set(gca,'fontsize',12),box off
+[~,r] = max(squeeze(MIFAPA),[],2);
+t = squeeze(MIFAPA_angle);
+subplot(337),histogram(t,-pi:pi/8:pi,'normalization','probability'),set(gca,'TickDir','out'),set(gca,'fontsize',12),box off
+sz = size(squeeze(hitPA));
+dat = mean(squeeze(hitPA(linearProbe,:,1:3001)));
+subplot(3,3,[2 3]),plot(1:sz(2),dat);set(gca,'TickDir','out'),set(gca,'fontsize',12),box off
+dat = mean(squeeze(missPA(linearProbe,:,1:3001)));
+subplot(3,3,[5 6]),plot(1:sz(2),dat);set(gca,'TickDir','out'),set(gca,'fontsize',12),box off
+dat = mean(squeeze(MIFAPA(linearProbe,:,1:3001)));
+subplot(3,3,[8 9]),plot(1:sz(2),dat);set(gca,'TickDir','out'),set(gca,'fontsize',12),box off
+%%
+figure,
+t = squeeze(missPA_angle);
+dat = mean(smoothdata(t(linearProbe,:),'gaussian',5),2);
+err = std(t(linearProbe,:),[],2)/sqrt(size(t,2));
+subplot(3,2,[1 3 5]),errorbar(dat,1:length(linearProbe),err,'.-','horizontal'),axis tight,set(gca,'TickDir','out'),set(gca,'fontsize',12),box off
+set(gca, 'YDir','reverse')
+subplot(322),histogram(t(linearProbe(4),:),-pi:pi/8:pi,'normalization','probability'),set(gca,'TickDir','out'),set(gca,'fontsize',12),box off,title('Superficial')
+subplot(324),histogram(t(linearProbe(10),:),-pi:pi/8:pi,'normalization','probability'),set(gca,'TickDir','out'),set(gca,'fontsize',12),box off,title('Middle')
+subplot(326),histogram(t(linearProbe(20),:),-pi:pi/8:pi,'normalization','probability'),set(gca,'TickDir','out'),set(gca,'fontsize',12),box off,title('Deep')
 %% Spikes analysis
 [fpath,name,exts] = fileparts(ds_filename);
 data = matfile(ds_filename);
@@ -255,6 +283,8 @@ for n = length(IntanBehaviour.MIHitTrace)+1:length(Spikes.GPFA.MIHitFA.dat) %fix
     Spikes.GPFA.MIHitFA.dat(n).trialId = n;
 end
 %%
+addpath(genpath('C:\Users\khan332\Documents\GitHub\NeuralTraj'));
+addpath(genpath('mat_results'));
 if exist('mat_results','dir'),rmdir('mat_results','s'),end
 [Spikes.GPFA.resultHit,Spikes.GPFA.seqTrainHit] = gpfaAnalysis(Spikes.GPFA.hit.dat,1); %Run index
 [Spikes.GPFA.resultMiss,Spikes.GPFA.seqTrainMiss] = gpfaAnalysis(Spikes.GPFA.miss.dat,2); %Run index
