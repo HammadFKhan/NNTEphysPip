@@ -10,10 +10,10 @@ winAfterCue = winBeforeCue(end)+1:Behaviour.parameters.windowAfterCue*Behaviour.
 winRT = arrayfun(@(x) winAfterCue(1)+x.reactionTime*Behaviour.parameters.Fs,Behaviour.cueHitTrace);
 winRW = arrayfun(@(x) find(x.LFPIndex==x.rewardIndex),Behaviour.cueHitTrace,'UniformOutput',false);
 checkRW = cellfun(@(x) isempty(x),winRW);
-winRW{checkRW} = NaN;% Time from cue to Reward
+winRW(checkRW) = cell({0});% Time from cue to Reward
 winRW = cell2mat(winRW);
+winRW(winRW==0) = NaN;
 %%% Layer specific spike analysis and statistics
-
 % Assign new variables based on good spikes
 if isfield(Spikes.PSTH,'hit')
 hitPSTH = Spikes.PSTH.hit.spks(Spikes.goodSpkComponents);
@@ -25,11 +25,11 @@ missFR = Spikes.PSTH.miss.spkRates(Spikes.goodSpkComponents,:);
 end
 if isfield(Spikes.PSTH,'MIHit')
     mihitPSTH = Spikes.PSTH.MIHit.spks(Spikes.goodSpkComponents);
-    mihitFR = Spikes.PSTH.MIHit.spkRates(Spikes.goodSpkComponents);
+    mihitFR = Spikes.PSTH.MIHit.spkRates(Spikes.goodSpkComponents,:);
 end
 if isfield(Spikes.PSTH,'MIFA')
     mifaPSTH = Spikes.PSTH.MIFA.spks(Spikes.goodSpkComponents);
-    mifaFR = Spikes.PSTH.MIFA.spkRates(Spikes.goodSpkComponents);
+    mifaFR = Spikes.PSTH.MIFA.spkRates(Spikes.goodSpkComponents,:);
 end
 
 
@@ -76,22 +76,25 @@ Spikes.spikeProp.missFRL5 = missFRL5;
 
 showplot = 1;
 if showplot
-    y =  [mean(hitFRL23,2),mean(missFRL23,2)];
-    disp(['L23 Hit vs Miss p = ' num2str(ranksum(y(:,1),y(:,2)))])
+    y =  [mean(hitFRL23(:,winBeforeCue(end):winBeforeCue(end)+1000),2),mean(missFRL23(:,winBeforeCue(end):winBeforeCue(end)+1000),2)];
+    [~,p] = ttest(y(:,1),y(:,2));
+    disp(['L23 Hit vs Miss p = ' num2str(p)])
     figure,subplot(121),hold on
     x1 = rand(size(y,1),1)/5+1;
     x2 = rand(size(y,1),1)/5+2;
     scatter(x1,y(:,1),'r','filled')
     scatter(x2,y(:,2),'r','filled')
-    xlim([0 3])
+    xlim([.75 2.25])
     plot([x1(:)';x2(:)'], [y(:,1)';y(:,2)'], 'k-')
-    y =  [mean(hitFRL5,2),mean(missFRL5,2)];
+    y =  [mean(hitFRL5(:,winBeforeCue(end):winBeforeCue(end)+1000),2),mean(missFRL5(:,winBeforeCue(end):winBeforeCue(end)+1000),2)];
+    y(y<3) = NaN;
+    [~,p] = ttest(y(:,1),y(:,2));
     disp(['L5 Hit vs Miss p = ' num2str(ranksum(y(:,1),y(:,2)))])
     x1 = rand(size(y,1),1)/5+1;
     x2 = rand(size(y,1),1)/5+2;
     scatter(x1,y(:,1),'b','filled')
     scatter(x2,y(:,2),'b','filled')
-    xlim([0 3])
+    xlim([.75 2.25])
     plot([x1(:)';x2(:)'], [y(:,1)';y(:,2)'], 'k-')
     title(['\color{red}L2/3 ' ' \color{blue}L5'])
     set(gca,'TickDir','out'),set(gca,'fontsize',16),box off
@@ -99,22 +102,23 @@ if showplot
     
     
     
-    y =  [mean(hitFRL23,2),mean(mifaFRL23,2)];
+    y =  [mean(mihitFRL23(:,winBeforeCue(end):winBeforeCue(end)+1000),2),mean(mifaFRL23(:,winBeforeCue(end):winBeforeCue(end)+1000),2)];
     disp(['L23 Hit vs FA p = ' num2str(ranksum(y(:,1),y(:,2)))])
     subplot(122),hold on
     x1 = rand(size(y,1),1)/5+1;
     x2 = rand(size(y,1),1)/5+2;
     scatter(x1,y(:,1),'r','filled')
     scatter(x2,y(:,2),'r','filled')
-    xlim([0 3])
+    xlim([.75 2.25])
     plot([x1(:)';x2(:)'], [y(:,1)';y(:,2)'], 'k-')
-    y =  [mean(hitFRL5,2),mean(mifaFRL5,2)];
+    y =  [mean(mihitFRL5(:,winBeforeCue(end):winBeforeCue(end)+1000),2),mean(mifaFRL5(:,winBeforeCue(end):winBeforeCue(end)+1000),2)];
+    y(y<3) = NaN;
     disp(['L5 Hit vs FA p = ' num2str(ranksum(y(:,1),y(:,2)))])
     x1 = rand(size(y,1),1)/5+1;
     x2 = rand(size(y,1),1)/5+2;
     scatter(x1,y(:,1),'b','filled')
     scatter(x2,y(:,2),'b','filled')
-    xlim([0 3])
+    xlim([.75 2.25])
     plot([x1(:)';x2(:)'], [y(:,1)';y(:,2)'], 'k-')
     title(['\color{red}L2/3 ' ' \color{blue}L5'])
     set(gca,'TickDir','out'),set(gca,'fontsize',16),box off
