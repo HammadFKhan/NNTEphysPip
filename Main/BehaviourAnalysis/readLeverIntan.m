@@ -18,7 +18,7 @@ else
     disp('Experiment has no opto trials.');
 end
 
-intanFs = 5000;
+intanFs = parameters.IntanFs;
 
 resting_position = 285*5/1024;
 flip = 1;
@@ -28,17 +28,17 @@ nlengthBeforeCue = round(parameters.windowBeforeCue/parameters.ts);
 nlengthCue = round(parameters.windowBeforeCue/parameters.ts + parameters.windowAfterCue/parameters.ts + 1);
 
 IntanBehaviour.leverTrace = resample(((double(leverTrace)- resting_position)*flip),parameters.Fs,intanFs);
-IntanBehaviour.time = downsample(lfpTime,round(intanFs/parameters.Fs),2); % time in seconds
-IntanBehaviour.rewardTrace = downsample(rewardTrace,round(intanFs/parameters.Fs),2);
+IntanBehaviour.time = downsample(lfpTime,round(intanFs/parameters.Fs),1); % time in seconds
+IntanBehaviour.rewardTrace = downsample(rewardTrace,round(intanFs/parameters.Fs),1);
 rewardIndex = find(diff(IntanBehaviour.rewardTrace)==1)+1;
 if cue == 1
-    IntanBehaviour.cueTrace = downsample(cueTrace,round(intanFs/parameters.Fs),2); 
+    IntanBehaviour.cueTrace = downsample(cueTrace,round(intanFs/parameters.Fs),1); 
     cueIndex = find(diff(IntanBehaviour.cueTrace)==1)+1;
     IntanBehaviour.nCueHit = size(rewardIndex,2);
     IntanBehaviour.nCueMiss = Behaviour.nCueMiss;
 end
 if parameters.opto == 1
-    IntanBehaviour.optoTrace = downsample(optoTrace,round(intanFs/parameters.Fs),2);
+    IntanBehaviour.optoTrace = downsample(optoTrace,round(intanFs/parameters.Fs),1);
     optoIndex = find(diff(IntanBehaviour.optoTrace)==1)+1;
     IntanBehaviour.nOpto = size(optoIndex,2);
 end
@@ -218,7 +218,8 @@ for i=1:Behaviour.nMiss
 end
 
 missIndex = removeNaNRows(missIndex');
-
+idx =  missIndex<parameters.windowBeforePull*parameters.Fs;
+missIndex(idx) = [];
 IntanBehaviour.nMiss = size(missIndex,1);
 
 for i=1:IntanBehaviour.nMiss
@@ -304,7 +305,7 @@ if plotOption == 1
     end
     plot(IntanBehaviour.cueHitTrace(1).time,mean(horzcat(IntanBehaviour.cueHitTrace(1:end).trace),2),'Color',[1 0 0 1],'LineWidth',2);
     yline(IntanBehaviour.threshold,'--.b','Threshold','LabelHorizontalAlignment','left'); 
-    xline(0,'--r','Cue','LabelVerticalAlignment','top');ylim([0 0.1]);
+    xline(0,'--r','Cue','LabelVerticalAlignment','top');%ylim([0 0.1]);
     xline(mean(IntanBehaviour.reactionTime,'all'),'--m','Avg. Reaction Time','LabelVerticalAlignment','top');
     ylabel('Lever deflection (in V)');xlabel('Time (in s)');title('Average Lever Traces for Cue Hits');box off;
     
@@ -328,7 +329,7 @@ if plotOption == 1
     end
     plot(IntanBehaviour.hitTrace(1).time,mean(horzcat(IntanBehaviour.hitTrace(1:end).trace),2),'Color',[1 0 0 1],'LineWidth',2);
     yline(IntanBehaviour.threshold,'--.b','Threshold','LabelHorizontalAlignment','left'); 
-    xline(0,'--r','Reward','LabelVerticalAlignment','top');ylim([0 0.1]);
+    xline(0,'--r','Reward','LabelVerticalAlignment','top');%ylim([0 0.1]);
     ylabel('Lever deflection (in V)');xlabel('Time (in s)');title('Average Lever Traces for Hits');box off;
     
     subplot(2,1,2);
