@@ -1,3 +1,18 @@
+temperature = data.analogChannels(1,:);
+temperature = (temperature-1.25)/0.005;
+IntanBehaviour.temperature = resample(temperature,parameters.Fs,data.targetedFs);
+IntanBehaviour.temperature =  IntanBehaviour.temperature-IntanBehaviour.temperature(10000);
+clear temperature
+for n = 1:IntanBehaviour.nCueHit
+    hitTemp(n,1) = IntanBehaviour.temperature(IntanBehaviour.cueHitTrace(n).LFPIndex(1));
+end
+for n = 1:IntanBehaviour.nCueMiss
+    missTemp(n,1) = IntanBehaviour.temperature(IntanBehaviour.cueMissTrace(n).LFPIndex(1));
+end
+for n = 1:length(IntanBehaviour.missTrace)
+    FATemp(n,1) = IntanBehaviour.temperature(IntanBehaviour.missTrace(n).LFPIndex(1));
+end
+%%
 hitRate = arrayfun(@(x) x.LFPtime(1), IntanBehaviour.cueHitTrace);
 binningAmount = ceil(hitRate(end)/60);
 idxh = discretize(hitRate,binningAmount);
@@ -33,11 +48,11 @@ missRatei = interp1(1:length(missRate),missRate,1:0.01:length(missRate));
 FARatei = interp1(1:length(FARate),FARate,1:0.01:length(FARate));
 figure,
 h = cline(1:length(hitRatei), smoothdata(hitRatei,'movmean',50), [], idxci);set( h, 'linestyle', '-', 'linewidth', 2  ),hold on
-caxis([-25 0])
+caxis([-20 0])
 h = cline(1:length(missRatei), missRatei, [], idxci);set( h, 'linestyle', '-', 'linewidth', 2  ),hold on
-caxis([-25 0])
+caxis([-20 0])
 h = cline(1:length(FARatei), FARatei, [], idxci);set( h, 'linestyle', '-', 'linewidth', 2  ),hold on
-caxis([-25 0])
+caxis([-20 0])
 set(gca,'TickDir','out'),set(gca,'fontsize',16),box off
 colormap(flip(myMap))
 %%
