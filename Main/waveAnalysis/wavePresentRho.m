@@ -32,7 +32,7 @@ end
 waveDir(waveDir==0) = NaN;
 waveRho(waveRho==0) = NaN;
 load myMap
-tIdx = randi(size(waveStart,1),200,1);
+tIdx = randi(size(waveStart,1),60,1);
 waveDirt = waveDir(tIdx,:);
 waveStartt = waveStart(tIdx,:);
 wavePresentt = wavePresent(tIdx,:);
