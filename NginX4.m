@@ -149,16 +149,17 @@ for i = 1:length(IntanBehaviour.MIFATrace)
     MIFAxgp{i} = LFP.probe1.xgp(:,MIFAWin);
     MIFALFP{i} = LFP.probe1.xo(:,MIFAWin);
 end
-hitxgp = cellfun(@(x) reshape(x,64,1,[]),hitxgp,'UniformOutput',false);
-missxgp = cellfun(@(x) reshape(x,64,1,[]),missxgp,'UniformOutput',false);
-MIhitxgp = cellfun(@(x) reshape(x,64,1,[]),MIhitxgp,'UniformOutput',false);
-MIFAxgp = cellfun(@(x) reshape(x,64,1,[]),MIFAxgp,'UniformOutput',false);
-%%
+LFP.probe1.hitxgp = cellfun(@(x) reshape(x,64,1,[]),hitxgp,'UniformOutput',false);
+LFP.probe1.missxgp = cellfun(@(x) reshape(x,64,1,[]),missxgp,'UniformOutput',false);
+LFP.probe1.MIhitxgp = cellfun(@(x) reshape(x,64,1,[]),MIhitxgp,'UniformOutput',false);
+LFP.probe1.MIFAxgp = cellfun(@(x) reshape(x,64,1,[]),MIFAxgp,'UniformOutput',false);
+
+%% Save PAs into single struct
 load myMap
-[hitPA,hitPA_angle] = calPhaseAlignment(hitxgp);
-[missPA,missPA_angle] = calPhaseAlignment(missxgp);
-[MIhitPA,MIhitPA_angle] = calPhaseAlignment(MIhitxgp);
-[MIFAPA,MIFAPA_angle] = calPhaseAlignment(MIFAxgp);
+[PA.hitPA,PA.hitPA_angle] = calPhaseAlignment(LFP.probe1.hitxgp);
+[PA.missPA,PA.missPA_angle] = calPhaseAlignment(LFP.probe1.missxgp);
+[PA.MIhitPA,PA.MIhitPA_angle] = calPhaseAlignment(LFP.probe1.MIhitxgp);
+[PA.MIFAPA,PA.MIFAPA_angle] = calPhaseAlignment(LFP.probe1.MIFAxgp);
 % figure,plot((squeeze(PA)'),'LineWidth',1);
 % cmap = (gray(22));
 % set(gca(),'ColorOrder',cmap)
@@ -166,30 +167,32 @@ load myMap
 %% PA plotting
 linearProbe = find(s.sorted_probe_wiring(:,2)==20);
 figure,
-subplot(311),imagesc(-1500:1500,1:22,squeeze((hitPA(linearProbe,:,1:3001)))),xlim([-500 1500]),colormap(myMap),colorbar,title('Hit')
-subplot(312),imagesc(-1500:1500,1:22,squeeze((missPA(linearProbe,:,1:3001)))),xlim([-500 1500]),colormap(myMap),colorbar,title('Miss')
+subplot(311),imagesc(-1500:1500,1:22,squeeze((PA.hitPA(linearProbe,:,1:3001)))),xlim([-500 1500]),colormap(myMap),colorbar,title('Hit')
+subplot(312),imagesc(-1500:1500,1:22,squeeze((PA.missPA(linearProbe,:,1:3001)))),xlim([-500 1500]),colormap(myMap),colorbar,title('Miss')
 % subplot(313),imagesc(-1500:1500,1:22,squeeze((MIhitPA(linearProbe,:,1:3001)))),xlim([-500 1500]),colormap(myMap),colorbar,title('MI Hit')
-subplot(313),imagesc(-1500:1500,1:22,squeeze((MIFAPA(linearProbe,:,1:3001)))),xlim([-500 1500]),colormap(myMap),colorbar,title('MI FA')
+subplot(313),imagesc(-1500:1500,1:22,squeeze((PA.MIFAPA(linearProbe,:,1:3001)))),xlim([-500 1500]),colormap(myMap),colorbar,title('MI FA')
 %% Alternative way of ploting PA w/angle
 figure,
-shuf = hitPA_angle(:);
-t = squeeze(hitPA_angle);
+shuf = PA.hitPA_angle(:);
+t = squeeze(PA.hitPA_angle);
 subplot(331),histogram(t,-pi:pi/8:pi,'normalization','probability'),set(gca,'TickDir','out'),set(gca,'fontsize',12),box off
-t = squeeze(missPA_angle);
+t = squeeze(PA.missPA_angle);
 subplot(334),histogram(t,-pi:pi/8:pi,'normalization','probability'),set(gca,'TickDir','out'),set(gca,'fontsize',12),box off
-[~,r] = max(squeeze(MIFAPA),[],2);
-t = squeeze(MIFAPA_angle);
+[~,r] = max(squeeze(PA.MIFAPA),[],2);
+t = squeeze(PA.MIFAPA_angle);
 subplot(337),histogram(t,-pi:pi/8:pi,'normalization','probability'),set(gca,'TickDir','out'),set(gca,'fontsize',12),box off
-sz = size(squeeze(hitPA));
-dat = mean(squeeze(hitPA(linearProbe,:,1:3001)));
+sz = size(squeeze(PA.hitPA));
+dat = mean(squeeze(PA.hitPA(linearProbe,:,1:3001)));
 subplot(3,3,[2 3]),plot(1:sz(2),dat);set(gca,'TickDir','out'),set(gca,'fontsize',12),box off
-dat = mean(squeeze(missPA(linearProbe,:,1:3001)));
+dat = mean(squeeze(PA.missPA(linearProbe,:,1:3001)));
 subplot(3,3,[5 6]),plot(1:sz(2),dat);set(gca,'TickDir','out'),set(gca,'fontsize',12),box off
-dat = mean(squeeze(MIFAPA(linearProbe,:,1:3001)));
+dat = mean(squeeze(PA.MIFAPA(linearProbe,:,1:3001)));
 subplot(3,3,[8 9]),plot(1:sz(2),dat);set(gca,'TickDir','out'),set(gca,'fontsize',12),box off
+
+
 %%
 figure,
-t = squeeze(missPA_angle);
+t = squeeze(PA.hitPA_angle);
 dat = mean(smoothdata(t(linearProbe,:),'gaussian',5),2);
 err = std(t(linearProbe,:),[],2)/sqrt(size(t,2));
 subplot(3,2,[1 3 5]),errorbar(dat,1:length(linearProbe),err,'.-','horizontal'),axis tight,set(gca,'TickDir','out'),set(gca,'fontsize',12),box off
@@ -197,6 +200,10 @@ set(gca, 'YDir','reverse')
 subplot(322),histogram(t(linearProbe(4),:),-pi:pi/8:pi,'normalization','probability'),set(gca,'TickDir','out'),set(gca,'fontsize',12),box off,title('Superficial')
 subplot(324),histogram(t(linearProbe(10),:),-pi:pi/8:pi,'normalization','probability'),set(gca,'TickDir','out'),set(gca,'fontsize',12),box off,title('Middle')
 subplot(326),histogram(t(linearProbe(20),:),-pi:pi/8:pi,'normalization','probability'),set(gca,'TickDir','out'),set(gca,'fontsize',12),box off,title('Deep')
+%%
+figure,histogram(t(linearProbe(1),:),-pi:pi/8:pi,'normalization','probability'),hold on
+histogram(t(linearProbe(2),:),-pi:pi/8:pi,'normalization','probability')
+[pval, k, K] = circ_kuipertest(t(linearProbe(1),:), t(linearProbe(2),:), 60, 1)
 %% Spikes analysis
 [fpath,name,exts] = fileparts(ds_filename);
 data = matfile(ds_filename);
@@ -233,23 +240,32 @@ Spikes.Clusters(temp) = [];
 Spikes = leverPSTH(Spikes,IntanBehaviour);
 %%% save spike output data to load into gui
 savepath = fullfile(path,['spks4sorting','.mat']);
-save(savepath,'Spikes')
+save(savepath,'Spikes','-v7.3')
 ManualSpikeCurateGUI
 %% Basic spike analysis
 % z-score spike rates
+IntanBehaviour.parameters = parameters;
 if exist('goodSpkComponents','var')
     Spikes.goodSpkComponents = unique(goodSpkComponents);
 end
-[Spikes] = sortSpkLever(Spikes,IntanBehaviour1);
+[Spikes] = sortSpkLever(Spikes,IntanBehaviour);
 [fpath,name,exts] = fileparts(ds_filename);
 sessionName = [fpath,'/','Spikes.mat'];
 % save(sessionName,"IntanBehaviour","fpath","parameters","-v7.3");
 save(sessionName,"Spikes","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
 %% Make it layer specific TODO:Gamma GED/Spike coherence
 Spikes = layerspikeAnalysis(Spikes,IntanBehaviour,LFP);
+%% Spike field coherence using GP
+% Grab the localized spike electrode so we can match to GP electrode
+spkChan = arrayfun(@(x) vertcat(x.channelDepth),Spikes.Clusters)';
+spkChan = spkChan(Spikes.goodSpkComponents);
+[Spikes.SpikeField.hit] = GPSpikeField(Spikes.PSTH.hit.spks(Spikes.goodSpkComponents),LFP.probe1.hitxgp,spkChan);
+[Spikes.SpikeField.FA] = GPSpikeField(Spikes.PSTH.MIFA.spks(Spikes.goodSpkComponents),LFP.probe1.MIFAxgp,spkChan);
+[Spikes.SpikeField.miss] = GPSpikeField(Spikes.PSTH.miss.spks(Spikes.goodSpkComponents),LFP.probe1.missxgp,spkChan);
+
 %%
 figure,hold on
-for n = 20
+for n = 21
 subplot(2,1,[1]),Show_Spikes(Spikes.PSTH.hit.spks{n}),axis off
 subplot(2,1,[2]),bar(-1500:1500,smoothdata(Spikes.PSTH.hit.spkRates(n,:)),'FaceColor',[28/255 117/255 188/255],'EdgeColor','none')
 axis tight, box off, set(gca,'TickDir','out')
@@ -292,8 +308,10 @@ if exist('mat_results','dir'),rmdir('mat_results','s'),end
 [Spikes.GPFA.resultMIFA,Spikes.GPFA.seqTrainMIFA] = gpfaAnalysis(Spikes.GPFA.MIFA.dat,4); %Run index
 [Spikes.GPFA.resultHitMiss,Spikes.GPFA.seqTrainHitMiss] = gpfaAnalysis(Spikes.GPFA.HitMiss.dat,5); %Run index
 [Spikes.GPFA.resultMIHitFA,Spikes.GPFA.seqTrainMIHitFA] = gpfaAnalysis(Spikes.GPFA.MIHitFA.dat,6); %Run index
+close all
 %% Neural Trajectory Analysis
-neuralTrajAnalysis(Spikes,[],IntanBehaviour)
+IntanBehaviour.parameters = parameters;
+neuralTrajAnalysis(Spikes,[],IntanBehaviour);
 %%
 figure,
 for n = 1:111
