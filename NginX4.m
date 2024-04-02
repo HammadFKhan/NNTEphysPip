@@ -40,7 +40,7 @@ parameters.Fs = 1000; % Eventual downsampled data
 parameters.ts = 1/parameters.Fs;
 parameters.IntanFs = data.targetedFs;
 [Behaviour] = readLever(parameters,data.amplifierTime);
-[IntanBehaviour] = readLeverIntan(parameters,data.amplifierTime,data.analogChannels(1,:),data.digitalChannels,Behaviour,1);
+[IntanBehaviour] = readLeverIntan(parameters,data.amplifierTime,data.analogChannels(2,:),data.digitalChannels,Behaviour,1);
 % Calculate ITI time for trials and reward/no reward sequence
 temp1 = arrayfun(@(x) x.LFPtime(1), IntanBehaviour.cueHitTrace);
 temp1 = vertcat(temp1,ones(1,IntanBehaviour.nCueHit)); %  write 1 for reward given
@@ -222,10 +222,10 @@ Spikes.SpikeSamples = SpikeSamples;
 Spikes = clusterSort(Spikes);
 Spikes = ISI(Spikes,0.01,data.Fs,0); %Spikes, Interval, Fs
 % Calculate Depth profile
-% load chanMap64F2
+%load chanMap64F2
 load UCLA_chanMap
 [spikeAmps, spikeDepths, templateDepths, tempAmps, tempsUnW, templateDuration, waveforms, max_site] =...
-    spikeTemplatePosition(data.fpath,ycoords,[]);
+    spikeTemplatePosition(data.fpath,ycoords,[]); % 'invert'
 for i = 1:length(tempAmps)
     Spikes.Clusters(i).spikeDepth = templateDepths(i);
     Spikes.Clusters(i).channelDepth = max_site(i);
@@ -244,28 +244,68 @@ save(savepath,'Spikes','-v7.3')
 ManualSpikeCurateGUI
 %% Basic spike analysis
 % z-score spike rates
-IntanBehaviour.parameters = parameters;
+if exist('parameters','var')
+    IntanBehaviour.parameters = parameters;
+end
 if exist('goodSpkComponents','var')
     Spikes.goodSpkComponents = unique(goodSpkComponents);
+else 
+    Spikes.goodSpkComponents = 1:length(Spikes.Clusters);
 end
+Spikes = rejectSpikes(Spikes,0.75,1,parameters); % Reject spikes here for further analysis
 [Spikes] = sortSpkLever(Spikes,IntanBehaviour);
 [fpath,name,exts] = fileparts(ds_filename);
 sessionName = [fpath,'/','Spikes.mat'];
 % save(sessionName,"IntanBehaviour","fpath","parameters","-v7.3");
-save(sessionName,"Spikes","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
+save(sessionName,"Spikes","IntanBehaviour","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
+disp('Saved!')
 %% Make it layer specific TODO:Gamma GED/Spike coherence
 Spikes = layerspikeAnalysis(Spikes,IntanBehaviour,LFP);
 %% Spike field coherence using GP
 % Grab the localized spike electrode so we can match to GP electrode
-spkChan = arrayfun(@(x) vertcat(x.channelDepth),Spikes.Clusters)';
-spkChan = spkChan(Spikes.goodSpkComponents);
-[Spikes.SpikeField.hit] = GPSpikeField(Spikes.PSTH.hit.spks(Spikes.goodSpkComponents),LFP.probe1.hitxgp,spkChan);
-[Spikes.SpikeField.FA] = GPSpikeField(Spikes.PSTH.MIFA.spks(Spikes.goodSpkComponents),LFP.probe1.MIFAxgp,spkChan);
-[Spikes.SpikeField.miss] = GPSpikeField(Spikes.PSTH.miss.spks(Spikes.goodSpkComponents),LFP.probe1.missxgp,spkChan);
 
+spkChan = arrayfun(@(x) vertcat(x.channelDepth),Spikes.Clusters)';
+[Spikes.SpikeField.hit] = GPSpikeField(Spikes.PSTH.hit.spks,LFP.probe1.hitxgp,spkChan);
+[Spikes.SpikeField.FA] = GPSpikeField(Spikes.PSTH.MIFA.spks,LFP.probe1.MIFAxgp,spkChan);
+[Spikes.SpikeField.miss] = GPSpikeField(Spikes.PSTH.miss.spks,LFP.probe1.missxgp,spkChan);
+%%
+dat = Spikes.SpikeField.hit;
+figure
+imagesc(dat.SPI)
+colormap hot
+c = colorbar;
+c.Label.String = 'SPI';
+ylabel('LFP Electrode Channel')
+xlabel('Spiking #')
+set(gca,'fontsize',14,'linewidth',1.5)
+
+figure
+imagesc(dat.Angle)
+map = colorcet( 'C2' );
+map = circshift(map,1);
+colormap(map)
+c = colorbar;
+c.Label.String = 'Best Phase (rad)';
+ylabel('LFP Electrode Channel')
+xlabel('Spiking #')
+set(gca,'fontsize',14,'linewidth',1.5)
+
+figure
+imagesc(dat.PhaseCorr)
+colormap hot
+c = colorbar;
+c.Label.String = 'Circ Corr (r)';
+ylabel('Channel')
+xlabel('Channel')
+set(gca,'fontsize',14,'linewidth',1.5)
+[r,val] = max(dat.SPI,[],1);
+figure,
+for n = 1:length(val)
+    histogram(dat.Dist{val(n),n},-pi:pi/8:pi,'normalization','probability','edgecolor','none'),hold on % Dist is done by channel x neuron
+end
 %%
 figure,hold on
-for n = 21
+for n = 1
 subplot(2,1,[1]),Show_Spikes(Spikes.PSTH.hit.spks{n}),axis off
 subplot(2,1,[2]),bar(-1500:1500,smoothdata(Spikes.PSTH.hit.spkRates(n,:)),'FaceColor',[28/255 117/255 188/255],'EdgeColor','none')
 axis tight, box off, set(gca,'TickDir','out')
