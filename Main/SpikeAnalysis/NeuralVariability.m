@@ -1,5 +1,6 @@
 %% Prep data for VarMean analysis
-fpath = 'F:\LeverTask\Ephys\Analysis\spksPooledwFA';
+%fpath = 'F:\LeverTask\Ephys\Analysis\spksPooledwFA';
+fpath = 'F:\LeverTask\Ephys\Cooling\Spikes';
 file = dir(fullfile(fpath,'*.mat'));
 
 %%%
@@ -7,8 +8,8 @@ M1Data = struct();
 count = 1;
 for fileNum = 1:length(file)
     load(fullfile(file(fileNum).folder,file(fileNum).name))
-    for n = 1:length(Spikes.PSTH.miss.spks)
-        M1Data(count).spikes = logical(Spikes.PSTH.miss.spks{n});
+    for n = 1:length(Spikes.PSTH.hit.spks)
+        M1Data(count).spikes = logical(Spikes.PSTH.hit.spks{n});
         count = count+1;
     end
 end
@@ -22,13 +23,16 @@ end
 temp = find(arrayfun(@(x) isempty(x.spikes), M1Data)==1);
 M1Data(temp) = [];
 
-%%%
+%%
 addpath(genpath('C:\Users\khan332\Documents\GitHub\Variance_toolbox'));
-times = 100:15:1200;  % from 200 ms before target onset until 450 ms after.
-fanoParams.alignTime = 500;    % this time will become zero time
+% times = 100:15:1200;  % from 200 ms before target onset until 450 ms after.
+% fanoParams.alignTime = 500;    % this time will become zero time
+% fanoParams.boxWidth = 200;     % 50 ms sliding window.
+times = 1000:15:2500;  % from 200 ms before target onset until 450 ms after.
+fanoParams.alignTime = 1500;    % this time will become zero time
 fanoParams.boxWidth = 200;     % 50 ms sliding window.
-%Result = VarVsMean(PMDdata2, times, fanoParams);
-MissResult = MeanFano(M1Data, times, fanoParams);
+Result = VarVsMean(M1Data, times, fanoParams);
+%Result = MeanFano(M1Data, times, fanoParams);
 plotFanoParams.plotRawF = 1;
 plotFano(Result,plotFanoParams);
 %%
