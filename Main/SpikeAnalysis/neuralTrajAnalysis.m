@@ -4,9 +4,9 @@ X = arrayfun(@(x) vertcat(x.xorth),Spikes.GPFA.seqTrainHit,'UniformOutput',false
 X = horzcat(X{:});
 neuralTrajHit = reshape(X,size(X,1),Spikes.GPFA.seqTrainHit(1).T,[]);
 
-X = arrayfun(@(x) vertcat(x.xorth),Spikes.GPFA.seqTrainMiss,'UniformOutput',false);
-X = horzcat(X{:});
-neuralTrajMiss = reshape(X,size(X,1),Spikes.GPFA.seqTrainMiss(1).T,[]);
+% X = arrayfun(@(x) vertcat(x.xorth),Spikes.GPFA.seqTrainMiss,'UniformOutput',false);
+% X = horzcat(X{:});
+% neuralTrajMiss = reshape(X,size(X,1),Spikes.GPFA.seqTrainMiss(1).T,[]);
 
 X = arrayfun(@(x) vertcat(x.xorth),Spikes.GPFA.seqTrainMIHit,'UniformOutput',false);
 X = horzcat(X{:});
@@ -43,11 +43,11 @@ reactionTime(isnan(reactionTime)) = length(t);
 if ~isempty(Waves)
     rawWaveDensityhit = arrayfun(@(x) vertcat(x.wavePresent),Waves.wavesHit,'UniformOutput',false);rawWaveDensityhit= vertcat(rawWaveDensityhit{:});
     rawWavePGDhit = arrayfun(@(x) vertcat(x.PGD), Waves.wavesHit,'UniformOutput',false);rawWavePGDhit = vertcat(rawWavePGDhit{:});
-    rawWaveSpeedhit = arrayfun(@(x) vertcat(x.s), Waves.wavesHit,'UniformOutput',false);rawWaveSpeedhit = vertcat(rawWaveSpeedhit{:});
+%     rawWaveSpeedhit = arrayfun(@(x) vertcat(x.s), Waves.wavesHit,'UniformOutput',false);rawWaveSpeedhit = vertcat(rawWaveSpeedhit{:});
     
     rawWaveDensitymiss = arrayfun(@(x) vertcat(x.wavePresent),Waves.wavesMiss,'UniformOutput',false);rawWaveDensitymiss= vertcat(rawWaveDensitymiss{:});
     rawWavePGDmiss = arrayfun(@(x) vertcat(x.PGD), Waves.wavesMiss,'UniformOutput',false);rawWavePGDmiss = vertcat(rawWavePGDmiss{:});
-    rawWaveSpeedmiss = arrayfun(@(x) vertcat(x.s), Waves.wavesMiss,'UniformOutput',false);rawWaveSpeedmiss = vertcat(rawWaveSpeedmiss{:});
+%     rawWaveSpeedmiss = arrayfun(@(x) vertcat(x.s), Waves.wavesMiss,'UniformOutput',false);rawWaveSpeedmiss = vertcat(rawWaveSpeedmiss{:});
     
     waveDensityhit = [];
     wavePGDhit = [];
@@ -61,13 +61,15 @@ if ~isempty(Waves)
     for n = 1:length(win)-1
         waveDensityhit = horzcat(waveDensityhit,sum(rawWaveDensityhit(:,win(n):win(n+1)),2)); %convert to density/sec
         wavePGDhit = horzcat(wavePGDhit,mean(rawWavePGDhit(:,win(n):win(n+1)),2));
-        waveSpeedhit = horzcat(waveSpeedhit,mean(rawWaveSpeedhit(:,win(n):win(n+1)),2));
+        %waveSpeedhit = horzcat(waveSpeedhit,mean(rawWaveSpeedhit(:,win(n):win(n+1)),2));
         waveDensitymiss = horzcat(waveDensitymiss,sum(rawWaveDensitymiss(:,win(n):win(n+1)),2)); %convert to density/sec
         wavePGDmiss = horzcat(wavePGDmiss,mean(rawWavePGDmiss(:,win(n):win(n+1)),2));
-        waveSpeedmiss = horzcat(waveSpeedmiss,mean(rawWaveSpeedmiss(:,win(n):win(n+1)),2));
+       % waveSpeedmiss = horzcat(waveSpeedmiss,mean(rawWaveSpeedmiss(:,win(n):win(n+1)),2));
     end
     
 end
+
+
 % waveDensity = interp1(t,1:length(t),mean(rawWaveDensity,1),'nearest');
 rawrewardTime = cell2mat(arrayfun(@(x) x.rewardIndex - x.LFPIndex(1501),Behaviour.cueHitTrace,'UniformOutput',false))/1000;
 mrewardTime = interp1(t,1:length(t),mean(rawrewardTime),'nearest');
@@ -120,6 +122,110 @@ mrewardTime(isnan(reactionTime)) = length(t);
 [neuralTrajsh,rprimesinit,rprimehinit] = neuralTrajDiff(rs,rh,'initial');
 
 
+
+
+%% Estimate differene in neural conditions
+rprime1 = smoothdata(diff(squeeze(mean(neuralTrajHit(1,:,:),3)))-diff(squeeze(mean(neuralTrajMiss(1,:,:),3))),'gaussian',5);
+rprime2 = smoothdata(diff(squeeze(mean(neuralTrajHit(2,:,:),3)))-diff(squeeze(mean(neuralTrajMiss(2,:,:),3))),'gaussian',5);
+rprime3 = smoothdata(diff(squeeze(mean(neuralTrajHit(3,:,:),3)))-diff(squeeze(mean(neuralTrajMiss(3,:,:),3))),'gaussian',5);
+
+figure,plot(-74*20:20:20*75,[0,rprime1],'LineWidth',2),hold on
+plot(-74*20:20:20*75,[0,rprime2],'LineWidth',2)
+plot(-74*20:20:20*75,[0,rprime3],'LineWidth',2),box off,set(gca,'FontSize',16),set(gca,'TickDir','out'),ylabel("r'"),
+
+
+rprime1 = smoothdata(diff(squeeze(mean(neuralTrajMIHit(1,:,:),3)))-diff(squeeze(mean(neuralTrajMIFA(1,:,:),3))),'gaussian',5);
+rprime2 = smoothdata(diff(squeeze(mean(neuralTrajMIHit(2,:,:),3)))-diff(squeeze(mean(neuralTrajMIFA(2,:,:),3))),'gaussian',5);
+rprime3 = smoothdata(diff(squeeze(mean(neuralTrajMIHit(3,:,:),3)))-diff(squeeze(mean(neuralTrajMIFA(3,:,:),3))),'gaussian',5);
+
+figure,plot(-74*20:20:20*75,[0,rprime1],'LineWidth',2),hold on
+plot(-74*20:20:20*75,[0,rprime2],'LineWidth',2)
+plot(-74*20:20:20*75,[0,rprime3],'LineWidth',2),box off,set(gca,'FontSize',16),set(gca,'TickDir','out'),ylabel("r'")
+%% Overlaying traveling wave dynamics across neural trajectories
+% TODO: Plotting the data like this makes the rendering all messed up; need
+% to adapt from Lyles GP phase code for plotting....
+x = rh(:,1);
+y = rh(:,2);
+cd = [uint8((jet(150))*255) uint8(ones(150,1))].';
+n = 150;
+t = mean(wavePGDhit);
+col = [0;smoothdata(diff(t),'movmean',10)'];
+%col = smoothdata(t,'movmean',10);
+% Interp to make the line smoother
+xin = interp1(1:150,x,1:0.1:150);
+yin = interp1(1:150,y,1:0.1:150);
+col = interp1(1:150,col,1:0.1:150);
+col_map = (col - min(col))/(max(col)-min(col)) * (n-1) + 1;
+for n = 1:length(col)
+    cd1(:,n) = cd(:,floor(col_map(n)));
+end
+figure,
+for n = 2:length(col)
+plot(xin(n-1:n),yin(n-1:n),'color',double(cd1(1:3,n))/255, 'LineWidth',2);hold on %cline( time, xf, [], angle(xgp) );
+end
+box off, axis off
+% modified jet-colormap
+% cd = [uint8(jet(150)*255) uint8(ones(150,1))].';
+%% Use Cline so we can make the colorbar
+figure,
+h4 = cline( xin, yin, [], col);
+colormap((jet))
+set( h4, 'linestyle', '-', 'linewidth', 2  );axis off
+
+%% Statistics of Neural Traj and Waves
+X = neuralTrajHitMiss;
+PQ = [];
+idx = discretize(reactionTime,20);
+
+for n = 1:length(hittrials)
+dat = meanTraj(X,n,6); %grab and calculate distance per reaction time
+x = dat(1,1:reactionTime(n)); y = dat(2,1:reactionTime(n)); z = dat(3,1:reactionTime(n));
+PQ(n) = sqrt((x(end)-x(1))^2+(y(end)-y(1))^2+(z(end)-z(1))^2);
+if ~isempty(Waves)
+    dPGD(n) = mean(diff(wavePGDhit(n,1:reactionTime(n))));
+end
+end
+PQ = (PQ./rawreactionTime)';
+
+figure,scatter(PQ,rawreactionTime,'k','filled')
+xlim([0 30])
+ylim([0 1.5])
+set(gca,'TickDir','out'),set(gca,'fontsize',16),box off
+xlabel('Neural trajectory speed'),ylabel('Reaction time (s)')
+
+mdl = fitlm(PQ,rawreactionTime)
+figure,plot(mdl)
+xlim([0 30])
+ylim([0 1.5])
+set(gca,'TickDir','out'),set(gca,'fontsize',16),box off
+xlabel('Neural trajectory speed'),ylabel('Reaction time (s)')
+legend(num2str(mdl.Rsquared.Ordinary),num2str(mdl.Coefficients.pValue(2)))
+title('')
+%%
+figure,scatter(PQ,dPGD,'k','filled')
+set(gca,'TickDir','out'),set(gca,'fontsize',16),box off
+xlabel('Neural trajectory speed'),ylabel('Phase gradient')
+xlim([0 10])
+
+mdl = fitlm(PQ,dPGD)
+figure,plot(mdl)
+set(gca,'TickDir','out'),set(gca,'fontsize',16),box off
+xlabel('Neural trajectory speed'),ylabel('Phase gradient')
+legend(num2str(mdl.Rsquared.Ordinary),num2str(mdl.Coefficients.pValue(2)))
+xlim([0 10])
+title('')
+
+figure,scatter(dPGD,rawreactionTime,'k','filled')
+set(gca,'TickDir','out'),set(gca,'fontsize',16),box off
+xlabel('Phase gradient'),ylabel('Reaction time (s)')
+
+mdl = fitlm(dPGD,rawreactionTime)
+figure,plot(mdl)
+set(gca,'TickDir','out'),set(gca,'fontsize',16),box off
+xlabel('Phase gradient'),ylabel('Reaction time (s)')
+legend(num2str(mdl.Rsquared.Ordinary),num2str(mdl.Coefficients.pValue(2)))
+%%
+
 showplot = 1;
 if showplot
     %%% Hit vs Miss
@@ -132,6 +238,7 @@ if showplot
     scatter3(x(stimStart,:),y(stimStart,:),z(stimStart,:),15,'g','filled')
     scatter3(x(mreactionTime),y(mreactionTime),z(mreactionTime),15,'b','filled')
     scatter3(x(mrewardTime),y(mrewardTime),z(mrewardTime),15,'r','filled')
+    scatter3(x(1:5:150,:),y(1:5:150,:),z(1:5:150,:),'k')
     x = rm(:,1);y = rm(:,2);z = rm(:,3);
     plot3(x,y,z,'-','color',[3/255 190/255 252/255],'lineWidth',1);
     hold on,axis tight
@@ -186,57 +293,7 @@ if showplot
     subplot(133),plot(t,smoothdata(mean(waveSpeedmiss)),'k','LineWidth',2),set(gca,'TickDir','out','fontsize',16),box off
     subplot(133),hold on,plot(t,mean(waveSpeedmiss),'b.')
 end
-
-%% Estimate differene in neural conditions
-rprime1 = smoothdata(diff(squeeze(mean(neuralTrajHit(1,:,:),3)))-diff(squeeze(mean(neuralTrajMiss(1,:,:),3))),'gaussian',5);
-rprime2 = smoothdata(diff(squeeze(mean(neuralTrajHit(2,:,:),3)))-diff(squeeze(mean(neuralTrajMiss(2,:,:),3))),'gaussian',5);
-rprime3 = smoothdata(diff(squeeze(mean(neuralTrajHit(3,:,:),3)))-diff(squeeze(mean(neuralTrajMiss(3,:,:),3))),'gaussian',5);
-
-figure,plot(-74*20:20:20*75,[0,rprime1],'LineWidth',2),hold on
-plot(-74*20:20:20*75,[0,rprime2],'LineWidth',2)
-plot(-74*20:20:20*75,[0,rprime3],'LineWidth',2),box off,set(gca,'FontSize',16),set(gca,'TickDir','out'),ylabel("r'"),
-
-
-rprime1 = smoothdata(diff(squeeze(mean(neuralTrajMIHit(1,:,:),3)))-diff(squeeze(mean(neuralTrajMIFA(1,:,:),3))),'gaussian',5);
-rprime2 = smoothdata(diff(squeeze(mean(neuralTrajMIHit(2,:,:),3)))-diff(squeeze(mean(neuralTrajMIFA(2,:,:),3))),'gaussian',5);
-rprime3 = smoothdata(diff(squeeze(mean(neuralTrajMIHit(3,:,:),3)))-diff(squeeze(mean(neuralTrajMIFA(3,:,:),3))),'gaussian',5);
-
-figure,plot(-74*20:20:20*75,[0,rprime1],'LineWidth',2),hold on
-plot(-74*20:20:20*75,[0,rprime2],'LineWidth',2)
-plot(-74*20:20:20*75,[0,rprime3],'LineWidth',2),box off,set(gca,'FontSize',16),set(gca,'TickDir','out'),ylabel("r'")
-%% Overlaying traveling wave dynamics across neural trajectories
-% TODO: Plotting the data like this makes the rendering all messed up; need
-% to adapt from Lyles GP phase code for plotting....
-x = rh(:,1);
-y = rh(:,2);
-cd = [uint8((jet(150))*255) uint8(ones(150,1))].';
-n = 150;
-t = mean(waveSpeedhit);
-col = [0;smoothdata(diff(t),'movmean',10)'];
-%col = smoothdata(t,'movmean',10);
-% Interp to make the line smoother
-xin = interp1(1:150,x,1:0.1:150);
-yin = interp1(1:150,y,1:0.1:150);
-col = interp1(1:150,col,1:0.1:150);
-col_map = (col - min(col))/(max(col)-min(col)) * (n-1) + 1;
-for n = 1:length(col)
-    cd1(:,n) = cd(:,floor(col_map(n)));
 end
-figure,
-for n = 2:length(col)
-plot(xin(n-1:n),yin(n-1:n),'color',double(cd1(1:3,n))/255, 'LineWidth',2);hold on %cline( time, xf, [], angle(xgp) );
-end
-box off, axis off
-% modified jet-colormap
-% cd = [uint8(jet(150)*255) uint8(ones(150,1))].';
-%% Use Cline so we can make the colorbar
-figure,
-h4 = cline( xin, yin, [], col);
-colormap((jet))
-set( h4, 'linestyle', '-', 'linewidth', 2  );axis off
-
-end
-
 
 
 
