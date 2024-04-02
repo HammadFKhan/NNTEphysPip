@@ -10,14 +10,15 @@ function [LaminarData] = GPSpikeField(spikes,lfp,spkChan)
 % resultants, and mean phase angles of the spike-LFP relationship on each
 % channel.
 % Example data
-% Load and run LaminarData = GetLaminarPhase(spikeTimes,LFP,chanMap,1000,[5 50],0);
+% EXAMPLE INPUT: GPSpikeField(Spikes.PSTH.hit.spks,LFP.probe1.hitxgp,spkChan)
 %  10/21/2022 - ZD
 %  02/23/2024 - HK
 %%% Prep for generalized spike-field coherence
 % Here we can use the Spike PSTH and Spike good spike to generate the
 % neccessary spike format. 
+% 
 
-plotOn = 1;
+plotOn = 0;
 % Double check spk lengths for analysis
 assert(length(spkChan)==length(spikes))
 
