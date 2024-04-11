@@ -35,7 +35,7 @@ nlength = round(parameters.windowBeforePull/parameters.ts + parameters.windowAft
 nlengthBeforeCue = round(parameters.windowBeforeCue/parameters.ts);
 nlengthCue = round(parameters.windowBeforeCue/parameters.ts + parameters.windowAfterCue/parameters.ts + 1);
 
-lfpTime = downsample(lfpTime,round(5000/parameters.Fs),2); % time in seconds based on initial downsample
+lfpTime = downsample(lfpTime,round(parameters.IntanFs/parameters.Fs),1); % time in seconds based on initial downsample
 
 B = readmatrix([enpath,'/',enfile]);
 Behaviour.leverTrace = (B(2:end,1) - resting_position)*flip;

@@ -35,7 +35,7 @@ for n = 1:length(PGDpreCue)
 end
 box off,set(gca,'tickdir','out','fontsize',14)
 %%
-[waveCool.waveDir,waveCool.waveRho,waveCool.rhoMax,waveCool.rhoDiff] = wavePresentRho(Wavesc);
+[waveCool.waveDir,waveCool.waveRho,waveCool.rhoMax,waveCool.rhoDiff] = wavePresentRho(Waves);
 %close all
 %% Cooling data
 PGDc = arrayfun(@(x) x.PGD, Wavesc.wavesHit, 'UniformOutput', false);

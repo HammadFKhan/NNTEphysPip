@@ -1,4 +1,4 @@
-function [LaminarData] = GetLaminarPhase(spikeTimes,LFP,chanMap,Fs,filtBand,GP)
+function [LaminarData] = GetLaminarPhase(spikeTimes,LFP,chanMap,Fs)
 % Code to calculate the laminar profile of linear electrode data. The code
 % takes as input:
 % spikeTimes = a Mx1 cell array of M channels having N spike times in msec
@@ -22,13 +22,6 @@ function [LaminarData] = GetLaminarPhase(spikeTimes,LFP,chanMap,Fs,filtBand,GP)
 %  02/23/2024 - HK
 
 
-if iscell(LFP)
-    for i = 1:length(LFP)
-        lfpData(i,:) = LFP{i};
-    end
-    LFP = lfpData;
-end
-[b, a] = butter(4,[filtBand(1) filtBand(2)]./(Fs/2));
 NChan = min(size(LFP));
 
 % Flip the map so the top index is the most proximal electrode and the last
@@ -42,36 +35,22 @@ phaseSpikes = cell(NChan,NChan);
 
 % Filter and calculate LFP phase
 % Chunk data because GP doesn't like big numbers
-NSeg = floor(max(size(LFP))/(Fs*10));
-for seg = 1:NSeg %For each segment
-    thisSeg = 1+((seg-1)*(Fs*10)):seg*(Fs*10);
-    for i = 1:NChan %For each LFP channel
-        lamLFP = LFP(chanMap(i),thisSeg);
-        filtLFP(i,:) = filtfilt(b,a,lamLFP);
-        if GP
-            thisPhase = generalized_phase(reshape(filtLFP(i,:),1,1,[]),Fs,0);
-            phaseLFP(i,:) = angle(squeeze(thisPhase))';
+for i = 1:NChan
+    for j = 1:NChan %For each spike channel
+        if ~isempty(spikeTimes{chanMap(j)}) %No spikes? No phase.
+            theseSpikes = spikeTimes{chanMap(j)};
+            % Get rid of the spikes not in this segment
+            theseSpikes = theseSpikes - min(thisSeg)+1;
+            theseSpikes(theseSpikes < 1) = [];
+            theseSpikes(theseSpikes > (Fs*10)) = [];
+            %Get the spike phases
+            phaseSpikes{i,j} = [phaseSpikes{i,j} phaseLFP(i,theseSpikes)];
         else
-            %         %hilbert transform if you need fast calculation
-            hlfp = hilbert(filtLFP(i,:));
-            phaseLFP(i,:) = angle(hlfp);
-        end        
-        
-        for j = 1:NChan %For each spike channel
-            if ~isempty(spikeTimes{chanMap(j)}) %No spikes? No phase.
-                theseSpikes = spikeTimes{chanMap(j)};
-                % Get rid of the spikes not in this segment
-                theseSpikes = theseSpikes - min(thisSeg)+1;
-                theseSpikes(theseSpikes < 1) = [];
-                theseSpikes(theseSpikes > (Fs*10)) = [];
-                %Get the spike phases
-                phaseSpikes{i,j} = [phaseSpikes{i,j} phaseLFP(i,theseSpikes)];
-            else
-                phaseSpikes{i,j} = NaN;
-            end
+            phaseSpikes{i,j} = NaN;
         end
     end
 end
+
 
 spikePhase = [];
 prefPhase = [];

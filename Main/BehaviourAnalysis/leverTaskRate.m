@@ -1,17 +1,33 @@
-function output = leverTaskRate(IntanBehaviour)
-hitRate = arrayfun(@(x) x.LFPtime(1), IntanBehaviour.cueHitTrace);
-binningAmount = ceil(hitRate(end)/60);
+function output = leverTaskRate(IntanBehaviour,behaviourOnlyFlag)
+%% Calculate time-dependant behaviour performance
+% behaviourOnlyFlag allows for quick analysis using only the .csv files
+% instead of referencing to experiments. This is fine given that we are
+% only looking at minute-minute transience
+if behaviourOnlyFlag
+    hitRate =  arrayfun(@(x) x.t0, IntanBehaviour.cueHitTrace)';
+else
+    hitRate = arrayfun(@(x) x.LFPtime(1), IntanBehaviour.cueHitTrace);
+end
+binningAmount = 0:60:ceil(IntanBehaviour.time(end)+60);
 hitRate = histcounts(hitRate,binningAmount); % 29 should be the binning amount
 %figure,plot(hitRate);
 %
-missRate = arrayfun(@(x) x.LFPtime(1), IntanBehaviour.cueMissTrace);
-binningAmount = ceil(missRate(end)/60);
+if behaviourOnlyFlag
+    missRate = arrayfun(@(x) x.t0, IntanBehaviour.cueMissTrace)';
+else
+    missRate = arrayfun(@(x) x.LFPtime(1), IntanBehaviour.cueMissTrace);
+end
+%binningAmount = ceil(missRate(end)/60);
 missRate = histcounts(missRate,binningAmount); % 29 should be the binning amount
 
-FARate = arrayfun(@(x) x.LFPtime(1), IntanBehaviour.missTrace);
-binningAmount = ceil(FARate(end)/60);
+if behaviourOnlyFlag
+    FARate = arrayfun(@(x) x.t0, IntanBehaviour.missTrace)';
+else
+    FARate = arrayfun(@(x) x.LFPtime(1), IntanBehaviour.missTrace);
+end
+%binningAmount = ceil(FARate(end)/60);
 FARate = histcounts(FARate,binningAmount); % 29 should be the binning amount
-%%
+%
 hitRatei = interp1(1:length(hitRate),hitRate,1:0.01:length(hitRate));
 missRatei = interp1(1:length(missRate),missRate,1:0.01:length(missRate));
 FARatei = interp1(1:length(FARate),FARate,1:0.01:length(FARate));
