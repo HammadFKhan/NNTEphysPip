@@ -6,7 +6,7 @@ addpath(genpath('Main'));
 addpath(genpath('npy-matlab'));
 addpath(genpath('spikes-master'));
 % IntanConcatenate legacy version
-ds_filename = intanPreprocessing2(0); %IntanDs flag  %% double check file type
+ds_filename = intanPreprocessing2(1); %IntanDs flag  %% double check file type
 %% Combine intan data if needed
 fpath = kilosortbinCombine();
 %%
