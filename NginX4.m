@@ -40,7 +40,7 @@ parameters.Fs = 1000; % Eventual downsampled data
 parameters.ts = 1/parameters.Fs;
 parameters.IntanFs = data.targetedFs;
 [Behaviour] = readLever(parameters,data.amplifierTime);
-[IntanBehaviour] = readLeverIntan(parameters,data.amplifierTime,data.analogChannels(2,:),data.digitalChannels,Behaviour,1);
+[IntanBehaviour] = readLeverIntan(parameters,data.amplifierTime,data.analogChannels(1,:),data.digitalChannels,Behaviour,1);
 % Calculate ITI time for trials and reward/no reward sequence
 temp1 = arrayfun(@(x) x.LFPtime(1), IntanBehaviour.cueHitTrace);
 temp1 = vertcat(temp1,ones(1,IntanBehaviour.nCueHit)); %  write 1 for reward given
@@ -223,7 +223,7 @@ Spikes = clusterSort(Spikes);
 Spikes = ISI(Spikes,0.01,data.Fs,0); %Spikes, Interval, Fs
 % Calculate Depth profile
 %load chanMap64F2
-load UCLA_chanMap
+load chanMap64Sharp
 [spikeAmps, spikeDepths, templateDepths, tempAmps, tempsUnW, templateDuration, waveforms, max_site] =...
     spikeTemplatePosition(data.fpath,ycoords,[]); % 'invert'
 for i = 1:length(tempAmps)
@@ -252,20 +252,18 @@ if exist('goodSpkComponents','var')
 else 
     Spikes.goodSpkComponents = 1:length(Spikes.Clusters);
 end
-Spikes = rejectSpikes(Spikes,0.75,1,parameters); % Reject spikes here for further analysis
+Spikes = rejectSpikes(Spikes,0.25,0.25,parameters); % Reject spikes here for further analysis
 [Spikes] = sortSpkLever(Spikes,IntanBehaviour);
 [fpath,name,exts] = fileparts(ds_filename);
 sessionName = [fpath,'/','Spikes.mat'];
 % save(sessionName,"IntanBehaviour","fpath","parameters","-v7.3");
-save(sessionName,"Spikes","IntanBehaviour","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
+save(sessionName,"Spikes","IntanBehaviour","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
 disp('Saved!')
 %% Make it layer specific TODO:Gamma GED/Spike coherence
 Spikes = layerspikeAnalysis(Spikes,IntanBehaviour,LFP);
 %% Spike field coherence using GP
-% Grab the localized spike electrode so we can match to GP electrode
-
-spkChan = arrayfun(@(x) vertcat(x.channelDepth),Spikes.Clusters)';
-[Spikes.SpikeField.hit] = GPSpikeField(Spikes.PSTH.hit.spks,LFP.probe1.hitxgp,spkChan);
+Spikes = GPSFAnalysis(Spikes,LFP.probe1);
+%%
 [Spikes.SpikeField.FA] = GPSpikeField(Spikes.PSTH.MIFA.spks,LFP.probe1.MIFAxgp,spkChan);
 [Spikes.SpikeField.miss] = GPSpikeField(Spikes.PSTH.miss.spks,LFP.probe1.missxgp,spkChan);
 %%
@@ -280,7 +278,7 @@ xlabel('Spiking #')
 set(gca,'fontsize',14,'linewidth',1.5)
 
 figure
-imagesc(dat.Angle)
+imagesc(dat.Angle')
 map = colorcet( 'C2' );
 map = circshift(map,1);
 colormap(map)
@@ -305,7 +303,7 @@ for n = 1:length(val)
 end
 %%
 figure,hold on
-for n = 1
+for n = 3
 subplot(2,1,[1]),Show_Spikes(Spikes.PSTH.hit.spks{n}),axis off
 subplot(2,1,[2]),bar(-1500:1500,smoothdata(Spikes.PSTH.hit.spkRates(n,:)),'FaceColor',[28/255 117/255 188/255],'EdgeColor','none')
 axis tight, box off, set(gca,'TickDir','out')
@@ -331,8 +329,8 @@ caxis([0.0 2.56])
 % statistical comparison (ie. hit vs miss, hit vs FA, opto vs no opto)
 Spikes = makeSpikeGPFA(Spikes);
 Spikes.GPFA.HitMiss.dat = [Spikes.GPFA.hit.dat,Spikes.GPFA.miss.dat];
-for n = IntanBehaviour.nCueHit+1:length(Spikes.GPFA.HitMiss.dat) %fix trials
-    Spikes.GPFA.HitMiss.dat(n).trialId = n;
+for n = 1:IntanBehaviour.nCueHit%+1:length(Spikes.GPFA.BaselineOpto.dat) %fix trials
+    Spikes.GPFA.BaselineOpto.dat(n).spikes = Spikes.GPFA.BaselineOpto.dat(n).spikes(1:91,:);
 end
 Spikes.GPFA.MIHitFA.dat = [Spikes.GPFA.MIHit.dat,Spikes.GPFA.MIFA.dat];
 for n = length(IntanBehaviour.MIHitTrace)+1:length(Spikes.GPFA.MIHitFA.dat) %fix trials
