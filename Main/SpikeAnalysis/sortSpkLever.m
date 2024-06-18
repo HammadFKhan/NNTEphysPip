@@ -2,16 +2,16 @@ function [Spikes] = sortSpkLever(Spikes,Behaviour)
 showplot = 1;
 %%% zscore normalize
 % hits
-temp = smoothdata(Spikes.PSTH.hit.spkRates(Spikes.goodSpkComponents,:),2,'gaussian',40); %template plus smoothing
+temp = smoothdata(Spikes.PSTH.hit.spkRates,2,'gaussian',40); %template plus smoothing
 [hitnormSpk,hittimIdx,hitspkIdx] = spknorm(temp);
 % misses
-temp = smoothdata(Spikes.PSTH.miss.spkRates(Spikes.goodSpkComponents,:),2,'gaussian',40); %template plus smoothing
+temp = smoothdata(Spikes.PSTH.miss.spkRates,2,'gaussian',40); %template plus smoothing
 [missnormSpk,misstimIdx,missspkIdx] = spknorm(temp);
 % MI hits
-temp = smoothdata(Spikes.PSTH.MIHit.spkRates(Spikes.goodSpkComponents,:),2,'gaussian',40); %template plus smoothing
+temp = smoothdata(Spikes.PSTH.MIHit.spkRates,2,'gaussian',40); %template plus smoothing
 [MIhitnormSpk,MIhittimIdx,MIhitspkIdx] = spknorm(temp);
 % MI false alarms
-temp = smoothdata(Spikes.PSTH.MIFA.spkRates(Spikes.goodSpkComponents,:),2,'gaussian',40); %template plus smoothing
+temp = smoothdata(Spikes.PSTH.MIFA.spkRates,2,'gaussian',40); %template plus smoothing
 [MIFAnormSpk,MIFAtimIdx,MIFAspkIdx] = spknorm(temp);
 
 %%% jitter response and stability
