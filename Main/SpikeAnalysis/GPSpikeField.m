@@ -18,7 +18,7 @@ function [LaminarData] = GPSpikeField(spikes,lfp,spkChan)
 % neccessary spike format. 
 % 
 
-plotOn = 0;
+plotOn = 1;
 % Double check spk lengths for analysis
 assert(length(spkChan)==length(spikes))
 
@@ -97,8 +97,8 @@ map = circshift(map,1);
 colormap(map)
 c = colorbar;
 c.Label.String = 'Best Phase (rad)';
-ylabel('Spiking Electrode Channel')
-xlabel('LFP Electrode Channel')
+ylabel('LFP Electrode Channel')
+xlabel('Spike #')
 set(gca,'fontsize',14,'linewidth',1.5)
 
 figure
