@@ -24,9 +24,13 @@ X = arrayfun(@(x) vertcat(x.xorth),Spikes.GPFA.seqTrainMIHitFA,'UniformOutput',f
 X = horzcat(X{:});
 neuralTrajMIHitFA = reshape(X,size(X,1),Spikes.GPFA.seqTrainMIHitFA(1).T,[]);
 
+X = arrayfun(@(x) vertcat(x.xorth),Spikes.GPFA.seqTrainBaselineOpto,'UniformOutput',false);
+X = horzcat(X{:});
+neuralTrajBaselineOpto = reshape(X,size(X,1),Spikes.GPFA.seqTrainBaselineOpto(1).T,[]);
+
 %% Calculate average trajectories and divergence based on trial difference
 % local function call for meaning based on combined PCA of trial conditions
-X = neuralTrajHitMiss;
+X = neuralTrajBaselineOpto;
 hittrials = 1:length(Behaviour.cueHitTrace);
 misstrials = length(Behaviour.cueHitTrace)+1:size(X,3);
 rh = meanTraj(X,hittrials,6)'; %trajectory variable and predefined conditional trial indexes
@@ -43,11 +47,16 @@ reactionTime(isnan(reactionTime)) = length(t);
 if ~isempty(Waves)
     rawWaveDensityhit = arrayfun(@(x) vertcat(x.wavePresent),Waves.wavesHit,'UniformOutput',false);rawWaveDensityhit= vertcat(rawWaveDensityhit{:});
     rawWavePGDhit = arrayfun(@(x) vertcat(x.PGD), Waves.wavesHit,'UniformOutput',false);rawWavePGDhit = vertcat(rawWavePGDhit{:});
-%     rawWaveSpeedhit = arrayfun(@(x) vertcat(x.s), Waves.wavesHit,'UniformOutput',false);rawWaveSpeedhit = vertcat(rawWaveSpeedhit{:});
+    rawWaveSpeedhit = arrayfun(@(x) vertcat(x.s), Waves.wavesHit,'UniformOutput',false);rawWaveSpeedhit = vertcat(rawWaveSpeedhit{:});
     
     rawWaveDensitymiss = arrayfun(@(x) vertcat(x.wavePresent),Waves.wavesMiss,'UniformOutput',false);rawWaveDensitymiss= vertcat(rawWaveDensitymiss{:});
     rawWavePGDmiss = arrayfun(@(x) vertcat(x.PGD), Waves.wavesMiss,'UniformOutput',false);rawWavePGDmiss = vertcat(rawWavePGDmiss{:});
-%     rawWaveSpeedmiss = arrayfun(@(x) vertcat(x.s), Waves.wavesMiss,'UniformOutput',false);rawWaveSpeedmiss = vertcat(rawWaveSpeedmiss{:});
+    rawWaveSpeedmiss = arrayfun(@(x) vertcat(x.s), Waves.wavesMiss,'UniformOutput',false);rawWaveSpeedmiss = vertcat(rawWaveSpeedmiss{:});
+    
+    rawWaveDensityFA = arrayfun(@(x) vertcat(x.wavePresent),Waves.wavesMIFA,'UniformOutput',false);rawWaveDensityFA= vertcat(rawWaveDensityFA{:});
+    rawWavePGDFA = arrayfun(@(x) vertcat(x.PGD), Waves.wavesMIFA,'UniformOutput',false);rawWavePGDFA = vertcat(rawWavePGDFA{:});
+    rawWaveSpeedFA = arrayfun(@(x) vertcat(x.s), Waves.wavesMIFA,'UniformOutput',false);rawWaveSpeedFA = vertcat(rawWaveSpeedFA{:});
+    
     
     waveDensityhit = [];
     wavePGDhit = [];
@@ -57,14 +66,24 @@ if ~isempty(Waves)
     wavePGDmiss = [];
     waveSpeedmiss = [];
     
+    waveDensityFA = [];
+    wavePGDFA = [];
+    waveSpeedFA = [];
+    
     win = ceil(1:20:size(rawWaveDensityhit,2));
     for n = 1:length(win)-1
-        waveDensityhit = horzcat(waveDensityhit,sum(rawWaveDensityhit(:,win(n):win(n+1)),2)); %convert to density/sec
+        waveDensityhit = horzcat(waveDensityhit,sum(rawWaveDensityhit(:,win(n):win(n+1)),2)); %convert to wave/sec
         wavePGDhit = horzcat(wavePGDhit,mean(rawWavePGDhit(:,win(n):win(n+1)),2));
-        %waveSpeedhit = horzcat(waveSpeedhit,mean(rawWaveSpeedhit(:,win(n):win(n+1)),2));
-        waveDensitymiss = horzcat(waveDensitymiss,sum(rawWaveDensitymiss(:,win(n):win(n+1)),2)); %convert to density/sec
+        waveSpeedhit = horzcat(waveSpeedhit,mean(rawWaveSpeedhit(:,win(n):win(n+1)),2));
+        
+        waveDensitymiss = horzcat(waveDensitymiss,sum(rawWaveDensitymiss(:,win(n):win(n+1)),2)); %convert to wave/sec
         wavePGDmiss = horzcat(wavePGDmiss,mean(rawWavePGDmiss(:,win(n):win(n+1)),2));
-       % waveSpeedmiss = horzcat(waveSpeedmiss,mean(rawWaveSpeedmiss(:,win(n):win(n+1)),2));
+        waveSpeedmiss = horzcat(waveSpeedmiss,mean(rawWaveSpeedmiss(:,win(n):win(n+1)),2));
+        
+        waveDensityFA = horzcat(waveDensityFA,sum(rawWaveDensityFA(:,win(n):win(n+1)),2)); %convert to wave/sec
+        wavePGDFA = horzcat(wavePGDFA,mean(rawWavePGDFA(:,win(n):win(n+1)),2));
+        waveSpeedFA = horzcat(waveSpeedFA,mean(rawWaveSpeedFA(:,win(n):win(n+1)),2));
+        
     end
     
 end
@@ -144,6 +163,7 @@ plot(-74*20:20:20*75,[0,rprime3],'LineWidth',2),box off,set(gca,'FontSize',16),s
 %% Overlaying traveling wave dynamics across neural trajectories
 % TODO: Plotting the data like this makes the rendering all messed up; need
 % to adapt from Lyles GP phase code for plotting....
+
 x = rh(:,1);
 y = rh(:,2);
 cd = [uint8((jet(150))*255) uint8(ones(150,1))].';
@@ -167,6 +187,7 @@ box off, axis off
 % modified jet-colormap
 % cd = [uint8(jet(150)*255) uint8(ones(150,1))].';
 %% Use Cline so we can make the colorbar
+load myMap
 figure,
 h4 = cline( xin, yin, [], col);
 colormap((jet))
@@ -234,16 +255,16 @@ if showplot
     clf
     % Updating the line
     x = rh(:,1);y = rh(:,2);z = rh(:,3);
-    plot3(x,y,z,'-','color',[252/255 186/255 3/255],'lineWidth',1);hold on
+    plot3(x,y,z,'-','color',[147/255 149/255 152/255],'lineWidth',1);hold on
     scatter3(x(stimStart,:),y(stimStart,:),z(stimStart,:),15,'g','filled')
     scatter3(x(mreactionTime),y(mreactionTime),z(mreactionTime),15,'b','filled')
     scatter3(x(mrewardTime),y(mrewardTime),z(mrewardTime),15,'r','filled')
-    scatter3(x(1:5:150,:),y(1:5:150,:),z(1:5:150,:),'k')
+    %scatter3(x(1:5:150,:),y(1:5:150,:),z(1:5:150,:),'k')
     x = rm(:,1);y = rm(:,2);z = rm(:,3);
-    plot3(x,y,z,'-','color',[3/255 190/255 252/255],'lineWidth',1);
+    plot3(x,y,z,'-','color',[217/255 83/255 25/255],'lineWidth',1);
     hold on,axis tight
-    scatter3(x(1,:),y(1,:),z(1,:),15,'r','filled')
-    scatter3(x(stimStart,:),y(stimStart,:),z(stimStart,:),15,'g','filled')
+    scatter3(x(stimStart,:),y(1,:),z(1,:),15,'r','filled')
+    scatter3(x(mreactionTime,:),y(mreactionTime,:),z(mreactionTime,:),15,'g','filled')
     %%% Hit vs FA
     figure
     clf
@@ -261,7 +282,7 @@ if showplot
     scatter3(x(stimStart,:),y(stimStart,:),z(stimStart,:),15,'g','filled')
     %     legend('Hit','','','','False Alarms')
     
-    %%% Plot 2d PCA space with wave properties
+    %% Plot 2d PCA space with wave properties
     % Hit
     figure,subplot(131),plot(t,squeeze(neuralTrajHitMiss(1,:,hittrials)),'Color',[0 0 0 .25]);set(gca,'TickDir','out','fontsize',16),box off
     hold on, subplot(131),for n = 1:length(reactionTime),plot(t(reactionTime(n)),squeeze(neuralTrajHitMiss(1,reactionTime(n),n)),'b.'),end
