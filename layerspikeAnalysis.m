@@ -63,8 +63,9 @@ mifaPSTHL5 = mifaPSTH(l5Idx);
 %%% after reward, non-specific. Defined under task specific
 
 hitspkTuning = spkResponse(hitFR,winBeforeCue,winAfterCue,winRT,winRW);
-missspkTuning = spkResponse(missFR,winBeforeCue,winAfterCue,winRT,winRW);
-
+%%
+missspkTuning = spkResponse(missFR',winBeforeCue,winAfterCue,winRT,winRW);
+%%
 %%% output some stuff
 
 Spikes.spikeProp.hitspkTuning = hitspkTuning;
