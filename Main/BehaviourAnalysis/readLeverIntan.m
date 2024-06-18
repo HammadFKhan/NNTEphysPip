@@ -5,8 +5,13 @@ if strcmp(parameters.experiment,'self')
     disp('Experiment set to self initiated.');
     cue = 0;
 elseif strcmp(parameters.experiment,'cue')
-    rewardTrace = dig_in_data(2,:);
-    cueTrace = dig_in_data(3,:);
+    if size(dig_in_data,1)<3
+        rewardTrace = dig_in_data(1,:);
+        cueTrace = dig_in_data(2,:);
+    else
+        rewardTrace = dig_in_data(2,:);
+        cueTrace = dig_in_data(3,:);
+    end
     disp('Experiment set to cue initiated.');
     cue = 1;
 end
@@ -237,7 +242,7 @@ IntanBehaviour.MIcutoffHit = 0.2*(IntanBehaviour.threshold-IntanBehaviour.meanRe
 
 badTrials = [];
 
-for i=1:IntanBehaviour.nHit
+for i=1:size(IntanBehaviour.cueHit,1)
     f = IntanBehaviour.hitTrace(i).trace - IntanBehaviour.MIcutoffHit;
     fAbove = f.*(f >= 0);
     fCross = find(diff(fAbove>0)==1);
