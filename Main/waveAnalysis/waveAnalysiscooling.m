@@ -1,4 +1,9 @@
 % Code for cooling figure
+%% For wave RT
+load('Y:\Hammad\Ephys\LeverTask\Cooling\23960SomCooling\Day3\TWSpeed_RT.mat')
+colors = [ [181 29 98]/255; [43 198 214]/255];
+figure,violinplot(temp,[],'ShowData',true,'ShowWhiskers',false,'ShowBox',false,'MarkerSize',5,'ViolinColor' ,colors)
+set(gca,'tickdir','out','fontsize',16),box off,ylabel('Wave Speed cm/s'),ylim([0 40])
 %% Baseline data
 PGD = arrayfun(@(x) x.PGD, Waves.wavesHit, 'UniformOutput', false);
 PGD = vertcat(PGD{:});
