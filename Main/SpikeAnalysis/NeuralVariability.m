@@ -72,30 +72,54 @@ Stats.FakHit = calcStats(FakResulthit);
 Stats.FakMiss = calcStats(FakResultmiss);
 Stats.FakFA = calcStats(FakResultFA);
 %% Plot it out
-% dat1 = Stats.Hit.FFdrop;
-% dat2 = Stats.Miss.FFdrop;
-% dat3 = Stats.FA.FFdrop;
+colors = [0 0.4470 0.7410;0.75 0.75 0.75;190/255 30/255 45/255];
 
+dat1 = Stats.Hit.FFdrop;
+dat2 = Stats.Miss.FFdrop;
+dat3 = Stats.FA.FFdrop;
+
+temp = nan(max([length(dat1) length(dat2) length(dat3)]),3);
+temp(1:length(dat1),1) = dat1;
+temp(1:length(dat2),2) = dat2;
+temp(1:length(dat3),3) = dat3;
+figure(1)
+clf
+subplot(121),violinplot(temp,[],'ShowData',true,'ShowWhiskers',false,'ShowBox',false,'MarkerSize',5,'ViolinColor',colors);
+set(gca,'tickdir','out','fontsize',16),box off,ylim([-1.5 1.5])
+
+dat1 = Stats.Hit.FFstim;
+dat2 = Stats.Miss.FFstim;
+dat3 = Stats.FA.FFstim;
+
+temp = nan(max([length(dat1) length(dat2) length(dat3)]),3);
+temp(1:length(dat1),1) = dat1;
+temp(1:length(dat2),2) = dat2;
+temp(1:length(dat3),3) = dat3;
+figure(1)
+subplot(122),violinplot(temp,[],'ShowData',true,'ShowWhiskers',false,'ShowBox',false,'MarkerSize',5,'ViolinColor',colors);
+set(gca,'tickdir','out','fontsize',16),box off,ylim([1 3])
+
+%% Plot Fak
 dat1 = Stats.FakHit.FFdrop;
 dat2 = Stats.FakMiss.FFdrop;
 dat3 = Stats.FakFA.FFdrop;
-
-temp = zeros(max([length(dat1) length(dat2) length(dat3)]),3);
+temp = nan(max([length(dat1) length(dat2) length(dat3)]),3);
 temp(1:length(dat1),1) = dat1;
 temp(1:length(dat2),2) = dat2;
 temp(1:length(dat3),3) = dat3;
 figure
-subplot(121),customBoxplot(temp),set(gca,'tickdir','out','fontsize',16),box off,ylim([-1 1.5])
+subplot(121),violinplot(temp,[],'ShowData',true,'ShowWhiskers',false,'ShowBox',false,'MarkerSize',5,'ViolinColor' ,colors)
+set(gca,'tickdir','out','fontsize',16),box off,ylim([-1 1.5])
 
 dat1 = Stats.FakHit.FFstim;
 dat2 = Stats.FakMiss.FFstim;
 dat3 = Stats.FakFA.FFstim;
-
-temp = zeros(max([length(dat1) length(dat2) length(dat3)]),3);
+temp = nan(max([length(dat1) length(dat2) length(dat3)]),3);
 temp(1:length(dat1),1) = dat1;
 temp(1:length(dat2),2) = dat2;
 temp(1:length(dat3),3) = dat3;
-subplot(122),customBoxplot(temp),set(gca,'tickdir','out','fontsize',16),box off,ylim([1 3])
+subplot(122),violinplot(temp,[],'ShowData',true,'ShowWhiskers',fale,'ShowBox',false,'MarkerSize',5,'ViolinColor',colors)
+set(gca,'tickdir','out','fontsize',16),box off,ylim([0 2])
 %%
 scatterParams.axLim = 'auto'; 
 scatterParams.axLen = 6;
@@ -159,7 +183,7 @@ M1Data(temp) = [];
 addpath(genpath('C:\Users\khan332\Documents\GitHub\Variance_toolbox'));
 % times = 100:15:1200;  % from 200 ms before target onset until 450 ms after.
 % fanoParams.alignTime = 500;    % this time will become zero time
-% fanoParams.boxWidth = 200;     % 50 ms sliding window.
+% fanoParams.boxWidth = 100;     % 50 ms sliding window.
 times = 1000:15:2500;  % from 200 ms before target onset until 450 ms after.
 fanoParams.alignTime = 1500;    % this time will become zero time
 fanoParams.boxWidth = 100;     % 50 ms sliding window.
@@ -170,9 +194,13 @@ plotFano(Result,plotFanoParams);
 end
 
 function FakResult = calcFakNeuralVariace(M1Data)
-times = 1000:15:2500;  % from 200 ms before target onset until 450 ms after.
-fanoParams.alignTime = 1500;    % this time will become zero time
-fanoParams.boxWidth = 100;     % 50 ms sliding window.
+times = 100:15:1200;  % from 200 ms before target onset until 450 ms after.
+fanoParams.alignTime = 500;    % this time will become zero time
+fanoParams.boxWidth = 200;     % 50 ms sliding window.
+
+% times = 1000:15:2500;  % from 200 ms before target onset until 450 ms after.
+% fanoParams.alignTime = 1500;    % this time will become zero time
+% fanoParams.boxWidth = 100;     % 50 ms sliding window.
 FakResult = VarVsMean(Fakerize(M1Data,'poisson'), times, fanoParams);  % takes a while
 %FakResult = MeanFano(Fakerize(PMDdata2,'gamma'), times, fanoParams);
 plotFanoParams.plotRawF = 1;
