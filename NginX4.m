@@ -107,7 +107,7 @@ if ~isempty(probe2)
     LFP.probe2 = bestLFP(LFP.probe2);
     LFP.probe2 = bandFilter(LFP.probe2,'depth'); % Extract LFPs based on 'depth' or 'single'
 end
-%%% Calculate generalize phase for electrodes
+%% Calculate generalize phase for electrodes
 addpath(genpath('C:\Users\khan332\Documents\GitHub\generalized-phase'));
 xo = bandpass_filter(LFP.probe1.LFP,5,40,1000); %x,f1,f2,Fs
 sz = size(xo);
@@ -207,7 +207,7 @@ histogram(t(linearProbe(2),:),-pi:pi/8:pi,'normalization','probability')
 %% Spikes analysis
 [fpath,name,exts] = fileparts(ds_filename);
 data = matfile(ds_filename);
-path = [fpath,'/kilosort3/'];
+path = [fpath,'/postAutoMerge/'];
 mergename = 'merged';
 Kilosort3AutoMergeTester
 path = [fpath,'/kilosort3/' mergename];
@@ -330,7 +330,7 @@ caxis([0.0 2.56])
 Spikes = makeSpikeGPFA(Spikes);
 Spikes.GPFA.HitMiss.dat = [Spikes.GPFA.hit.dat,Spikes.GPFA.miss.dat];
 for n = 1:IntanBehaviour.nCueHit%+1:length(Spikes.GPFA.BaselineOpto.dat) %fix trials
-    Spikes.GPFA.BaselineOpto.dat(n).spikes = Spikes.GPFA.BaselineOpto.dat(n).spikes(1:91,:);
+    Spikes.GPFA.HitMiss.dat(n).trialId = n;
 end
 Spikes.GPFA.MIHitFA.dat = [Spikes.GPFA.MIHit.dat,Spikes.GPFA.MIFA.dat];
 for n = length(IntanBehaviour.MIHitTrace)+1:length(Spikes.GPFA.MIHitFA.dat) %fix trials
@@ -348,8 +348,8 @@ if exist('mat_results','dir'),rmdir('mat_results','s'),end
 [Spikes.GPFA.resultMIHitFA,Spikes.GPFA.seqTrainMIHitFA] = gpfaAnalysis(Spikes.GPFA.MIHitFA.dat,6); %Run index
 close all
 %% Neural Trajectory Analysis
-IntanBehaviour.parameters = parameters;
-neuralTrajAnalysis(Spikes,[],IntanBehaviour);
+IntanBehaviour1.parameters = parameters;
+neuralTrajAnalysis(Spikes,Waves1,IntanBehaviour1);
 %%
 figure,
 for n = 1:111
