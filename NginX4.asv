@@ -40,7 +40,7 @@ parameters.Fs = 1000; % Eventual downsampled data
 parameters.ts = 1/parameters.Fs;
 parameters.IntanFs = data.targetedFs;
 [Behaviour] = readLever(parameters,data.amplifierTime);
-[IntanBehaviour] = readLeverIntan(parameters,data.amplifierTime,data.analogChannels(2,:),data.digitalChannels,Behaviour,1);
+[IntanBehaviour] = readLeverIntan(parameters,data.amplifierTime,data.analogChannels(1,:),data.digitalChannels,Behaviour,1);
 % Calculate ITI time for trials and reward/no reward sequence
 temp1 = arrayfun(@(x) x.LFPtime(1), IntanBehaviour.cueHitTrace);
 temp1 = vertcat(temp1,ones(1,IntanBehaviour.nCueHit)); %  write 1 for reward given
@@ -107,7 +107,7 @@ if ~isempty(probe2)
     LFP.probe2 = bestLFP(LFP.probe2);
     LFP.probe2 = bandFilter(LFP.probe2,'depth'); % Extract LFPs based on 'depth' or 'single'
 end
-%%% Calculate generalize phase for electrodes
+%% Calculate generalize phase for electrodes
 addpath(genpath('C:\Users\khan332\Documents\GitHub\generalized-phase'));
 xo = bandpass_filter(LFP.probe1.LFP,5,40,1000); %x,f1,f2,Fs
 sz = size(xo);
@@ -207,7 +207,7 @@ histogram(t(linearProbe(2),:),-pi:pi/8:pi,'normalization','probability')
 %% Spikes analysis
 [fpath,name,exts] = fileparts(ds_filename);
 data = matfile(ds_filename);
-path = [fpath,'/kilosort3/'];
+path = [fpath,'/postAutoMerge/'];
 mergename = 'merged';
 Kilosort3AutoMergeTester
 path = [fpath,'/kilosort3/' mergename];
@@ -223,7 +223,7 @@ Spikes = clusterSort(Spikes);
 Spikes = ISI(Spikes,0.01,data.Fs,0); %Spikes, Interval, Fs
 % Calculate Depth profile
 %load chanMap64F2
-load UCLA_chanMap
+load chanMap64Sharp
 [spikeAmps, spikeDepths, templateDepths, tempAmps, tempsUnW, templateDuration, waveforms, max_site] =...
     spikeTemplatePosition(data.fpath,ycoords,[]); % 'invert'
 for i = 1:length(tempAmps)
@@ -252,12 +252,12 @@ if exist('goodSpkComponents','var')
 else 
     Spikes.goodSpkComponents = 1:length(Spikes.Clusters);
 end
-Spikes = rejectSpikes(Spikes,0.75,1,parameters); % Reject spikes here for further analysis
+Spikes = rejectSpikes(Spikes,0.25,0.25,parameters); % Reject spikes here for further analysis
 [Spikes] = sortSpkLever(Spikes,IntanBehaviour);
 [fpath,name,exts] = fileparts(ds_filename);
 sessionName = [fpath,'/','Spikes.mat'];
 % save(sessionName,"IntanBehaviour","fpath","parameters","-v7.3");
-save(sessionName,"Spikes","IntanBehaviour","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
+save(sessionName,"Spikes","IntanBehaviour","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
 disp('Saved!')
 %% Make it layer specific TODO:Gamma GED/Spike coherence
 Spikes = layerspikeAnalysis(Spikes,IntanBehaviour,LFP);
@@ -303,7 +303,7 @@ for n = 1:length(val)
 end
 %%
 figure,hold on
-for n = 1
+for n = 3
 subplot(2,1,[1]),Show_Spikes(Spikes.PSTH.hit.spks{n}),axis off
 subplot(2,1,[2]),bar(-1500:1500,smoothdata(Spikes.PSTH.hit.spkRates(n,:)),'FaceColor',[28/255 117/255 188/255],'EdgeColor','none')
 axis tight, box off, set(gca,'TickDir','out')
@@ -330,7 +330,7 @@ caxis([0.0 2.56])
 Spikes = makeSpikeGPFA(Spikes);
 Spikes.GPFA.HitMiss.dat = [Spikes.GPFA.hit.dat,Spikes.GPFA.miss.dat];
 for n = 1:IntanBehaviour.nCueHit%+1:length(Spikes.GPFA.BaselineOpto.dat) %fix trials
-    Spikes.GPFA.BaselineOpto.dat(n).spikes = Spikes.GPFA.BaselineOpto.dat(n).spikes(1:91,:);
+    Spikes.GPFA.HitMiss.dat(n).trialId = n;
 end
 Spikes.GPFA.MIHitFA.dat = [Spikes.GPFA.MIHit.dat,Spikes.GPFA.MIFA.dat];
 for n = length(IntanBehaviour.MIHitTrace)+1:length(Spikes.GPFA.MIHitFA.dat) %fix trials
@@ -348,8 +348,8 @@ if exist('mat_results','dir'),rmdir('mat_results','s'),end
 [Spikes.GPFA.resultMIHitFA,Spikes.GPFA.seqTrainMIHitFA] = gpfaAnalysis(Spikes.GPFA.MIHitFA.dat,6); %Run index
 close all
 %% Neural Trajectory Analysis
-IntanBehaviour.parameters = parameters;
-neuralTrajAnalysis(Spikes,[],IntanBehaviour);
+IntanBehaviour1.parameters = parameters;
+neuralTrajAnalysis(Spikes,Waves1,IntanBehaviour1);
 %%
 figure,
 for n = 1:111
