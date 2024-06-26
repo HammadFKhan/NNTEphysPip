@@ -3,6 +3,7 @@ temperature = (temperature-1.25)/0.005;
 IntanBehaviour.temperature = resample(temperature,parameters.Fs,data.targetedFs);
 IntanBehaviour.temperature =  IntanBehaviour.temperature-IntanBehaviour.temperature(10000);
 clear temperature
+%%
 for n = 1:IntanBehaviour.nCueHit
     hitTemp(n,1) = IntanBehaviour.temperature(IntanBehaviour.cueHitTrace(n).LFPIndex(1));
 end
@@ -42,6 +43,7 @@ end
 FARate = histcounts(FARate,binningAmount); % 29 should be the binning amount
 idxc = nanmean([idxc1;idxc2;idxc3]);
 %%
+load myMap
 hitRatei = interp1(1:length(hitRate),hitRate,1:0.01:length(hitRate));
 idxci = interp1(1:length(idxc),idxc,1:0.01:length(idxc));
 missRatei = interp1(1:length(missRate),missRate,1:0.01:length(missRate));
