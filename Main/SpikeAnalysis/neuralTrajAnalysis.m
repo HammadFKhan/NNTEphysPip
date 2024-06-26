@@ -4,9 +4,9 @@ X = arrayfun(@(x) vertcat(x.xorth),Spikes.GPFA.seqTrainHit,'UniformOutput',false
 X = horzcat(X{:});
 neuralTrajHit = reshape(X,size(X,1),Spikes.GPFA.seqTrainHit(1).T,[]);
 
-% X = arrayfun(@(x) vertcat(x.xorth),Spikes.GPFA.seqTrainMiss,'UniformOutput',false);
-% X = horzcat(X{:});
-% neuralTrajMiss = reshape(X,size(X,1),Spikes.GPFA.seqTrainMiss(1).T,[]);
+X = arrayfun(@(x) vertcat(x.xorth),Spikes.GPFA.seqTrainMiss,'UniformOutput',false);
+X = horzcat(X{:});
+neuralTrajMiss = reshape(X,size(X,1),Spikes.GPFA.seqTrainMiss(1).T,[]);
 
 X = arrayfun(@(x) vertcat(x.xorth),Spikes.GPFA.seqTrainMIHit,'UniformOutput',false);
 X = horzcat(X{:});
@@ -24,13 +24,13 @@ X = arrayfun(@(x) vertcat(x.xorth),Spikes.GPFA.seqTrainMIHitFA,'UniformOutput',f
 X = horzcat(X{:});
 neuralTrajMIHitFA = reshape(X,size(X,1),Spikes.GPFA.seqTrainMIHitFA(1).T,[]);
 
-X = arrayfun(@(x) vertcat(x.xorth),Spikes.GPFA.seqTrainBaselineOpto,'UniformOutput',false);
-X = horzcat(X{:});
-neuralTrajBaselineOpto = reshape(X,size(X,1),Spikes.GPFA.seqTrainBaselineOpto(1).T,[]);
+% X = arrayfun(@(x) vertcat(x.xorth),Spikes.GPFA.seqTrainBaselineOpto,'UniformOutput',false);
+% X = horzcat(X{:});
+% neuralTrajBaselineOpto = reshape(X,size(X,1),Spikes.GPFA.seqTrainBaselineOpto(1).T,[]);
 
 %% Calculate average trajectories and divergence based on trial difference
 % local function call for meaning based on combined PCA of trial conditions
-X = neuralTrajBaselineOpto;
+X = neuralTrajHitMiss;
 hittrials = 1:length(Behaviour.cueHitTrace);
 misstrials = length(Behaviour.cueHitTrace)+1:size(X,3);
 rh = meanTraj(X,hittrials,6)'; %trajectory variable and predefined conditional trial indexes
@@ -57,6 +57,10 @@ if ~isempty(Waves)
     rawWavePGDFA = arrayfun(@(x) vertcat(x.PGD), Waves.wavesMIFA,'UniformOutput',false);rawWavePGDFA = vertcat(rawWavePGDFA{:});
     rawWaveSpeedFA = arrayfun(@(x) vertcat(x.s), Waves.wavesMIFA,'UniformOutput',false);rawWaveSpeedFA = vertcat(rawWaveSpeedFA{:});
     
+    rawWaveDensityMIHit = arrayfun(@(x) vertcat(x.wavePresent),Waves.wavesMIHit,'UniformOutput',false);rawWaveDensityMIHit= vertcat(rawWaveDensityMIHit{:});
+    rawWavePGDMIHit= arrayfun(@(x) vertcat(x.PGD), Waves.wavesMIHit,'UniformOutput',false);rawWavePGDMIHit = vertcat(rawWavePGDMIHit{:});
+    rawWaveSpeedMIHit = arrayfun(@(x) vertcat(x.s), Waves.wavesMIHit,'UniformOutput',false);rawWaveSpeedMIHit = vertcat(rawWaveSpeedMIHit{:});
+    
     
     waveDensityhit = [];
     wavePGDhit = [];
@@ -69,6 +73,10 @@ if ~isempty(Waves)
     waveDensityFA = [];
     wavePGDFA = [];
     waveSpeedFA = [];
+    
+    waveDensityMIHit = [];
+    wavePGDMIHit = [];
+    waveSpeedMIHit = [];
     
     win = ceil(1:20:size(rawWaveDensityhit,2));
     for n = 1:length(win)-1
@@ -84,6 +92,9 @@ if ~isempty(Waves)
         wavePGDFA = horzcat(wavePGDFA,mean(rawWavePGDFA(:,win(n):win(n+1)),2));
         waveSpeedFA = horzcat(waveSpeedFA,mean(rawWaveSpeedFA(:,win(n):win(n+1)),2));
         
+        waveDensityMIHit = horzcat(waveDensityMIHit,sum(rawWaveDensityMIHit(:,win(n):win(n+1)),2)); %convert to wave/sec
+        wavePGDMIHit = horzcat(wavePGDMIHit,mean(rawWavePGDMIHit(:,win(n):win(n+1)),2));
+        waveSpeedMIHit = horzcat(waveSpeedMIHit,mean(rawWaveSpeedMIHit(:,win(n):win(n+1)),2));
     end
     
 end
@@ -110,8 +121,8 @@ rs = meanTraj(X,hittrials(fastTrials),6)'; %trajectory variable and predefined c
 % rs = rs-rfrrsinitl;
 [neuralsimRT,neuraldiffRT,rprimef,rprimes] = neuralTrajDiff(rf,rs);
 % reference to all hit trial initial state
-[neuralTrajfh,rprimefinit,rprimehinit] = neuralTrajDiff(rf,rh,'initial');
-[neuralTrajsh,rprimesinit,rprimehinit] = neuralTrajDiff(rs,rh,'initial');
+% [neuralTrajfh,rprimefinit,rprimehinit] = neuralTrajDiff(rf,rh,'initial');
+% [neuralTrajsh,rprimesinit,rprimehinit] = neuralTrajDiff(rs,rh,'initial');
 
 %%% Now do analysis for MI hit vs FA
 X = neuralTrajMIHitFA;
@@ -164,12 +175,12 @@ plot(-74*20:20:20*75,[0,rprime3],'LineWidth',2),box off,set(gca,'FontSize',16),s
 % TODO: Plotting the data like this makes the rendering all messed up; need
 % to adapt from Lyles GP phase code for plotting....
 
-x = rh(:,1);
-y = rh(:,2);
+x = rmif(:,1);
+y = rmif(:,2);
 cd = [uint8((jet(150))*255) uint8(ones(150,1))].';
 n = 150;
 t = mean(wavePGDhit);
-col = [0;smoothdata(diff(t),'movmean',10)'];
+col = [smoothdata(diff(t),'movmean',10)'];
 %col = smoothdata(t,'movmean',10);
 % Interp to make the line smoother
 xin = interp1(1:150,x,1:0.1:150);
@@ -201,28 +212,43 @@ idx = discretize(reactionTime,20);
 for n = 1:length(hittrials)
 dat = meanTraj(X,n,6); %grab and calculate distance per reaction time
 x = dat(1,1:reactionTime(n)); y = dat(2,1:reactionTime(n)); z = dat(3,1:reactionTime(n));
-PQ(n) = sqrt((x(end)-x(1))^2+(y(end)-y(1))^2+(z(end)-z(1))^2);
+PQ(n) = sqrt((x(end)-x(stimStart))^2+(y(end)-y(stimStart))^2+(z(end)-z(stimStart))^2); %Calculate Speed
+dat1 = vertcat(zeros(1,6),rprimeh)'; % Grab norm vector alignment data
+x = dat1(1,1:reactionTime(n)); y = dat1(2,1:reactionTime(n)); z = dat1(3,1:reactionTime(n));
+TrajAngle(n) = mean(mean([x;y;z])); % Calculates how well aligned trajectories are for all trials
 if ~isempty(Waves)
-    dPGD(n) = mean(diff(wavePGDhit(n,1:reactionTime(n))));
+    dPGD(n) = mean(diff(wavePGDhit(n,stimStart:reactionTime(n))));
 end
 end
+%%
 PQ = (PQ./rawreactionTime)';
 
+figure,scatter(TrajAngle,rawreactionTime,'k','filled')
+xlim([0 .02])
+ylim([0 2])
+set(gca,'TickDir','out'),set(gca,'fontsize',16),box off
+xlabel('Neural trajectory alignment'),ylabel('Reaction time (s)')
+
 figure,scatter(PQ,rawreactionTime,'k','filled')
-xlim([0 30])
-ylim([0 1.5])
+xlim([0 15])
+ylim([0 2])
 set(gca,'TickDir','out'),set(gca,'fontsize',16),box off
 xlabel('Neural trajectory speed'),ylabel('Reaction time (s)')
 
 mdl = fitlm(PQ,rawreactionTime)
 figure,plot(mdl)
-xlim([0 30])
-ylim([0 1.5])
+xlim([0 15])
+ylim([0 2])
 set(gca,'TickDir','out'),set(gca,'fontsize',16),box off
 xlabel('Neural trajectory speed'),ylabel('Reaction time (s)')
 legend(num2str(mdl.Rsquared.Ordinary),num2str(mdl.Coefficients.pValue(2)))
 title('')
 %%
+figure,scatter(dPGD,TrajAngle,'k','filled')
+set(gca,'TickDir','out'),set(gca,'fontsize',16),box off
+xlabel('Neural trajectory speed'),ylabel('Phase gradient')
+xlim([0 10])
+
 figure,scatter(PQ,dPGD,'k','filled')
 set(gca,'TickDir','out'),set(gca,'fontsize',16),box off
 xlabel('Neural trajectory speed'),ylabel('Phase gradient')
