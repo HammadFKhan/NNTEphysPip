@@ -1,9 +1,14 @@
 function fpath = kilosortbinCombine()
 %% Function to combine kilsort bin files for multiple session spike sorting.
+% All you need is a folder with two kilosort bin files (name starting with
+% 'kilosort' (example. kilosortControl, kilosortOpto). Then select the bin
+% files when prompted.
+
 %Caution: Check Issue #132 on Mouseland kilosort for potential
 %complications with this approach. TLDR: The correlation matrix during the
 %spike sorting can generate a very large matrix if the drift correction
 %fails. Causing memory bottlenecking on the GPU.
+
 [fname,fpath] = uigetfile('*.bin','MultiSelect','on');
 if length(fname)<2
     error('Only 1 file was provided')
