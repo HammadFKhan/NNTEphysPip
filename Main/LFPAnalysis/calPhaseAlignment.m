@@ -1,7 +1,6 @@
 function [PA,PA_angle] = calPhaseAlignment(xgp)
 % Ref: Spontaneous travelling cortical waves gate perception in behaving
 % primates, Nature 2020
-
 sz = size(xgp{1});
 rows = sz(1);
 cols = sz(2);
