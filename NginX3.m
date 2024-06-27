@@ -3,12 +3,12 @@
 addpath(genpath('Main'));
 % addpath(genpath('chronux'));
 % addpath(genpath('Kilosort'));
-addpath(genpath('npy-matlab'));
-addpath(genpath('spikes-master'));
+addpath(genpath('npy-matlab')); 
+addpath(genpath('spikes-master'));  
 % IntanConcatenate legacy version
 ds_filename = intanPreprocessing2(1); %IntanDs flag  %% double check file type
 %% Combine intan data if needed
-fpath = kilosortbinCombine();
+fpath = kilosortbinCombine(); 
 %%
 % Run Kilosort3 
 % load only neccessary variables from memory mapped file
@@ -48,7 +48,7 @@ temp2 = vertcat(temp2,zeros(1,IntanBehaviour.nCueMiss)); %  write 0 for no rewar
 temp = [temp1,temp2];
 [~,idx] = sort(temp(1,:)); %sort by occurance
 IntanBehaviour.ITI = temp(:,idx);
-%% For Cooling 
+%% For Cooling  
 temperature = data.analogChannels(1,:);
 temperature = (temperature-1.25)/0.005;
 IntanBehaviour.temperature = resample(temperature,parameters.Fs,5000);
