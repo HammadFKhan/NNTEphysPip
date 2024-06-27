@@ -39,6 +39,9 @@ parameters.windowAfterMI = 1.5; % in seconds
 parameters.Fs = 1000; % Eventual downsampled data
 parameters.ts = 1/parameters.Fs;
 parameters.IntanFs = data.targetedFs;
+parameters.rows = 64;
+parameters.cols = 1;
+
 [Behaviour] = readLever(parameters,data.amplifierTime);
 [IntanBehaviour] = readLeverIntan(parameters,data.amplifierTime,data.analogChannels(1,:),data.digitalChannels,Behaviour,1);
 % Calculate ITI time for trials and reward/no reward sequence
