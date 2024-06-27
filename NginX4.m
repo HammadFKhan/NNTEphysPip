@@ -39,6 +39,9 @@ parameters.windowAfterMI = 1.5; % in seconds
 parameters.Fs = 1000; % Eventual downsampled data
 parameters.ts = 1/parameters.Fs;
 parameters.IntanFs = data.targetedFs;
+parameters.rows = 64;
+parameters.cols = 1;
+
 [Behaviour] = readLever(parameters,data.amplifierTime);
 [IntanBehaviour] = readLeverIntan(parameters,data.amplifierTime,data.analogChannels(1,:),data.digitalChannels,Behaviour,1);
 % Calculate ITI time for trials and reward/no reward sequence
@@ -156,6 +159,7 @@ LFP.probe1.MIFAxgp = cellfun(@(x) reshape(x,64,1,[]),MIFAxgp,'UniformOutput',fal
 
 %% Save PAs into single struct
 load myMap
+PA = struct();
 [PA.hitPA,PA.hitPA_angle] = calPhaseAlignment(LFP.probe1.hitxgp);
 [PA.missPA,PA.missPA_angle] = calPhaseAlignment(LFP.probe1.missxgp);
 [PA.MIhitPA,PA.MIhitPA_angle] = calPhaseAlignment(LFP.probe1.MIhitxgp);
@@ -164,6 +168,19 @@ load myMap
 % cmap = (gray(22));
 % set(gca(),'ColorOrder',cmap)
 % cmap = colormap_redblackblue();
+%% PAs with zscoring
+z_score = 1;
+nIterrate = 1000;
+plotFlag = 0;
+PA = struct();
+[LFP.probe1.PA] = getPAProbe(LFP.probe1,IntanBehaviour,z_score,nIterrate,plotFlag,parameters);
+
+
+%%% Save data cos it takes a while
+[fpath,name,exts] = fileparts(ds_filename);
+sessionName = [fpath,'/','LFP.mat'];
+% save(sessionName,"IntanBehaviour","fpath","parameters","-v7.3");
+save(sessionName,"IntanBehaviour","parameters","LFP","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
 %% PA plotting
 linearProbe = find(s.sorted_probe_wiring(:,2)==20);
 figure,

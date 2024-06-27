@@ -156,6 +156,7 @@ LFP.probe1.MIFAxgp = cellfun(@(x) reshape(x,64,1,[]),MIFAxgp,'UniformOutput',fal
 
 %% Save PAs into single struct
 load myMap
+PA = struct();
 [PA.hitPA,PA.hitPA_angle] = calPhaseAlignment(LFP.probe1.hitxgp);
 [PA.missPA,PA.missPA_angle] = calPhaseAlignment(LFP.probe1.missxgp);
 [PA.MIhitPA,PA.MIhitPA_angle] = calPhaseAlignment(LFP.probe1.MIhitxgp);
@@ -164,6 +165,12 @@ load myMap
 % cmap = (gray(22));
 % set(gca(),'ColorOrder',cmap)
 % cmap = colormap_redblackblue();
+%% PAs with zscoring
+z_score = 1;
+nIterrate = 1000;
+plotFlag = 0;
+PA = struct();
+[PA] = getPAProbe(LFP.probe1,IntanBehaviour,z_score,nIterrate,plotFlag,parameters);
 %% PA plotting
 linearProbe = find(s.sorted_probe_wiring(:,2)==20);
 figure,
