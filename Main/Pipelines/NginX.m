@@ -88,7 +88,13 @@ L5gammaITPC = [TimeFreq.tfRest.depth.L5.gamma.itpc TimeFreq.tfRun.depth.L5.gamma
 % plotTF(TimeFreq,LFP)
 % TF stats of depth
 TimeFreq.tf = TimeFreq.tfRun;
-stats = tfStats(TimeFreq);ylim([0 0.4])
+itpcstats = tfStats(TimeFreq);ylim([0 0.4])
+
+savepath = 'Y:\Hammad\Ephys\PFFProject\RebuttelITPC\';
+sessionName = [savepath,filename,'_itpcStats.mat'];
+% save(sessionName,"IntanBehaviour","fpath","parameters","-v7.3");
+save(sessionName,"pathname","itpcstats","Spikes","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
+disp('Data Saved!')
 %%
 tfDepth = TimeFreq.tf.depth;
 betaGammaCoupling = gammaBetaCoupling(LFP,TimeFreq.tfRun,betaGroup);

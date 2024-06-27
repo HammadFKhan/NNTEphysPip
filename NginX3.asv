@@ -8,7 +8,7 @@ addpath(genpath('spikes-master'));
 % IntanConcatenate legacy version
 ds_filename = intanPreprocessing2(1); %IntanDs flag  %% double check file type
 %% Combine intan data if needed
-fpath = kilosortbinCombine(); 
+fpath = kilosortbinCombine();
 %%
 % Run Kilosort3 
 % load only neccessary variables from memory mapped file

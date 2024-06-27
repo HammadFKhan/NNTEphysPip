@@ -21,12 +21,6 @@ plot(IntanBehaviour.cueHitTrace(1).time,traceM-traceSE,'k')
 box off,set(gca,'tickdir','out','fontsize',16)
 %% Pull speed, Pull duration, pull reproducability
 % integrated pull speed from cue to movement (RT)
-figure(2),hold on
-pSpeed = [];
 temp = diff(trace,[],2);
 for n = 1:size(trace,1)
-    pSpeed{n} = (temp(n,1500:(1500+IntanBehaviour.reactionTime(n)*1000)));
-    plot(smoothdata(pSpeed{n},'movmean',10),'color',[0 0 0 0.1]),hold on
-end
-figure(3)
-customBoxplot(cellfun(@mean,pSpeed)');
+    pSpeed = mean(diff(temp(1500:(1500+IntanBehaviour.reactionTime*1000)
