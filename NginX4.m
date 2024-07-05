@@ -91,8 +91,8 @@ IntanBehaviour.AvgHitTrace = mean(IntanBehaviour.AvgHitTrace,1);
 % Since there are two probes we want to seperate everything into linear
 % maps for CSD and depthwise LFP analysis and then we do filtering
 data = matfile(ds_filename);
-% load UCLA_chanMap_64F2
-load UCLA_chanmap_fixed.mat
+load UCLA_chanMap_64F2
+% load UCLA_chanmap_fixed.mat
 if ~exist('lfp','var'),lfp = data.amplifierData;end
 %TODO check if the field orientation during insertion is reversed (ie. probe 1 is lateral to probe 2)
 probe1 = lfp(s.sorted_probe_wiring(:,5)==1,:);
