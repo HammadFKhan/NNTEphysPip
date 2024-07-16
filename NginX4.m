@@ -114,18 +114,24 @@ end
 
 LFP.probe1.genPhase = getGenPhaseProbe(LFP.probe1,IntanBehaviour); %lfp,IntanBehaviour
 
-
-
 %%% Save data
+% [fpath,name,exts] = fileparts(ds_filename);
+% sessionName = [fpath,'/','LFP.mat'];
+% % save(sessionName,"IntanBehaviour","fpath","parameters","-v7.3");
+% save(sessionName,"IntanBehaviour","parameters","LFP","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
+%%% PAs with zscoring
+z_score = 1;
+nIterrate = 1000;
+plotFlag = 0;
+PA = struct();
+[LFP.probe1.PA] = getPAProbe(LFP.probe1.genPhase,IntanBehaviour,z_score,nIterrate,plotFlag,parameters);
+
+
+%%% Save data cos it takes a while
 [fpath,name,exts] = fileparts(ds_filename);
 sessionName = [fpath,'/','LFP.mat'];
 % save(sessionName,"IntanBehaviour","fpath","parameters","-v7.3");
-save(sessionName,"IntanBehaviour","parameters","LFP","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
-LFP.probe1.hitxgp = cellfun(@(x) reshape(x,64,1,[]),hitxgp,'UniformOutput',false);
-LFP.probe1.missxgp = cellfun(@(x) reshape(x,64,1,[]),missxgp,'UniformOutput',false);
-LFP.probe1.MIhitxgp = cellfun(@(x) reshape(x,64,1,[]),MIhitxgp,'UniformOutput',false);
-LFP.probe1.MIFAxgp = cellfun(@(x) reshape(x,64,1,[]),MIFAxgp,'UniformOutput',false);
-
+save(sessionName,"IntanBehaviour","parameters","LFP","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
 %% Save PAs into single struct
 load myMap
 PA = struct();
@@ -137,19 +143,7 @@ PA = struct();
 % cmap = (gray(22));
 % set(gca(),'ColorOrder',cmap)
 % cmap = colormap_redblackblue();
-%% PAs with zscoring
-z_score = 1;
-nIterrate = 1000;
-plotFlag = 0;
-PA = struct();
-[LFP.probe1.PA] = getPAProbe(LFP.probe1,IntanBehaviour,z_score,nIterrate,plotFlag,parameters);
 
-
-%%% Save data cos it takes a while
-[fpath,name,exts] = fileparts(ds_filename);
-sessionName = [fpath,'/','LFP.mat'];
-% save(sessionName,"IntanBehaviour","fpath","parameters","-v7.3");
-save(sessionName,"IntanBehaviour","parameters","LFP","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
 %% PA plotting
 linearProbe = find(s.sorted_probe_wiring(:,2)==20);
 figure,

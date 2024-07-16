@@ -111,59 +111,27 @@ if ~isempty(probe2)
     LFP.probe2 = bandFilter(LFP.probe2,'depth'); % Extract LFPs based on 'depth' or 'single'
 end
 %% Calculate generalize phase for electrodes
-addpath(genpath('C:\Users\khan332\Documents\GitHub\generalized-phase'));
-xo = bandpass_filter(LFP.probe1.LFP,5,40,1000); %x,f1,f2,Fs
-sz = size(xo);
-xo = reshape(xo,sz(1),1,sz(2));
 
-%%
-for i = 1:IntanBehaviour.nCueHit
-    disp(['Analyzing trial: ' num2str(i)])
-    hitWin = floor(IntanBehaviour.cueHitTrace(i).LFPtime*1000); %multiply by Fs;
-    temp = xo(:,:,hitWin);
-    lfp.hitLFP{i} = temp;
-    [lfp.hitxgp{i},~] = generalized_phase(temp,1000, 0 );
-end
-for i = 1:IntanBehaviour.nCueMiss
-    disp(['Analyzing trial: ' num2str(i)])
-    missWin = floor(IntanBehaviour.cueMissTrace(i).LFPtime*1000);
-    temp = xo(:,:,missWin);
-    lfp.missLFP{i} = temp;
-    [lfp.missxgp{i},~] = generalized_phase(temp,1000, 0 );
-end
+LFP.probe1.genPhase = getGenPhaseProbe(LFP.probe1,IntanBehaviour); %lfp,IntanBehaviour
 
-%%% Motion Intiated
-for i = 1:length(IntanBehaviour.MIHitTrace)
-    disp(['Analyzing trial: ' num2str(i)])
-    MIhitWin = floor(IntanBehaviour.MIHitTrace(i).LFPtime*1000); %multiply by Fs;
-    temp = xo(:,:,MIhitWin);
-    lfp.MIhitLFP{i} = temp;
-    [lfp.MIhitxgp{i},~] = generalized_phase(temp,1000, 0 );
-end
-
-for i = 1:length(IntanBehaviour.MIFATrace)
-    disp(['Analyzing trial: ' num2str(i)])
-    MIFAWin = floor(IntanBehaviour.MIFATrace(i).LFPtime*1000);
-    temp = xo(:,:,MIFAWin);
-    lfp.MIFALFP{i} = temp;
-    [lfp.MIFAxgp{i},~] = generalized_phase(temp,1000, 0 );
-end
-
-
-
-[xgp,wt] = generalized_phase(xo, 1000, 0 );
-LFP.probe1.xgp = xgp;
-LFP.probe1.xo = xo;
 %%% Save data
+% [fpath,name,exts] = fileparts(ds_filename);
+% sessionName = [fpath,'/','LFP.mat'];
+% % save(sessionName,"IntanBehaviour","fpath","parameters","-v7.3");
+% save(sessionName,"IntanBehaviour","parameters","LFP","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
+%%% PAs with zscoring
+z_score = 1;
+nIterrate = 1000;
+plotFlag = 0;
+PA = struct();
+[LFP.probe1.PA] = getPAProbe(LFP.probe1.genPhase,IntanBehaviour,z_score,nIterrate,plotFlag,parameters);
+
+
+%%% Save data cos it takes a while
 [fpath,name,exts] = fileparts(ds_filename);
 sessionName = [fpath,'/','LFP.mat'];
 % save(sessionName,"IntanBehaviour","fpath","parameters","-v7.3");
-save(sessionName,"IntanBehaviour","parameters","LFP","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
-LFP.probe1.hitxgp = cellfun(@(x) reshape(x,64,1,[]),hitxgp,'UniformOutput',false);
-LFP.probe1.missxgp = cellfun(@(x) reshape(x,64,1,[]),missxgp,'UniformOutput',false);
-LFP.probe1.MIhitxgp = cellfun(@(x) reshape(x,64,1,[]),MIhitxgp,'UniformOutput',false);
-LFP.probe1.MIFAxgp = cellfun(@(x) reshape(x,64,1,[]),MIFAxgp,'UniformOutput',false);
-
+save(sessionName,"IntanBehaviour","parameters","LFP","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
 %% Save PAs into single struct
 load myMap
 PA = struct();
@@ -175,19 +143,7 @@ PA = struct();
 % cmap = (gray(22));
 % set(gca(),'ColorOrder',cmap)
 % cmap = colormap_redblackblue();
-%% PAs with zscoring
-z_score = 1;
-nIterrate = 1000;
-plotFlag = 0;
-PA = struct();
-[LFP.probe1.PA] = getPAProbe(LFP.probe1,IntanBehaviour,z_score,nIterrate,plotFlag,parameters);
 
-
-%%% Save data cos it takes a while
-[fpath,name,exts] = fileparts(ds_filename);
-sessionName = [fpath,'/','LFP.mat'];
-% save(sessionName,"IntanBehaviour","fpath","parameters","-v7.3");
-save(sessionName,"IntanBehaviour","parameters","LFP","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
 %% PA plotting
 linearProbe = find(s.sorted_probe_wiring(:,2)==20);
 figure,
@@ -249,7 +205,7 @@ Spikes = ISI(Spikes,0.01,data.Fs,0); %Spikes, Interval, Fs
 %load chanMap64F2
 load chanMap64Sharp
 [spikeAmps, spikeDepths, templateDepths, tempAmps, tempsUnW, templateDuration, waveforms, max_site] =...
-    spikeTemplatePosition(data.fpath,ycoords,'invert'); % 'invert'
+    spikeTemplatePosition(data.fpath,ycoords,[]); % 'invert'
 for i = 1:length(tempAmps)
     Spikes.Clusters(i).spikeDepth = templateDepths(i);
     Spikes.Clusters(i).channelDepth = max_site(i);
