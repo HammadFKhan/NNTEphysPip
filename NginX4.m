@@ -242,7 +242,7 @@ Spikes = ISI(Spikes,0.01,data.Fs,0); %Spikes, Interval, Fs
 %load chanMap64F2
 load chanMap64Sharp
 [spikeAmps, spikeDepths, templateDepths, tempAmps, tempsUnW, templateDuration, waveforms, max_site] =...
-    spikeTemplatePosition(data.fpath,ycoords,'invert'); % 'invert'
+    spikeTemplatePosition(data.fpath,ycoords,[]); % 'invert'
 for i = 1:length(tempAmps)
     Spikes.Clusters(i).spikeDepth = templateDepths(i);
     Spikes.Clusters(i).channelDepth = max_site(i);
