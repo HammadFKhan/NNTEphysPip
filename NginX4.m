@@ -91,8 +91,8 @@ IntanBehaviour.AvgHitTrace = mean(IntanBehaviour.AvgHitTrace,1);
 % Since there are two probes we want to seperate everything into linear
 % maps for CSD and depthwise LFP analysis and then we do filtering
 data = matfile(ds_filename);
-load UCLA_chanMap_64F2
-% load UCLA_chanmap_fixed.mat
+%load UCLA_chanMap_64F2
+load UCLA_chanmap_fixed.mat
 if ~exist('lfp','var'),lfp = data.amplifierData;end
 %TODO check if the field orientation during insertion is reversed (ie. probe 1 is lateral to probe 2)
 probe1 = lfp(s.sorted_probe_wiring(:,5)==1,:);
@@ -224,7 +224,7 @@ histogram(t(linearProbe(2),:),-pi:pi/8:pi,'normalization','probability')
 %% Spikes analysis
 [fpath,name,exts] = fileparts(ds_filename);
 data = matfile(ds_filename);
-path = [fpath,'/postAutoMerge/'];
+path = [fpath,'/kilosort3/'];
 mergename = 'merged';
 Kilosort3AutoMergeTester
 path = [fpath,'/kilosort3/' mergename];
@@ -242,7 +242,7 @@ Spikes = ISI(Spikes,0.01,data.Fs,0); %Spikes, Interval, Fs
 %load chanMap64F2
 load chanMap64Sharp
 [spikeAmps, spikeDepths, templateDepths, tempAmps, tempsUnW, templateDuration, waveforms, max_site] =...
-    spikeTemplatePosition(data.fpath,ycoords,[]); % 'invert'
+    spikeTemplatePosition(data.fpath,ycoords,'invert'); % 'invert'
 for i = 1:length(tempAmps)
     Spikes.Clusters(i).spikeDepth = templateDepths(i);
     Spikes.Clusters(i).channelDepth = max_site(i);
@@ -258,8 +258,8 @@ Spikes = leverPSTH(Spikes,IntanBehaviour);
 %%% save spike output data to load into gui
 savepath = fullfile(path,['spks4sorting','.mat']);
 save(savepath,'Spikes','-v7.3')
-ManualSpikeCurateGUI
-%% Basic spike analysis
+%ManualSpikeCurateGUI
+%%% Basic spike analysis
 % z-score spike rates
 if exist('parameters','var')
     IntanBehaviour.parameters = parameters;
@@ -280,9 +280,10 @@ disp('Saved!')
 Spikes = layerspikeAnalysis(Spikes,IntanBehaviour,LFP);
 %% Spike field coherence using GP
 Spikes = GPSFAnalysis(Spikes,LFP.probe1);
-%%
-[Spikes.SpikeField.FA] = GPSpikeField(Spikes.PSTH.MIFA.spks,LFP.probe1.MIFAxgp,spkChan);
-[Spikes.SpikeField.miss] = GPSpikeField(Spikes.PSTH.miss.spks,LFP.probe1.missxgp,spkChan);
+sessionName = [fpath,'\','SpikesSF.mat'];
+% save(sessionName,"IntanBehaviour","fpath","parameters","-v7.3");
+save(sessionName,"Spikes","IntanBehaviour","fpath","-v7.3"); %"betaWaves","thetaWaves","gammaWaves"
+disp('Saved!')
 %%
 dat = Spikes.SpikeField.hit;
 figure
