@@ -4,6 +4,16 @@ function Spikes = GPSFAnalysis(Spikes,lfp)
 % across task conditions and cue times of lever task. Along with some basic
 % analysis and quantifications for plotting later down the road
 
+% Assert the structures of lfp and spikes are the same. Sometimes the
+% windowing parameters may be different or we just loaded the wrong files
+% in. 
+assert(size(Spikes.PSTH.hit.spks{1},2)==size(squeeze(lfp.hitxgp{1}),2)); %checks length
+assert(size(Spikes.PSTH.hit.spks{1},1)==length(lfp.hitxgp));
+assert(size(Spikes.PSTH.miss.spks{1},1)==length(lfp.missxgp));
+assert(size(Spikes.PSTH.MIHit.spks{1},1)==length(lfp.MIhitxgp));
+assert(size(Spikes.PSTH.MIFA.spks{1},1)==length(lfp.MIFAxgp));
+
+
 % Grab the localized spike electrode so we can match to GP electrode
 spkChan = arrayfun(@(x) vertcat(x.channelDepth),Spikes.Clusters)';
 precueWin = 1200:1500;
