@@ -16,9 +16,9 @@ function [LaminarData] = GPSpikeField(spikes,lfp,spkChan)
 %%% Prep for generalized spike-field coherence
 % Here we can use the Spike PSTH and Spike good spike to generate the
 % neccessary spike format. 
-% 
+% This function is called when we run the GPSFAnalysis.m function.
 
-plotOn = 1;
+plotOn = 0;
 % Double check spk lengths for analysis
 assert(length(spkChan)==length(spikes))
 
