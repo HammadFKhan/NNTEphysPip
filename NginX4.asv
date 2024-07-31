@@ -58,14 +58,17 @@ temperature = (temperature-1.25)/0.005;
 IntanBehaviour.temperature = resample(temperature,parameters.Fs,data.targetedFs);
 clear temperature
 for n = 1:IntanBehaviour.nCueHit
-    hitTemp(n,1) = IntanBehaviour.temperature(IntanBehaviour.cueHitTrace(n).LFPIndex(1));
+    IntanBehaviour.hitTemp(n,1) = IntanBehaviour.temperature(IntanBehaviour.cueHitTrace(n).LFPIndex(1));
 end
+IntanBehaviour.hitTemp = IntanBehaviour.hitTemp-IntanBehaviour.temperature(100);
 for n = 1:IntanBehaviour.nCueMiss
-    missTemp(n,1) = IntanBehaviour.temperature(IntanBehaviour.cueMissTrace(n).LFPIndex(1));
+    IntanBehaviour.missTemp(n,1) = IntanBehaviour.temperature(IntanBehaviour.cueMissTrace(n).LFPIndex(1));
 end
+IntanBehaviour.missTemp = IntanBehaviour.missTemp-IntanBehaviour.temperature(100);
 for n = 1:length(IntanBehaviour.missTrace)
-    FATemp(n,1) = IntanBehaviour.temperature(IntanBehaviour.missTrace(n).LFPIndex(1));
+    IntanBehaviour.FATemp(n,1) = IntanBehaviour.temperature(IntanBehaviour.missTrace(n).LFPIndex(1));
 end
+IntanBehaviour.FATemp = IntanBehaviour.FATemp-IntanBehaviour.temperature(100);
 %% Plot behaviour
 figure
 for i=1:IntanBehaviour.nCueHit
@@ -121,9 +124,10 @@ LFP.probe1.genPhase = getGenPhaseProbe(LFP.probe1,IntanBehaviour); %lfp,IntanBeh
 % save(sessionName,"IntanBehaviour","parameters","LFP","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
 %%% PAs with zscoring
 z_score = 1;
-nIterrate = 1000;
+nIterrate = 200;
 plotFlag = 0;
-PA = struct();
+%[LFP.probe1.CooledPA,LFP.probe1.BaselinePA] =...
+%    getPAProbeCooling(LFP.probe1.genPhase,IntanBehaviour,z_score,nIterrate,plotFlag,parameters);
 [LFP.probe1.PA] = getPAProbe(LFP.probe1.genPhase,IntanBehaviour,z_score,nIterrate,plotFlag,parameters);
 
 
@@ -220,6 +224,7 @@ Spikes.Clusters(temp) = [];
 Spikes = leverPSTH(Spikes,IntanBehaviour);
 %%% save spike output data to load into gui
 savepath = fullfile(path,['spks4sorting','.mat']);
+path = [fpath,'/kilosort3/' mergename];
 save(savepath,'Spikes','-v7.3')
 %ManualSpikeCurateGUI
 %%% Basic spike analysis
@@ -232,7 +237,7 @@ if exist('goodSpkComponents','var')
 else 
     Spikes.goodSpkComponents = 1:length(Spikes.Clusters);
 end
-Spikes = rejectSpikes(Spikes,0.25,0.25,parameters); % Reject spikes here for further analysis
+Spikes = rejectSpikes(Spikes,0.25,0.25,IntanBehaviour.parameters); % Reject spikes here for further analysis
 [Spikes] = sortSpkLever(Spikes,IntanBehaviour);
 [fpath,name,exts] = fileparts(ds_filename);
 sessionName = [fpath,'/','Spikes.mat'];
@@ -242,7 +247,7 @@ disp('Saved!')
 %% Make it layer specific TODO:Gamma GED/Spike coherence
 Spikes = layerspikeAnalysis(Spikes,IntanBehaviour,LFP);
 %% Spike field coherence using GP
-Spikes = GPSFAnalysis(Spikes,LFP.probe1);
+Spikes = GPSFAnalysis(Spikes,LFP.probe1.genPhase);
 sessionName = [fpath,'\','SpikesSF.mat'];
 % save(sessionName,"IntanBehaviour","fpath","parameters","-v7.3");
 save(sessionName,"Spikes","IntanBehaviour","fpath","-v7.3"); %"betaWaves","thetaWaves","gammaWaves"
