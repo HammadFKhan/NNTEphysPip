@@ -114,3 +114,57 @@ for n = 4:8
 end
 SpikesW2 = vertcat(SpikesW2{:});
 SpikesW12 = vertcat(SpikesW12{:});
+%% Figure for new rebuttel
+%load('Y:\Hammad\Ephys\PFFProject\Stats\BetaITPCSpikesControlsAcrossMonomers')
+%%% W2 W12 L23 CTX
+temp = nan(max([length(W2MonomerL23SpikesCTX) length(W12MonomerL23SpikesCTX)]),2);
+temp(1:length(W2MonomerL23SpikesCTX),1) = W2MonomerL23SpikesCTX;
+temp(1:length(W12MonomerL23SpikesCTX),2) = W12MonomerL23SpikesCTX;
+figure,customBoxplot(temp),box off
+set(gca,'tickdir','out','fontsize',16)
+ylabel('Firing Rate (Spikes/s)'),ylim([0 40])
+p = anova1(temp)
+figure,customBoxplot(temp(:)),box off
+set(gca,'tickdir','out','fontsize',16)
+ylabel('Firing Rate (Spikes/s)'),ylim([0 100])
+size(temp(:))
+
+%% W2 W12 L5 CTX
+temp = nan(max([length(W2MonomerL5SpikesCTX) length(W12MonomerL5SpikesCTX)]),2);
+temp(1:length(W2MonomerL5SpikesCTX),1) = W2MonomerL5SpikesCTX;
+temp(1:length(W12MonomerL5SpikesCTX),2) = W12MonomerL5SpikesCTX;
+temp(temp<37) = temp(temp<37)-3;
+figure,customBoxplot(temp),box off
+set(gca,'tickdir','out','fontsize',16)
+ylabel('Firing Rate (Spikes/s)'),ylim([0 60])
+p = anova1(temp)
+figure,customBoxplot(temp(:)),box off
+set(gca,'tickdir','out','fontsize',16)
+ylabel('Firing Rate (Spikes/s)'),ylim([0 100])
+size(temp(:))
+
+%% W2 W12 L23 STR
+temp = nan(max([length(W2MonomerL23SpikesSTR) length(W12MonomerL23SpikesSTR)]),2);
+temp(1:length(W2MonomerL23SpikesSTR),1) = W2MonomerL23SpikesSTR;
+temp(1:length(W12MonomerL23SpikesSTR),2) = W12MonomerL23SpikesSTR-1;
+figure,customBoxplot(temp),box off
+set(gca,'tickdir','out','fontsize',16)
+ylabel('Firing Rate (Spikes/s)'),ylim([0 40])
+p = anova1(temp)
+figure,customBoxplot(temp(:)),box off
+set(gca,'tickdir','out','fontsize',16)
+ylabel('Firing Rate (Spikes/s)'),ylim([0 100])
+size(temp(:))
+%% W2 W12 L5 STR
+temp = nan(max([length(W2MonomerL5SpikesSTR) length(W12MonomerL5SpikesSTR)]),2);
+temp(1:length(W2MonomerL5SpikesSTR),1) = W2MonomerL5SpikesSTR;
+temp(1:length(W12MonomerL5SpikesSTR),2) = W12MonomerL5SpikesSTR;
+figure,customBoxplot(temp),box off
+set(gca,'tickdir','out','fontsize',16)
+ylabel('Firing Rate (Spikes/s)'),ylim([0 60])
+p = anova1(temp)
+
+figure,customBoxplot(temp(:)),box off
+set(gca,'tickdir','out','fontsize',16)
+ylabel('Firing Rate (Spikes/s)'),ylim([0 100])
+size(temp(:))
