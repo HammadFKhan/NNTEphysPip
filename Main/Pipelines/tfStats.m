@@ -1,8 +1,8 @@
 function stats = tfStats(TimeFreq)
 stats = [];
-L23 = TimeFreq.tf.depth.L23;
+L23 = TimeFreq.tfRun.depth.L23;
 % L4 = TimeFreq.tf.depth.L4;
-L5 = TimeFreq.tf.depth.L5;
+L5 = TimeFreq.tfRun.depth.L5;
 
 layersTheta = [L23.theta.itpc;L5.theta.itpc];
 xTheta = [repmat({'L2/3 theta'},length(L23.theta.itpc), 1);repmat({'L5-theta'},length(L5.theta.itpc), 1)];
@@ -32,13 +32,11 @@ scatter(x,layers,'filled','k')
 % 
 % figure,boxplot(freq,xl,'PlotStyle','compact')
 % Export stat structure
-% stats.layersTheta = layersTheta;
-% stats.xTheta = xTheta;
-% stats.xBeta = xBeta;
-% stats.xGamma = xGamma;
-% stats.layers = layers;
-% stats.x = x;
-% 
+stats.thetaDepth = [L23.theta.itpc,L5.theta.itpc];
+stats.betaDepth = [L23.beta.itpc,L5.beta.itpc];
+stats.gammaDepth = [L23.gamma.itpc,L5.gamma.itpc];
+
+
 % stats.layers23 = layers23;
 % stats.layers4 = layers4;
 % stats.layers5 = layers5;
