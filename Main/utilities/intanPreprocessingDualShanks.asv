@@ -34,7 +34,7 @@ Intan = read_Intan_RHD2000_file(path,file);
 data.Fs =  Intan.frequency_parameters.amplifier_sample_rate;
 data.path = path;
 intanOffset = 1;
-% Removing first second of data
+% Removing first second of data6
 disp(['Adjusting for ' num2str(intanOffset) ' second offset']);
 Intan.amplifier_data = Intan.amplifier_data(activeElectrodes,data.Fs*intanOffset:size(Intan.amplifier_data,2));
 Intan.t_amplifier = Intan.t_amplifier(:,data.Fs*intanOffset:size(Intan.t_amplifier,2));
@@ -48,7 +48,7 @@ else
     pause(1)
     delete(kilosort_filename)
     temp = Intan.amplifier_data(s.sorted_electrodes,:);
-    kilosortPrep2(temp,path,kname)
+    kilosortPrep2(Intan.amplifier_data,path,kname)
 end
 % Now downsample data for LFP
 amplifierData{idx} = resample(Intan.amplifier_data',targetedFs,data.Fs)';
@@ -68,10 +68,9 @@ for idx = 2:L
     path = directory(idx).folder;
     file = directory(idx).name;
     Intan = read_Intan_RHD2000_file(path,file);
-    Intan.amplifier_data = Intan.amplifier_data(activeElectrodes,:);
     if idx== L %subtract the last second off the recording
         disp(['Adjusting for ' num2str(intanOffset) ' second offset']);
-        Intan.amplifier_data = Intan.amplifier_data(:,1:(size(Intan.amplifier_data,2)-data.Fs*intanOffset));
+        Intan.amplifier_data = Intan.amplifier_data(activeElectrodes,1:(size(Intan.amplifier_data,2)-data.Fs*intanOffset));
         Intan.t_amplifier = Intan.t_amplifier(:,1:(size(Intan.t_amplifier,2)-data.Fs*intanOffset));
         if exist('digitalChannels','var')
             Intan.board_dig_in_data = Intan.board_dig_in_data(:,1:(size(Intan.board_dig_in_data,2)-data.Fs*intanOffset));
@@ -81,7 +80,7 @@ for idx = 2:L
         end
     end
     temp = Intan.amplifier_data(s.sorted_electrodes,:);
-    kilosortPrep2(temp,path,kname)
+    kilosortPrep2(temp,path)
     amplifierData{idx} = resample(Intan.amplifier_data',targetedFs,data.Fs)';
     amplifierTime{idx} = downsample(Intan.t_amplifier',round(data.Fs/targetedFs),1)';
     if exist('digitalChannels','var')
