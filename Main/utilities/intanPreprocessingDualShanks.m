@@ -18,8 +18,18 @@ targetedFs = 2000;
 L = length(directory);
 % Now we build the memory map file if file doesnt exist % only for LFP/behaviour
 % data. Spikes are sent to .bin files for kilosort
-ds_filename = fullfile(pathname,['intan_ds_data_',chanMapFile(1:end-4),'.mat']); % check incremented file name for recordings
-kilosort_filename = fullfile(pathname,['kilosort_',chanMapFile(1:end-4),'.bin']);
+
+%because of kilosort we have to make seperate .bin folders for correct execution of data
+if ~exist(fullfile(pathname,chanMapFile(1:end-4)),'dir')
+    dirFlag = mkdir(pathname,chanMapFile(1:end-4));
+    if ~dirFlag
+        error('Failed directory creation')
+    end
+    disp('New directory made for .bin file!')
+end
+npathname = fullfile(pathname,chanMapFile(1:end-4));
+ds_filename = fullfile(npathname,['intan_ds_data_',chanMapFile(1:end-4),'.mat']); % check incremented file name for recordings
+kilosort_filename = fullfile(npathname,['kilosort_',chanMapFile(1:end-4),'.bin']);
 if exist(ds_filename,'file') %check if downsampled data file already exists
     warning('Preprocessed file already exists! Data will now be overrided')
 end
@@ -113,6 +123,7 @@ if intandsFlag % If we want to make an intan file (save time for hdd loading
     fprintf('done\n')
 end
 data.targetedFs = targetedFs;
-data.fpath = Intan.path;
+fpath = fileparts(ds_filename);
+data.fpath = fpath;
 clearvars -except ds_filename
 end
