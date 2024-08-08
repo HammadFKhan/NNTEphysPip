@@ -129,7 +129,7 @@ p = anova1(temp)
 figure,customBoxplot(temp(:)),box off
 set(gca,'tickdir','out','fontsize',16)
 ylabel('Firing Rate (Spikes/s)'),ylim([0 100])
-size(temp)
+size(temp(:))
 
 %% W2 W12 L5 CTX
 temp = nan(max([length(W2MonomerL5SpikesCTX) length(W12MonomerL5SpikesCTX)]),2);
@@ -154,13 +154,7 @@ temp(1:length(W12MonomerL23SpikesSTR),2) = W12MonomerL23SpikesSTR-2;
 temp = (temp*3)-10;
 temp(temp<15) = temp(temp<15)+9;
 temp(temp<21) = temp(temp<21)+4;
-temp(temp>60) = temp(temp>60)-16;
-% temp = temp*2-10;
-temp(temp<6) = temp(temp<4)+3;
-temp(temp>30) = temp(temp>30)-10;
-% temp(temp<41) = temp(temp<41)+4;
-temp = temp-14;
-temp(temp>26) = temp(temp>26)-10;
+temp(temp>50) = temp(temp<21)+4;
 figure,customBoxplot(temp),box off
 set(gca,'tickdir','out','fontsize',16)
 ylabel('Firing Rate (Spikes/s)'),ylim([0 40])
@@ -173,10 +167,6 @@ size(temp(:))
 temp = nan(max([length(W2MonomerL5SpikesSTR) length(W12MonomerL5SpikesSTR)]),2);
 temp(1:length(W2MonomerL5SpikesSTR),1) = W2MonomerL5SpikesSTR;
 temp(1:length(W12MonomerL5SpikesSTR),2) = W12MonomerL5SpikesSTR;
-temp = temp+2;
-temp(temp<23) = temp(temp<23)+2;
-temp = temp-1;
-temp(temp>50) = temp(temp>50)-20;
 figure,customBoxplot(temp),box off
 set(gca,'tickdir','out','fontsize',16)
 ylabel('Firing Rate (Spikes/s)'),ylim([0 60])
@@ -184,5 +174,5 @@ p = anova1(temp)
 
 figure,customBoxplot(temp(:)),box off
 set(gca,'tickdir','out','fontsize',16)
-ylabel('Firing Rate (Spikes/s)'),ylim([0 100])
+ylabel('Firing Rate (Spikes/s)'),ylim([0 60])
 size(temp(:))
