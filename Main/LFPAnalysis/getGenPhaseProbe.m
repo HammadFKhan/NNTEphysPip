@@ -11,6 +11,7 @@ for i = 1:IntanBehaviour.nCueHit
     output.hitLFP{i} = temp;
     [output.hitxgp{i},~] = generalized_phase(temp,1000, 0 );
 end
+
 for i = 1:IntanBehaviour.nCueMiss
     disp(['Analyzing trial: ' num2str(i)])
     missWin = floor(IntanBehaviour.cueMissTrace(i).LFPtime*1000);

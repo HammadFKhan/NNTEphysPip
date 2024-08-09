@@ -110,8 +110,6 @@ LFP.probe1= fastpreprocess_filtering(probe1,data.targetedFs);
 % LFP.probe1 = bandFilter(LFP.probe1,'depth'); % Extract LFPs based on 'depth' or 'single'
 if ~isempty(probe2)
     LFP.probe2 = fastpreprocess_filtering(probe2,data.targetedFs);
-    LFP.probe2 = bestLFP(LFP.probe2);
-    LFP.probe2 = bandFilter(LFP.probe2,'depth'); % Extract LFPs based on 'depth' or 'single'
 end
 %% Calculate generalize phase for electrodes
 

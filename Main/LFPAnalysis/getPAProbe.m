@@ -4,6 +4,8 @@ function [PA] = getPAProbe(LFP,IntanBehaviour,z_score,nPerm,plotFlag,parameters)
 % behaving primates, Nature, 2020 
 
 % Similair to getPA but adjusted for silicon probe data. (HK 06/2024)
+parameters.rows = size(LFP.hitxgp{1},1);
+parameters.cols = size(LFP.hitxgp{1},2);
 nElectrodes = parameters.rows*parameters.cols;
 
 xgpHit = LFP.hitxgp;
