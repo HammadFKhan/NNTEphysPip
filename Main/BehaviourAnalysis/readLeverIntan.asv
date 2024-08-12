@@ -242,13 +242,12 @@ IntanBehaviour.MIcutoffHit = 0.2*(IntanBehaviour.threshold-IntanBehaviour.meanRe
 
 badTrials = [];
 
-for i=1:size(IntanBehaviour.cueHit,1)
+for i=2:size(IntanBehaviour.cueHit,1)
     f = IntanBehaviour.hitTrace(i).trace - IntanBehaviour.MIcutoffHit;
     fAbove = f.*(f >= 0);
     fCross = find(diff(fAbove>0)==1);
     rewardIndex = (parameters.windowBeforePull*parameters.Fs) + 1;
     fCross(fCross>rewardIndex) = [];
-    try
     if isempty(fCross)
         badTrials = [badTrials,i];
         disp('Bad trial in Motion Allignment Detected');
@@ -268,11 +267,6 @@ for i=1:size(IntanBehaviour.cueHit,1)
         IntanBehaviour.MIHitTrace(i).time = (0:1/parameters.Fs:(size(IntanBehaviour.MIHitTrace(i).trace,1)-1)*1/parameters.Fs)' - parameters.windowBeforeMI;
         IntanBehaviour.MIHitTrace(i).LFPIndex = ([IntanBehaviour.MIHitTrace(i).MIIndex-parameters.windowBeforeMI*parameters.Fs:1:IntanBehaviour.MIHitTrace(i).MIIndex+parameters.windowAfterMI*parameters.Fs])';
         IntanBehaviour.MIHitTrace(i).LFPtime = IntanBehaviour.time(IntanBehaviour.MIHitTrace(i).MIIndex-parameters.windowBeforeMI*parameters.Fs:IntanBehaviour.MIHitTrace(i).MIIndex+parameters.windowAfterMI*parameters.Fs)';
-    end
-    catch ME
-        badTrials = [badTrials,i];
-        disp('Bad trial in Motion Allignment Detected');
-        continue
     end
 end
 

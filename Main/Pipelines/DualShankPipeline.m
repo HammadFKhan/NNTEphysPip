@@ -131,12 +131,12 @@ LFP.probe3.genPhase = getGenPhaseProbe(LFP.probe3,IntanBehaviour); %lfp,IntanBeh
 % save(sessionName,"IntanBehaviour","parameters","LFP","fpath","-v7.3");
 
 %%% PAs with zscoring
-z_score = 1;
+z_score = 0;
 nIterrate = 500;
 plotFlag = 0;
 [LFP.probe1.PA] = getPAProbe(LFP.probe1.genPhase,IntanBehaviour,z_score,nIterrate,plotFlag,parameters);
 [LFP.probe2.PA] = getPAProbe(LFP.probe2.genPhase,IntanBehaviour,z_score,nIterrate,plotFlag,parameters);
-[LFP.probe3.PA] = getPAProbe(LFP.probe3.genPhase,IntanBehaviour,0,nIterrate,plotFlag,parameters);
+[LFP.probe3.PA] = getPAProbe(LFP.probe3.genPhase,IntanBehaviour,z_score,nIterrate,plotFlag,parameters);
 
 %%% Save data cos it takes a while
 [fpath,name,exts] = fileparts(ds_filename1);
