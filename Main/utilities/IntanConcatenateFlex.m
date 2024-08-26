@@ -1,11 +1,12 @@
-% Concatenate trials
+% Concatenate trials for flex probe analysis
 addpath(genpath('main'));
 pathname = uigetdir(pwd,'Input Directory');
 pathname = fullfile(pathname);
 directory = dir(fullfile(pathname,'*.rhd')); %Parses RHD files
 count = 1;
 downsampleRate = 4;
-targetedFs = 10000;
+targetedFs = 2000;
+%
 L = length(directory);
 for idx = 1:L
     file = directory(idx).folder;
@@ -43,8 +44,8 @@ end
 % Intan.dig_in_data = single(Intan.dig_in_data);
 % Adjust electrode order by depth
 % UCLA_probe_map %legacy file call
-load UCLA_chanmap_64F.mat
-% load Flex4BSq.mat
+%load UCLA_chanmap_64F.mat
+load Flex4BSq.mat
 Intan.allIntan  = Intan.allIntan(s.sorted_electrodes,:);
 % Fix recording offset
 Intan.offset = 1; % second
@@ -54,6 +55,9 @@ Intan.allIntan = Intan.allIntan(:,Intan.offsetSample:(size(Intan.allIntan,2)-Int
 % Intan.analog_adc_data = Intan.analog_adc_data(:,Intan.offsetSample:(size(Intan.analog_adc_data,2)-Intan.offsetSample));
 Intan.t_amplifier = Intan.t_amplifier(:,Intan.offsetSample:(size(Intan.t_amplifier,2)-Intan.offsetSample));
 % Intan.dig_in_data = Intan.dig_in_data(:,Intan.offsetSample:(size(Intan.dig_in_data,2)-Intan.offsetSample));
+ds_filename = [pathname,'\intan_ds'];
+data = matfile(ds_filename,'writable',true);
+data.Intan = Intan;
 clear amplifier_data t_amplifier frequncy_parameters notes aux_input_channels...
     aux_input_data board_dig_in_channels board_dig_in_data amplifier_channels...
     board_adc_data board_adc_channels t_board_adc t_dig t_aux_input 

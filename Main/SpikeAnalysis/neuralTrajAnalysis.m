@@ -96,7 +96,6 @@ if ~isempty(Waves)
         wavePGDMIHit = horzcat(wavePGDMIHit,mean(rawWavePGDMIHit(:,win(n):win(n+1)),2));
         waveSpeedMIHit = horzcat(waveSpeedMIHit,mean(rawWaveSpeedMIHit(:,win(n):win(n+1)),2));
     end
-    
 end
 
 

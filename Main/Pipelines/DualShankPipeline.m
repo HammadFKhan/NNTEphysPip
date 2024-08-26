@@ -146,20 +146,26 @@ save(sessionName,"IntanBehaviour","parameters","LFP","fpath","-v7.3"); %,"betaWa
 %% Spikes analysis
 % For spike analysis we can built the function call to call the neccessary
 % function twice for each probe. It will make like a lot easier. 
-IntanBehaviour.parameters = parameters;
+if exist('parameters','var')
+    IntanBehaviour.parameters = parameters;
+end
 chanMap =  'chanMap64F2';
 %load chanMap64Sharp
-M2Spikes = getSpikeStruct(ds_filename1, chanMap,LFP,IntanBehaviour);
+M2Spikes = getSpikeStruct(ds_filename1, chanMap,IntanBehaviour);
 %%
+if exist('parameters','var')
+    IntanBehaviour.parameters = parameters;
+end
 chanMap =  'chanMap64Sharp';
-M1Spikes = getSpikeStruct(ds_filename2, chanMap,LFP,IntanBehaviour);
+M1Spikes = getSpikeStruct(ds_filename2, chanMap,IntanBehaviour);
 
-
+%% Trajectory Analysis of two regions
+neuralTrajAnalysis(Spikes,[],IntanBehaviour);
 
 %% LOCAL FUNCTION CALL
 
 % Function call for getting spike structure
-function Spikes = getSpikeStruct(ds_filename, chanMap,LFP,IntanBehaviour)
+function Spikes = getSpikeStruct(ds_filename, chanMap,IntanBehaviour)
 [fpath,name,exts] = fileparts(ds_filename);
 
 fprintf('Getting spikes...')
@@ -214,13 +220,14 @@ save(savepath,'Spikes','-v7.3')
 if exist('parameters','var')
     IntanBehaviour.parameters = parameters;
 end
+Spikes = rejectSpikes(Spikes,0.25,0.25,IntanBehaviour.parameters); % Reject spikes here for further analysis
+[Spikes] = sortSpkLever(Spikes,IntanBehaviour);
 if exist('goodSpkComponents','var')
     Spikes.goodSpkComponents = unique(goodSpkComponents);
 else
     Spikes.goodSpkComponents = 1:length(Spikes.Clusters);
+    disp('Manual curation skipped...')
 end
-Spikes = rejectSpikes(Spikes,0.25,0.25,IntanBehaviour.parameters); % Reject spikes here for further analysis
-[Spikes] = sortSpkLever(Spikes,IntanBehaviour);
 fprintf('done\n')
 [fpath,name,exts] = fileparts(ds_filename);
 sessionName = [fpath,'/','Spikes.mat'];
@@ -229,12 +236,26 @@ save(sessionName,"Spikes","IntanBehaviour","fpath","-v7.3"); %,"betaWaves","thet
 disp('Saved!')
 % %% Make it layer specific TODO:Gamma GED/Spike coherence
 % Spikes = layerspikeAnalysis(Spikes,IntanBehaviour,LFP);
-%% Spike field coherence using GP
-Spikes = GPSFAnalysis(Spikes,LFP.probe1.genPhase);
-%%% Run alternative function for cooling
-%Spikes = CooledGPSFAnalysis(Spikes,LFP.probe1.genPhase,IntanBehaviour);
-sessionName = [fpath,'\','SpikesSF.mat'];
-% save(sessionName,"IntanBehaviour","fpath","parameters","-v7.3");
-save(sessionName,"Spikes","IntanBehaviour","fpath","-v7.3"); %"betaWaves","thetaWaves","gammaWaves"
-disp('Saved!')
+%% Neural Trajectories
+Spikes = makeSpikeGPFA(Spikes);
+Spikes.GPFA.HitMiss.dat = [Spikes.GPFA.hit.dat,Spikes.GPFA.miss.dat];
+for n = 1:IntanBehaviour.nCueHit%+1:length(Spikes.GPFA.BaselineOpto.dat) %fix trials
+    Spikes.GPFA.HitMiss.dat(n).trialId = n;
+end
+Spikes.GPFA.MIHitFA.dat = [Spikes.GPFA.MIHit.dat,Spikes.GPFA.MIFA.dat];
+for n = length(IntanBehaviour.MIHitTrace)+1:length(Spikes.GPFA.MIHitFA.dat) %fix trials
+    Spikes.GPFA.MIHitFA.dat(n).trialId = n;
+end
+%% Neural Trajectory
+addpath(genpath('C:\Users\khan332\Documents\GitHub\NeuralTraj'));
+addpath(genpath('mat_results'));
+if exist('mat_results','dir'),rmdir('mat_results','s'),end
+[Spikes.GPFA.resultHit,Spikes.GPFA.seqTrainHit] = gpfaAnalysis(Spikes.GPFA.hit.dat,1); %Run index
+[Spikes.GPFA.resultMiss,Spikes.GPFA.seqTrainMiss] = gpfaAnalysis(Spikes.GPFA.miss.dat,2); %Run index
+[Spikes.GPFA.resultMIHit,Spikes.GPFA.seqTrainMIHit] = gpfaAnalysis(Spikes.GPFA.MIHit.dat,3); %Run index
+[Spikes.GPFA.resultMIFA,Spikes.GPFA.seqTrainMIFA] = gpfaAnalysis(Spikes.GPFA.MIFA.dat,4); %Run index
+[Spikes.GPFA.resultHitMiss,Spikes.GPFA.seqTrainHitMiss] = gpfaAnalysis(Spikes.GPFA.HitMiss.dat,5); %Run index
+[Spikes.GPFA.resultMIHitFA,Spikes.GPFA.seqTrainMIHitFA] = gpfaAnalysis(Spikes.GPFA.MIHitFA.dat,6); %Run index
+close all
+
 end
