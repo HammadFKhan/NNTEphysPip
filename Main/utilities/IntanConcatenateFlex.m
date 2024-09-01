@@ -1,6 +1,7 @@
 % Concatenate trials for flex probe analysis
 addpath(genpath('main'));
 pathname = uigetdir(pwd,'Input Directory');
+%%
 pathname = fullfile(pathname);
 directory = dir(fullfile(pathname,'*.rhd')); %Parses RHD files
 count = 1;
@@ -13,8 +14,8 @@ for idx = 1:L
     path = directory(idx).name;
     Intan = read_Intan_RHD2000_file(file,path);
     Fs =  Intan.frequency_parameters.amplifier_sample_rate;
-%     allIntan{count} = resample(Intan.amplifier_data',targetedFs,Fs)';
-    allIntan{count} = Intan.amplifier_data;
+    allIntan{count} = resample(Intan.amplifier_data',targetedFs,Fs)';
+    %allIntan{count} = Intan.amplifier_data;
 
     if ~isempty(Intan.board_adc_data)
         analog_adc_data{count} = resample(Intan.board_adc_data',targetedFs,Fs);
@@ -45,7 +46,8 @@ end
 % Adjust electrode order by depth
 % UCLA_probe_map %legacy file call
 %load UCLA_chanmap_64F.mat
-load Flex4BSq.mat
+%load Flex4BSq.mat
+load 32Channel_Flex.mat
 Intan.allIntan  = Intan.allIntan(s.sorted_electrodes,:);
 % Fix recording offset
 Intan.offset = 1; % second
