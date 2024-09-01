@@ -13,10 +13,10 @@ xgpMiss = LFP.missxgp;
 xgpMIhit = LFP.MIhitxgp;
 xgpMIFA = LFP.MIFAxgp;
 
-PA.Hit = calPhaseAlignment(xgpHit);
-PA.Miss = calPhaseAlignment(xgpMiss);
-PA.MIHit = calPhaseAlignment(xgpMIhit);
-PA.MIFA = calPhaseAlignment(xgpMIFA);
+[PA.Hit,PA.Hit_ang] = calPhaseAlignment(xgpHit);
+[PA.Miss,PA.Miss_ang] = calPhaseAlignment(xgpMiss);
+[PA.MIHit,PA.MIHit_ang] = calPhaseAlignment(xgpMIhit);
+[PA.MIFA,PA.MIFA_ang] = calPhaseAlignment(xgpMIFA);
 
 if plotFlag == 1
     figure();
