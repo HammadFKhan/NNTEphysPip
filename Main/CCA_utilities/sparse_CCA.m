@@ -25,6 +25,7 @@
 % sensory cortical coding and inter-area communication. Nature 605, 713–721
 % (2022).
 
+addpath(genpath('Main\CCA_utilities'));
 % Load data
 if ~exist('M1Spikes','var')||~exist('M2Spikes','var')
     disp('Loading data...')
@@ -33,8 +34,6 @@ end
 % Make M1 and M2 PCA dimensions based on GPFA
 [M1rh,M1rm,M1rmh,M1rmf] = trajNorm(M1Spikes,IntanBehaviour);
 [M2rh,M2rm,M2rmh,M2rmf] = trajNorm(M2Spikes,IntanBehaviour);
-
-
 %% Sparse CCA Analysis
 % Here we take the high dimensional neural trajectory data and perform CCA
 % analysis on it to see what correlations there are from the time varying
@@ -44,8 +43,18 @@ end
 % lets say we only use 80% of the data to check for validity.
 
 nModes = 5;
-iter = 10; %Number of training rounds
+iter = 1; %Number of training rounds
 dataKeep = 0.8; % Percentage we keep for CCA model
+
+timeLag = NaN;
+shufFlag = 0;
+CCA = getCCA(M1rh,M1rm,M1rmh,M1rmf,M2rh,M2rm,M2rmh,M2rmf,iter,nModes,dataKeep,timeLag,shufFlag);
+[fpath,name,exts] = fileparts(ds_filename1);
+%%
+sessionName = [fpath,'/','CCA_data.mat'];
+% save(sessionName,"IntanBehaviour","fpath","parameters","-v7.3");
+save(sessionName,"IntanBehaviour","parameters","M1Spikes","M2Spikes","CCA","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
+%%
 % Control condition where we set the time lag for CCA control. If we set it
 % as non negative we let M2 lead M1. If negative then we force M2 to lag
 % M1.
@@ -60,12 +69,6 @@ timeLag = 5;
 CCA_timeLag5 = getCCA(M1rh,M1rm,M1rmh,M1rmf,M2rh,M2rm,M2rmh,M2rmf,iter,nModes,dataKeep,timeLag,shufFlag);
 timeLag = -5;
 CCA_timeLag5neg = getCCA(M1rh,M1rm,M1rmh,M1rmf,M2rh,M2rm,M2rmh,M2rmf,iter,nModes,dataKeep,timeLag,shufFlag);
-
-%%
-iter = 1;
-timeLag = NaN;
-shufFlag = 0;
-CCA = getCCA(M1rh,M1rm,M1rmh,M1rmf,M2rh,M2rm,M2rmh,M2rmf,iter,nModes,dataKeep,timeLag,shufFlag);
 %%
 figure,
 subplot(121),imagesc(CCA.hit.rVec-mean(mean(CCA.hit.rVec))),hold on,colormap(jet)

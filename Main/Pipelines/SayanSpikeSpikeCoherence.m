@@ -67,7 +67,9 @@ figure,customBoxplot([mean(CTXtheta,2) mean(CTXbeta,2) mean(CTXgamma,2)]),title(
 figure,customBoxplot([mean(STRtheta,2) mean(STRbeta,2) mean(STRgamma,2)]),title('STR'),ylim([0 0.2]),box off,set(gca,'fontsize',16),set(gca,'tickdir','out')
 %% Layer specific
 plotfreqlayerCoherence(SpikeCoherenceStats.Mon.coherence)
+%%
 plotfreqlayerCoherence(SpikeCoherenceStats.STR.coherence)
+%%
 plotfreqlayerCoherence(SpikeCoherenceStats.CTX.coherence)
 %% L23
 figure,customBoxplot([mean(MonL23Theta,2) mean(MonL23Beta,2) mean(MonL23Gamma,2)]),title('Mon'),ylim([0 0.2]),box off,set(gca,'fontsize',16),set(gca,'tickdir','out')

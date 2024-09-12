@@ -62,7 +62,7 @@ parameters.rows = 64;
 parameters.cols = 1;
 
 [Behaviour] = readLever(parameters,data.amplifierTime);
-[IntanBehaviour] = readLeverIntan(parameters,data.amplifierTime,data.analogChannels(1,:),digitalChannelsFixed,Behaviour,1);
+[IntanBehaviour] = readLeverIntan(parameters,data.amplifierTime,data.analogChannels(1,:),data.digitalChannels,Behaviour,1);
 % Calculate ITI time for trials and reward/no reward sequence
 temp1 = arrayfun(@(x) x.LFPtime(1), IntanBehaviour.cueHitTrace);
 temp1 = vertcat(temp1,ones(1,IntanBehaviour.nCueHit)); %  write 1 for reward given
@@ -118,7 +118,7 @@ clear lfp
 % LFP filter
 set(0,'DefaultFigureWindowStyle','normal')
 LFP.probe3= fastpreprocess_filtering(probe3,data.targetedFs);
-%% Calculate generalize phase for electrodes
+%%% Calculate generalize phase for electrodes
 LFP.probe1.genPhase = getGenPhaseProbe(LFP.probe1,IntanBehaviour); %lfp,IntanBehaviour
 LFP.probe2.genPhase = getGenPhaseProbe(LFP.probe2,IntanBehaviour); %lfp,IntanBehaviour
 LFP.probe3.genPhase = getGenPhaseProbe(LFP.probe3,IntanBehaviour); %lfp,IntanBehaviour
@@ -128,11 +128,11 @@ LFP.probe3.genPhase = getGenPhaseProbe(LFP.probe3,IntanBehaviour); %lfp,IntanBeh
 % [fpath,name,exts] = fileparts(ds_filename);
 % sessionName = [fpath,'/','LFP.mat'];
 % % save(sessionName,"IntanBehaviour","fpath","parameters","-v7.3");
-% save(sessionName,"IntanBehaviour","parameters","LFP","fpath","-v7.3");
+% save(sessionName,"IntanBehaviour","parameters","LFP","fpath","-v7.3");  
 
 %%% PAs with zscoring
-z_score = 0;
-nIterrate = 500;
+z_score = 1;
+nIterrate = 1000;
 plotFlag = 0;
 [LFP.probe1.PA] = getPAProbe(LFP.probe1.genPhase,IntanBehaviour,z_score,nIterrate,plotFlag,parameters);
 [LFP.probe2.PA] = getPAProbe(LFP.probe2.genPhase,IntanBehaviour,z_score,nIterrate,plotFlag,parameters);
@@ -160,7 +160,7 @@ chanMap =  'chanMap64Sharp';
 M1Spikes = getSpikeStruct(ds_filename2, chanMap,IntanBehaviour);
 
 %% Trajectory Analysis of two regions
-neuralTrajAnalysis(Spikes,[],IntanBehaviour);
+neuralTrajAnalysis(M1Spikes,[],IntanBehaviour);
 
 %% LOCAL FUNCTION CALL
 

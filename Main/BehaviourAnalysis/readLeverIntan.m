@@ -300,12 +300,16 @@ for i=1:IntanBehaviour.nMiss
         fCross = rewardIndex;
     end
     IntanBehaviour. MIFATrace(i).MIIndex = IntanBehaviour.missTrace(i).LFPIndex(fCross(end));
+    if IntanBehaviour. MIFATrace(i).MIIndex-parameters.windowBeforeMI*parameters.Fs<0
+        continue;
+    end
     IntanBehaviour. MIFATrace(i).trace = IntanBehaviour.leverTrace(IntanBehaviour. MIFATrace(i).MIIndex-parameters.windowBeforeMI*parameters.Fs:IntanBehaviour. MIFATrace(i).MIIndex+parameters.windowAfterMI*parameters.Fs)';
     IntanBehaviour. MIFATrace(i).time = (0:1/parameters.Fs:(size(IntanBehaviour. MIFATrace(i).trace,1)-1)*1/parameters.Fs)' - parameters.windowBeforeMI;
     IntanBehaviour. MIFATrace(i).LFPIndex = ([IntanBehaviour. MIFATrace(i).MIIndex-parameters.windowBeforeMI*parameters.Fs:1:IntanBehaviour. MIFATrace(i).MIIndex+parameters.windowAfterMI*parameters.Fs])';
     IntanBehaviour. MIFATrace(i).LFPtime = IntanBehaviour.time(IntanBehaviour. MIFATrace(i).MIIndex-parameters.windowBeforeMI*parameters.Fs:IntanBehaviour. MIFATrace(i).MIIndex+parameters.windowAfterMI*parameters.Fs)';
 end
-
+badTrials = arrayfun(@(x) isempty(x.trace), IntanBehaviour.MIFATrace);
+IntanBehaviour.MIFATrace(badTrials) = [];
 if plotOption == 1
     % Plotting Lever traces for Cue Hit 
     figure('Name','Average Lever Traces for Cue Hits and Misses');
