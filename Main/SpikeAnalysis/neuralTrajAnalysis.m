@@ -115,10 +115,18 @@ mreactionTimeslow = interp1(t,1:length(t),mean(rawreactionTime(slowTrials)),'nea
 mreactionTimefast = interp1(t,1:length(t),mean(rawreactionTime(fastTrials)),'nearest');
 rf = meanTraj(X,hittrials(slowTrials),6)'; %trajectory variable and predefined conditional trial indexes
 rs = meanTraj(X,hittrials(fastTrials),6)'; %trajectory variable and predefined conditional trial indexes
+
+rb = meanTraj(X,hittrials(Behaviour.hitTemp>-10),6)'; 
+rc = meanTraj(X,hittrials(Behaviour.hitTemp<=-10),6)'; 
+
 %%% calculate initial condition differences in rf and rs
 % rfrsinit = abs(rf(1,:)-rs(1,:));
 % rs = rs-rfrrsinitl;
 [neuralsimRT,neuraldiffRT,rprimef,rprimes] = neuralTrajDiff(rf,rs);
+%%
+[neuralsimRT,neuraldiffRT,rprimef,rprimes] = neuralTrajDiff(rb,rc);
+%%
+
 % reference to all hit trial initial state
 % [neuralTrajfh,rprimefinit,rprimehinit] = neuralTrajDiff(rf,rh,'initial');
 % [neuralTrajsh,rprimesinit,rprimehinit] = neuralTrajDiff(rs,rh,'initial');
@@ -211,7 +219,7 @@ idx = discretize(reactionTime,20);
 for n = 1:length(hittrials)
 dat = meanTraj(X,n,6); %grab and calculate distance per reaction time
 x = dat(1,1:reactionTime(n)); y = dat(2,1:reactionTime(n)); z = dat(3,1:reactionTime(n));
-PQ(n) = sqrt((x(end)-x(stimStart))^2+(y(end)-y(stimStart))^2+(z(end)-z(stimStart))^2); %Calculate Speed
+PQ(n) = sqrt((x(end)-x(1))^2+(y(end)-y(1))^2+(z(end)-z(1))^2); %Calculate Speed
 dat1 = vertcat(zeros(1,6),rprimeh)'; % Grab norm vector alignment data
 x = dat1(1,1:reactionTime(n)); y = dat1(2,1:reactionTime(n)); z = dat1(3,1:reactionTime(n));
 TrajAngle(n) = mean(mean([x;y;z])); % Calculates how well aligned trajectories are for all trials
@@ -219,6 +227,30 @@ if ~isempty(Waves)
     dPGD(n) = mean(diff(wavePGDhit(n,stimStart:reactionTime(n))));
 end
 end
+%%
+X = neuralTrajHitMiss;
+PQ = [];
+idx = discretize(reactionTime,20);
+
+for n = 1:length(hittrials)
+dat = meanTraj(X,n,6); %grab and calculate distance per reaction time
+x = dat(1,:); y = dat(2,:); z = dat(3,:);
+PQ(n) = sqrt((x(end)-x(1))^2+(y(end)-y(1))^2+(z(end)-z(1))^2); %Calculate Distance
+dat1 = vertcat(zeros(1,6),rprimeh)'; % Grab norm vector alignment data
+x = dat1(1,1:reactionTime(n)); y = dat1(2,1:reactionTime(n)); z = dat1(3,1:reactionTime(n));
+TrajAngle(n) = mean(mean([x;y;z])); % Calculates how well aligned trajectories are for all trials
+if ~isempty(Waves)
+    dPGD(n) = mean(diff(wavePGDhit(n,stimStart:reactionTime(n))));
+end
+end
+%%
+dat1 = PQ(Behaviour.hitTemp>-10);
+dat2 = PQ(Behaviour.hitTemp<-10);
+temp = nan(max([length(dat1) length(dat2)]),2);
+temp(1:length(dat1),1) = dat1;
+temp(1:length(dat2),2) = dat2;
+
+figure,customBoxplot(temp)
 %%
 PQ = (PQ./rawreactionTime)';
 
@@ -271,42 +303,78 @@ set(gca,'TickDir','out'),set(gca,'fontsize',16),box off
 xlabel('Phase gradient'),ylabel('Reaction time (s)')
 legend(num2str(mdl.Rsquared.Ordinary),num2str(mdl.Coefficients.pValue(2)))
 %%
-
+twoD = 1;
 showplot = 1;
 if showplot
-    %%% Hit vs Miss
-    drawArrow = @(x,y,color) quiver( x(1),y(1),x(2)-x(1),y(2)-y(1),0,'Color',color,'LineWidth',2,'MaxHeadSize',0.5);    
-    figure,hold on
-    clf
-    % Updating the line
-    x = rh(:,1);y = rh(:,2);z = rh(:,3);
-    plot3(x,y,z,'-','color',[147/255 149/255 152/255],'lineWidth',1);hold on
-    scatter3(x(stimStart,:),y(stimStart,:),z(stimStart,:),15,'g','filled')
-    scatter3(x(mreactionTime),y(mreactionTime),z(mreactionTime),15,'b','filled')
-    scatter3(x(mrewardTime),y(mrewardTime),z(mrewardTime),15,'r','filled')
-    %scatter3(x(1:5:150,:),y(1:5:150,:),z(1:5:150,:),'k')
-    x = rm(:,1);y = rm(:,2);z = rm(:,3);
-    plot3(x,y,z,'-','color',[217/255 83/255 25/255],'lineWidth',1);
-    hold on,axis tight
-    scatter3(x(stimStart,:),y(1,:),z(1,:),15,'r','filled')
-    scatter3(x(mreactionTime,:),y(mreactionTime,:),z(mreactionTime,:),15,'g','filled')
-    %%% Hit vs FA
-    figure
-    clf
-    % Updating the line
-    x = rmih(:,1);y = rmih(:,2);z = rmih(:,3);
-    plot3(x,y,z,'-','color',[252/255 186/255 3/255],'lineWidth',1);
-    hold on,axis tight
-    scatter3(x(stimStart,:),y(stimStart,:),z(stimStart,:),15,'g','filled')
-    scatter3(x(mreactionTime),y(mreactionTime),z(mreactionTime),15,'b','filled')
-    scatter3(x(mrewardTime),y(mrewardTime),z(mrewardTime),15,'r','filled')
-    x = rmif(:,1);y = rmif(:,2);z = rmif(:,3);
-    plot3(x,y,z,'-','color',[3/255 190/255 252/255],'lineWidth',1);
-    hold on,axis tight
-    scatter3(x(1,:),y(1,:),z(1,:),15,'r','filled')
-    scatter3(x(stimStart,:),y(stimStart,:),z(stimStart,:),15,'g','filled')
-    %     legend('Hit','','','','False Alarms')
-    
+    if twoD
+        %%% Hit vs Miss
+        drawArrow = @(x,y,color) quiver( x(1),y(1),x(2)-x(1),y(2)-y(1),0,'Color',color,'LineWidth',2,'MaxHeadSize',0.5);
+        figure,hold on
+        clf
+        % Updating the line
+        x = rb(:,1);y = rb(:,2);z = rb(:,3);
+        plot3(x,y,z,'-','color',[147/255 149/255 152/255],'lineWidth',2);hold on
+        scatter3(x(stimStart,:),y(stimStart,:),z(stimStart,:),15,'g','filled')
+        %scatter3(x(mreactionTime),y(mreactionTime),z(mreactionTime),15,'b','filled')
+        %scatter3(x(mrewardTime),y(mrewardTime),z(mrewardTime),15,'r','filled')
+        scatter3(x(1:5:150,:),y(1:5:150,:),z(1:5:150,:),'k')
+        x = rc(:,1);y = rc(:,2);z = rc(:,3);
+        plot3(x,y,z,'-','color',[0/255 114/255 189/255],'lineWidth',2);
+        hold on,axis tight
+        scatter3(x(stimStart,:),y(stimStart,:),z(stimStart,:),15,'r','filled')
+        scatter3(x(1:5:150,:),y(1:5:150,:),z(1:5:150,:),'k')
+        %scatter3(x(mreactionTime,:),y(mreactionTime,:),z(mreactionTime,:),15,'g','filled')
+        %%% Hit vs FA
+        figure
+        clf
+        % Updating the line
+        x = rmih(:,1);y = rmih(:,2);z = rmih(:,3);
+        plot3(x,y,z,'-','color',[252/255 186/255 3/255],'lineWidth',1);
+        hold on,axis tight
+        scatter3(x(stimStart,:),y(stimStart,:),z(stimStart,:),15,'g','filled')
+        %scatter3(x(mreactionTime),y(mreactionTime),z(mreactionTime),15,'b','filled')
+        %scatter3(x(mrewardTime),y(mrewardTime),z(mrewardTime),15,'r','filled')
+        scatter3(x(1:5:150,:),y(1:5:150,:),z(1:5:150,:),'k')
+        x = rmif(:,1);y = rmif(:,2);z = rmif(:,3);
+        plot3(x,y,z,'-','color',[3/255 190/255 252/255],'lineWidth',1);
+        hold on,axis tight
+        scatter3(x(1,:),y(1,:),z(1,:),15,'r','filled')
+        scatter3(x(stimStart,:),y(stimStart,:),z(stimStart,:),15,'g','filled')
+    else
+        %%% Hit vs Miss
+        drawArrow = @(x,y,color) quiver( x(1),y(1),x(2)-x(1),y(2)-y(1),0,'Color',color,'LineWidth',2,'MaxHeadSize',0.5);
+        figure,hold on
+        clf
+        % Updating the line
+        x = rh(:,1);y = rh(:,2);z = rh(:,3);
+        plot3(x,y,z,'-','color',[147/255 149/255 152/255],'lineWidth',1);hold on
+        scatter3(x(stimStart,:),y(stimStart,:),z(stimStart,:),15,'g','filled')
+        scatter3(x(mreactionTime),y(mreactionTime),z(mreactionTime),15,'b','filled')
+        scatter3(x(mrewardTime),y(mrewardTime),z(mrewardTime),15,'r','filled')
+        scatter3(x(1:5:150,:),y(1:5:150,:),z(1:5:150,:),'k')
+        x = rm(:,1);y = rm(:,2);z = rm(:,3);
+        plot3(x,y,z,'-','color',[217/255 83/255 25/255],'lineWidth',1);
+        hold on,axis tight
+        scatter3(x(stimStart,:),y(1,:),z(1,:),15,'r','filled')
+        scatter3(x(mreactionTime,:),y(mreactionTime,:),z(mreactionTime,:),15,'g','filled')
+        %%% Hit vs FA
+        figure
+        clf
+        % Updating the line
+        x = rmih(:,1);y = rmih(:,2);z = rmih(:,3);
+        plot3(x,y,z,'-','color',[252/255 186/255 3/255],'lineWidth',1);
+        hold on,axis tight
+        scatter3(x(stimStart,:),y(stimStart,:),z(stimStart,:),15,'g','filled')
+        %scatter3(x(mreactionTime),y(mreactionTime),z(mreactionTime),15,'b','filled')
+        %scatter3(x(mrewardTime),y(mrewardTime),z(mrewardTime),15,'r','filled')
+        scatter3(x(1:5:150,:),y(1:5:150,:),z(1:5:150,:),'k')
+        x = rmif(:,1);y = rmif(:,2);z = rmif(:,3);
+        plot3(x,y,z,'-','color',[3/255 190/255 252/255],'lineWidth',1);
+        hold on,axis tight
+        scatter3(x(1,:),y(1,:),z(1,:),15,'r','filled')
+        scatter3(x(stimStart,:),y(stimStart,:),z(stimStart,:),15,'g','filled')
+        %     legend('Hit','','','','False Alarms')
+    end
     %% Plot 2d PCA space with wave properties
     % Hit
     figure,subplot(131),plot(t,squeeze(neuralTrajHitMiss(1,:,hittrials)),'Color',[0 0 0 .25]);set(gca,'TickDir','out','fontsize',16),box off
