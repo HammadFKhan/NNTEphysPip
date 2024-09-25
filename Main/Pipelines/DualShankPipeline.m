@@ -11,14 +11,14 @@ addpath(genpath('Main'));
 addpath(genpath('npy-matlab'));
 addpath(genpath('spikes-master'));
 intandsFlag = 1; %make LFPs
-activeElectrodes = 1:64;
+activeElectrodes = 33:96;
 %chanMapFile = 'UCLA_chanmap_fixed.mat'; %UCLA Sharp
 chanMapFile = 'UCLA_chanmap_64F2.mat';
 if ~exist('pathname','var')
     pathname = uigetdir(pwd,'Input Directory');
 end
 ds_filename1 = intanPreprocessingDualShanks(pathname,chanMapFile,intandsFlag,activeElectrodes);
-activeElectrodes = 65:128;
+activeElectrodes = 97:160;
 chanMapFile = 'UCLA_chanmap_fixed.mat'; %UCLA Sharp
 %chanMapFile = 'UCLA_chanmap_64F2.mat';
 ds_filename2 = intanPreprocessingDualShanks(pathname,chanMapFile,intandsFlag,activeElectrodes);
@@ -62,7 +62,7 @@ parameters.rows = 64;
 parameters.cols = 1;
 
 [Behaviour] = readLever(parameters,data.amplifierTime);
-[IntanBehaviour] = readLeverIntan(parameters,data.amplifierTime,data.analogChannels(1,:),data.digitalChannels,Behaviour,1);
+[IntanBehaviour] = readLeverIntan(parameters,data.amplifierTime,data.analogChannels(2,:),data.digitalChannels,Behaviour,1);
 % Calculate ITI time for trials and reward/no reward sequence
 temp1 = arrayfun(@(x) x.LFPtime(1), IntanBehaviour.cueHitTrace);
 temp1 = vertcat(temp1,ones(1,IntanBehaviour.nCueHit)); %  write 1 for reward given
@@ -152,14 +152,14 @@ end
 chanMap =  'chanMap64F2';
 %load chanMap64Sharp
 M2Spikes = getSpikeStruct(ds_filename1, chanMap,IntanBehaviour);
-%%
+%%%
 if exist('parameters','var')
     IntanBehaviour.parameters = parameters;
 end
 chanMap =  'chanMap64Sharp';
 M1Spikes = getSpikeStruct(ds_filename2, chanMap,IntanBehaviour);
 
-%% Trajectory Analysis of two regions
+%% Trajectory Analysis of two regions (ONGOING)
 neuralTrajAnalysis(M1Spikes,[],IntanBehaviour);
 
 %% LOCAL FUNCTION CALL
