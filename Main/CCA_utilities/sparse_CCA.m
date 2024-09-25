@@ -43,14 +43,14 @@ end
 % lets say we only use 80% of the data to check for validity.
 
 nModes = 5;
-iter = 1; %Number of training rounds
+iter = 10; %Number of training rounds
 dataKeep = 0.8; % Percentage we keep for CCA model
 
 timeLag = NaN;
 shufFlag = 0;
 CCA = getCCA(M1rh,M1rm,M1rmh,M1rmf,M2rh,M2rm,M2rmh,M2rmf,iter,nModes,dataKeep,timeLag,shufFlag);
 [fpath,name,exts] = fileparts(ds_filename1);
-%%
+%%%
 sessionName = [fpath,'/','CCA_data.mat'];
 % save(sessionName,"IntanBehaviour","fpath","parameters","-v7.3");
 save(sessionName,"IntanBehaviour","parameters","M1Spikes","M2Spikes","CCA","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
@@ -133,8 +133,23 @@ legend('Original','200ms M1 Lags','200ms M2 Lags','400ms M1 Lags','400ms M2 Lags
 %% Response compared to shuffle response
 dat = arrayfun(@(x) x.rVec(1,:),CCA.hit,'UniformOutput',false);
 dat = vertcat(dat{:});
+hitCCA = abs(mean(dat(:,75:end),2)-mean(dat(:,1:74),2));
 
-figure,customBoxplot(std(dat,[],2))
+dat = arrayfun(@(x) x.rVec(1,:),CCA.miss,'UniformOutput',false);
+dat = vertcat(dat{:});
+missCCA = abs(mean(dat(:,75:end),2)-mean(dat(:,1:74),2));
+
+dat = arrayfun(@(x) x.rVec(1,:),CCA.MIhit,'UniformOutput',false);
+dat = vertcat(dat{:});
+MIhitCCA = abs(mean(dat(:,75:end),2)-mean(dat(:,1:74),2));
+
+dat = arrayfun(@(x) x.rVec(1,:),CCA.MIFA,'UniformOutput',false);
+dat = vertcat(dat{:});
+MIFACCA = abs(nanmean(dat(:,75:end),2)-nanmean(dat(:,1:74),2));
+
+figure,
+subplot(121),customBoxplot([hitCCA, missCCA])
+subplot(122),customBoxplot([MIhitCCA, MIFACCA])
 %% LOCAL FUNCTIONS
 function r = meanTraj(X,trials,components)
 r = X(:,:,trials);
