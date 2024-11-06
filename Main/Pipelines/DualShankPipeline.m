@@ -48,7 +48,7 @@ data = matfile(ds_filename1); % ds_filename comes from loadme.mat
 % the new directory path
 parameters.experiment = 'cue'; % self - internally generated, cue - cue initiated
 parameters.opto = 0; % 1 - opto ON , 0 - opto OFF
-parameters.cool = 0; % No Cool 
+parameters.cool = 1; % No Cool 
 parameters.windowBeforePull = 1.5; % in seconds
 parameters.windowAfterPull = 1.5; % in seconds
 parameters.windowBeforeCue = 1.5; % in seconds
@@ -131,7 +131,7 @@ LFP.probe3.genPhase = getGenPhaseProbe(LFP.probe3,IntanBehaviour); %lfp,IntanBeh
 % save(sessionName,"IntanBehaviour","parameters","LFP","fpath","-v7.3");  
 
 %%% PAs with zscoring
-z_score = 1;
+z_score = 0;
 nIterrate = 1000;
 plotFlag = 0;
 [LFP.probe1.PA] = getPAProbe(LFP.probe1.genPhase,IntanBehaviour,z_score,nIterrate,plotFlag,parameters);
