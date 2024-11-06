@@ -29,7 +29,7 @@ data = matfile(ds_filename); % ds_filename comes from loadme.mat
 % the new directory path
 parameters.experiment = 'cue'; % self - internally generated, cue - cue initiated
 parameters.opto = 0; % 1 - opto ON , 0 - opto OFF
-parameters.cool = 0; % No Cool 
+parameters.cool = 1; % No Cool 
 parameters.windowBeforePull = 1.5; % in seconds
 parameters.windowAfterPull = 1.5; % in seconds
 parameters.windowBeforeCue = 1.5; % in seconds
@@ -218,7 +218,7 @@ end
 %%% delete empty spikes
 temp = arrayfun(@(x) isempty(x.cluster), Spikes.Clusters);
 Spikes.Clusters(temp) = []; 
-%% Calculate trial PSTH for lever
+%%% Calculate trial PSTH for lever
 Spikes = leverPSTH(Spikes,IntanBehaviour);
 %%% save spike output data to load into gui
 savepath = fullfile(path,['spks4sorting','.mat']);
@@ -322,7 +322,7 @@ Spikes.GPFA.MIHitFA.dat = [Spikes.GPFA.MIHit.dat,Spikes.GPFA.MIFA.dat];
 for n = length(IntanBehaviour.MIHitTrace)+1:length(Spikes.GPFA.MIHitFA.dat) %fix trials
     Spikes.GPFA.MIHitFA.dat(n).trialId = n;
 end
-%%
+%%%
 addpath(genpath('C:\Users\khan332\Documents\GitHub\NeuralTraj'));
 addpath(genpath('mat_results'));
 if exist('mat_results','dir'),rmdir('mat_results','s'),end
@@ -343,11 +343,6 @@ for n = 1:111
     subplot(132),plot(-74*20:20:20*75,Spikes.GPFA.seqTrainHit(n).xorth(2,:),'Color',[0 0 0 0.4]),hold on,box off,set(gca,'fontsize',18),xlim([-1500 1500]),ylim([-1 2])
     subplot(133),plot(-74*20:20:20*75,Spikes.GPFA.seqTrainHit(n).xorth(3,:),'Color',[0 0 0 0.4]),hold on,box off,set(gca,'fontsize',18),xlim([-1500 1500]),ylim([-1 3])
 end
-
-
-
-
-
 %% ----------------------- Some local function to make things easier ----------------------- %%
 % Hit trials
 function output = leverLFPAnalysis(linearProbe,Behaviour) % LFP of linear channel and Behaviour struct
