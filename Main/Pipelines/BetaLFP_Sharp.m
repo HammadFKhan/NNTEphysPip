@@ -220,4 +220,7 @@ comVect = total(1:25,:);
 [X1] = featureProject(comVect,5,0);
 figure,
     scatter3(X1(:,1),X1(:,2),X1(:,3),10,[236 0 140]/255,'filled'); hold on; %[43 57 144]/255
-    
+%%
+figure,histogram(l23_1,0:0.05:1,'normalization','probability')
+hold on
+histogram(l5_1,0:0.1:1,'normalization','probability')
