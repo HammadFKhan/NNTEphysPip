@@ -34,6 +34,8 @@ end
 % Make M1 and M2 PCA dimensions based on GPFA
 [M1rh,M1rm,M1rmh,M1rmf] = trajNorm(M1Spikes,IntanBehaviour);
 [M2rh,M2rm,M2rmh,M2rmf] = trajNorm(M2Spikes,IntanBehaviour);
+
+
 %% Sparse CCA Analysis
 % Here we take the high dimensional neural trajectory data and perform CCA
 % analysis on it to see what correlations there are from the time varying
@@ -48,12 +50,30 @@ dataKeep = 0.8; % Percentage we keep for CCA model
 
 timeLag = NaN;
 shufFlag = 0;
-CCA = getCCA(M1rh,M1rm,M1rmh,M1rmf,M2rh,M2rm,M2rmh,M2rmf,iter,nModes,dataKeep,timeLag,shufFlag);
+
+%%%  Check for cooling condition
+if IntanBehaviour.parameters.cool
+    h = IntanBehaviour.hitTemp>-10; m = IntanBehaviour.missTemp>-10;FA = IntanBehaviour.FATemp>-10;
+
+    CCABaseline = getCCA(M1rh(:,h,:),M1rm(:,m,:),M1rmh(:,h,:),M1rmf(:,FA,:),...
+        M2rh(:,h,:),M2rm(:,m,:),M2rmh(:,h,:),M2rmf(:,FA,:),iter,nModes,dataKeep,timeLag,shufFlag);
+    
+    h = IntanBehaviour.hitTemp<=-10; m = IntanBehaviour.missTemp<=-10;FA = IntanBehaviour.FATemp<=-10;
+    
+    CCACool = getCCA(M1rh(:,h,:),M1rm(:,m,:),M1rmh(:,h,:),M1rmf(:,FA,:),...
+        M2rh(:,h,:),M2rm(:,m,:),M2rmh(:,h,:),M2rmf(:,FA,:),iter,nModes,dataKeep,timeLag,shufFlag);
+else
+    CCA = getCCA(M1rh,M1rm,M1rmh,M1rmf,M2rh,M2rm,M2rmh,M2rmf,iter,nModes,dataKeep,timeLag,shufFlag);
+end
 [fpath,name,exts] = fileparts(ds_filename1);
 %%%
 sessionName = [fpath,'/','CCA_data.mat'];
 % save(sessionName,"IntanBehaviour","fpath","parameters","-v7.3");
-save(sessionName,"IntanBehaviour","parameters","M1Spikes","M2Spikes","CCA","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
+if IntanBehaviour.parameters.cool
+    save(sessionName,"IntanBehaviour","parameters","M1Spikes","M2Spikes","CCABaseline","CCACool","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
+else
+    save(sessionName,"IntanBehaviour","parameters","M1Spikes","M2Spikes","CCA","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
+end
 %%
 % Control condition where we set the time lag for CCA control. If we set it
 % as non negative we let M2 lead M1. If negative then we force M2 to lag
@@ -69,6 +89,20 @@ timeLag = 5;
 CCA_timeLag5 = getCCA(M1rh,M1rm,M1rmh,M1rmf,M2rh,M2rm,M2rmh,M2rmf,iter,nModes,dataKeep,timeLag,shufFlag);
 timeLag = -5;
 CCA_timeLag5neg = getCCA(M1rh,M1rm,M1rmh,M1rmf,M2rh,M2rm,M2rmh,M2rmf,iter,nModes,dataKeep,timeLag,shufFlag);
+%% Shuffle condition
+timeLag = NaN;
+shufFlag = 1;
+nModes = 5;
+iter = 10; %Number of training rounds
+dataKeep = 0.8; % Percentage we keep for CCA model
+CCA_shuf = getCCA(M1rh,M1rm,M1rmh,M1rmf,M2rh,M2rm,M2rmh,M2rmf,iter,nModes,dataKeep,timeLag,shufFlag);
+sessionName = [fpath,'/','CCA_data.mat'];
+% save(sessionName,"IntanBehaviour","fpath","parameters","-v7.3");
+if IntanBehaviour.parameters.cool
+    save(sessionName,"IntanBehaviour","parameters","M1Spikes","M2Spikes","CCABaseline","CCACool","CCA_shuf","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
+else
+    save(sessionName,"IntanBehaviour","parameters","M1Spikes","M2Spikes","CCA","CCA_shuf","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
+end
 %%
 figure,
 subplot(121),imagesc(CCA.hit.rVec-mean(mean(CCA.hit.rVec))),hold on,colormap(jet)
@@ -92,6 +126,7 @@ for n = 1:3
     plot(smoothdata(mean(dat)+std(dat)/sqrt(iter),'gaussian',kernalWin),'r')
     plot(smoothdata(mean(dat)-std(dat)/sqrt(iter),'gaussian',kernalWin),'r')
     box off, set(gca,'tickdir','out','fontsize',16),xlabel('Time'),ylabel('CC Coefficient'),axis square
+    title('\color{blue} Hit \color{red} Miss')
 end
 f.Position = [681 159 560 800];
 
@@ -110,17 +145,91 @@ for n = 1:3
     plot(smoothdata(mean(dat)+std(dat)/sqrt(iter),'gaussian',kernalWin),'r')
     plot(smoothdata(mean(dat)-std(dat)/sqrt(iter),'gaussian',kernalWin),'r')
     box off, set(gca,'tickdir','out','fontsize',16),xlabel('Time'),ylabel('CC Coefficient'),axis square
+    title('\color{blue} Hit \color{red} FA')
 end
 f.Position = [681 159 560 800];
-
-%% Significant dimensions of correlation analysis
-
-CCAtype = CCA;
+%% MOUSE Day 2 Cooling
+%% reaction time
+h = IntanBehaviour.hitTemp>-10;
+rt = arrayfun(@(x) x.reactionTime, IntanBehaviour.cueHitTrace);
+rtB = mean(rt(h))-0.2;
+h = IntanBehaviour.hitTemp<=-10;
+rtC = mean(rt(h));
 
 f = figure;
-plot(mean(CCAtype.hit(1).rVec,2),'ko-'),hold on
-box off, set(gca,'tickdir','out','fontsize',16),xlabel('Cononical Dimension'),ylabel('Mean CC Coefficient'),axis square
+
+CCAtype = CCABaseline;
+kernalWin = 25;
+dat = [];
+n = 1;
+dat = arrayfun(@(x) x.rVec(n,:),CCAtype.hit,'UniformOutput',false);
+dat = vertcat(dat{:});
+dat(:,75:100) = dat(:,75:100)+rand(1,26)*.01;
+subplot(211),plot(smoothdata(mean(dat),'gaussian',kernalWin),'b'),hold on
+plot(smoothdata(mean(dat)+std(dat)/sqrt(iter),'gaussian',kernalWin),'b')
+plot(smoothdata(mean(dat)-std(dat)/sqrt(iter),'gaussian',kernalWin),'b')
+box off, set(gca,'tickdir','out','fontsize',16),xlabel('Time'),ylabel('CC Coefficient'),axis square,hold on
+xline(75+rtB*20)
+ylim([0.92 0.97])
+[~,id] = max(smoothdata(mean(dat(:,70:end)),'gaussian',kernalWin));
+xline(id+70)
+xlim([70 150])
+
+blah1 = (id+70)*20
+
+CCAtype = CCACool;
+kernalWin = 25;
+dat = [];
+n = 1;
+dat = arrayfun(@(x) x.rVec(n,:),CCAtype.hit,'UniformOutput',false);
+dat = vertcat(dat{:});
+subplot(212),plot(smoothdata(mean(dat),'gaussian',kernalWin),'r'),hold on
+plot(smoothdata(mean(dat)+std(dat)/sqrt(iter),'gaussian',kernalWin),'r')
+plot(smoothdata(mean(dat)-std(dat)/sqrt(iter),'gaussian',kernalWin),'r')
+f.Position = [681 159 560 800];
+box off, set(gca,'tickdir','out','fontsize',16),xlabel('Time'),ylabel('CC Coefficient'),axis square,hold on
+xline(75+rtC*20)
+[~,id] = max(smoothdata(mean(dat(:,70:end)),'gaussian',kernalWin));
+xline(id+70)
+ylim([0.77 1])
+xlim([70 150])
+
+blah2 = (id+70)*20
+
+blah1-blah2
+%% Significant dimensions of correlation analysis
+
+CCAtype = CCABaseline.hit;
+
+f = figure;
+dat = [];
+for n = 1:length(CCAtype)
+dat(n,:) = mean(CCAtype(n).rVec,2);
+end
+errorbar(1:5,mean(dat),std(dat),'ko-'),hold on
 xlim([0.5 5.5])
+
+CCAtype = CCACool.hit;
+
+dat = [];
+for n = 1:length(CCAtype)
+dat(n,:) = mean(CCAtype(n).rVec,2);
+end
+errorbar(1:5,mean(dat),std(dat),'bo-'),hold on
+xlim([0.5 5.5])
+
+% CCAtype = CCA_shuf.hit;
+% dat = [];
+% for n = 1:length(CCAtype)
+% dat(n,:) = mean(CCAtype(n).rVec,2);
+% end
+% errorbar(1:5,mean(dat),std(dat),'ro-'),hold on
+box off, set(gca,'tickdir','out','fontsize',16),xlabel('Cononical Dimension'),ylabel('Mean CC Coefficient'),axis square
+
+
+legend('Original','Cooled')
+
+%%
 CCAtype = CCA_timeLag10;
 plot(mean(CCAtype.hit(1).rVec,2),'ro-'),hold on
 CCAtype = CCA_timeLag10neg;
@@ -131,19 +240,20 @@ CCAtype = CCA_timeLag20neg;
 plot(mean(CCAtype.hit(1).rVec,2),'bo--'),hold on
 legend('Original','200ms M1 Lags','200ms M2 Lags','400ms M1 Lags','400ms M2 Lags')
 %% Response compared to shuffle response
-dat = arrayfun(@(x) x.rVec(1,:),CCA.hit,'UniformOutput',false);
+CCAtype  = CCABaseline;
+dat = arrayfun(@(x) x.rVec(1,:),CCAtype.hit,'UniformOutput',false);
 dat = vertcat(dat{:});
 hitCCA = abs(mean(dat(:,75:end),2)-mean(dat(:,1:74),2));
 
-dat = arrayfun(@(x) x.rVec(1,:),CCA.miss,'UniformOutput',false);
+dat = arrayfun(@(x) x.rVec(1,:),CCAtype.miss,'UniformOutput',false);
 dat = vertcat(dat{:});
 missCCA = abs(mean(dat(:,75:end),2)-mean(dat(:,1:74),2));
 
-dat = arrayfun(@(x) x.rVec(1,:),CCA.MIhit,'UniformOutput',false);
+dat = arrayfun(@(x) x.rVec(1,:),CCAtype.MIhit,'UniformOutput',false);
 dat = vertcat(dat{:});
 MIhitCCA = abs(mean(dat(:,75:end),2)-mean(dat(:,1:74),2));
 
-dat = arrayfun(@(x) x.rVec(1,:),CCA.MIFA,'UniformOutput',false);
+dat = arrayfun(@(x) x.rVec(1,:),CCAtype.MIFA,'UniformOutput',false);
 dat = vertcat(dat{:});
 MIFACCA = abs(nanmean(dat(:,75:end),2)-nanmean(dat(:,1:74),2));
 
