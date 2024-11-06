@@ -2,7 +2,7 @@
 figure(); clf;
 sgtitlex('Pairwise-conditional Granger causality - time domain');
 % subplot(1,3,1);
-plot_pw(GCoutput.F*10);
+plot_pw(GCoutput.F);
 %%
 figure,
 title('Pairwise-conditional GC');
