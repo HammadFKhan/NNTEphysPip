@@ -78,17 +78,18 @@ end
 % Control condition where we set the time lag for CCA control. If we set it
 % as non negative we let M2 lead M1. If negative then we force M2 to lag
 % M1.
-timeLag = 20;
+timeLag = -25:5:25;
 shufFlag = 0;
 
-CCA_timeLag20 = getCCA(M1rh,M1rm,M1rmh,M1rmf,M2rh,M2rm,M2rmh,M2rmf,iter,nModes,dataKeep,timeLag,shufFlag);
-timeLag = -20;
-CCA_timeLag20neg = getCCA(M1rh,M1rm,M1rmh,M1rmf,M2rh,M2rm,M2rmh,M2rmf,iter,nModes,dataKeep,timeLag,shufFlag);
+count = 1;
+for n = timeLag
+CCA_timeLags(count).CCA = getCCA(M1rh,M1rm,M1rmh,M1rmf,M2rh,M2rm,M2rmh,M2rmf,iter,nModes,dataKeep,n,shufFlag);
+CCA_timeLags(count).timeLag = n;
+count  = count+1;
+end
+sessionName = [fpath,'/','CCA_data.mat'];
+save(sessionName,"IntanBehaviour","parameters","M1Spikes","M2Spikes","CCA","CCA_timeLags", "fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
 
-timeLag = 5;
-CCA_timeLag5 = getCCA(M1rh,M1rm,M1rmh,M1rmf,M2rh,M2rm,M2rmh,M2rmf,iter,nModes,dataKeep,timeLag,shufFlag);
-timeLag = -5;
-CCA_timeLag5neg = getCCA(M1rh,M1rm,M1rmh,M1rmf,M2rh,M2rm,M2rmh,M2rmf,iter,nModes,dataKeep,timeLag,shufFlag);
 %% Shuffle condition
 timeLag = NaN;
 shufFlag = 1;
@@ -110,8 +111,8 @@ subplot(122),imagesc(CCA.miss.rVec-mean(mean(CCA.hit.rVec))),colormap(jet),hold 
 %% Plot average of Mode 1 to 3
 f = figure;
 
-CCAtype = CCA;
-kernalWin = 25;
+CCAtype = CCA_timeLag20;
+kernalWin = 20;
 dat = [];
 for n = 1:3
     dat = arrayfun(@(x) x.rVec(n,:),CCAtype.hit,'UniformOutput',false);
@@ -148,6 +149,44 @@ for n = 1:3
     title('\color{blue} Hit \color{red} FA')
 end
 f.Position = [681 159 560 800];
+%% Peak CCA Response as a function of time lag
+
+hitCCA = [];missCCA = [];MIhitCCA = [];MIFACCA = [];
+count = 1;
+for n = arrayfun(@(x) x.timeLag,CCA_timeLags)
+    CCAtype  = CCA_timeLags(count).CCA;
+    dat = arrayfun(@(x) x.rVec(1,:),CCAtype.hit,'UniformOutput',false);
+    dat = vertcat(dat{:});
+    hitCCA(:,count) = abs(mean(dat(:,75:end),2)-mean(dat(:,1:74),2));
+    
+    dat = arrayfun(@(x) x.rVec(1,:),CCAtype.miss,'UniformOutput',false);
+    dat = vertcat(dat{:});
+    missCCA(:,count) = abs(mean(dat(:,75:end),2)-mean(dat(:,1:74),2));
+    
+    dat = arrayfun(@(x) x.rVec(1,:),CCAtype.MIhit,'UniformOutput',false);
+    dat = vertcat(dat{:});
+    MIhitCCA(:,count) = abs(mean(dat(:,75:end),2)-mean(dat(:,1:74),2));
+    
+    dat = arrayfun(@(x) x.rVec(1,:),CCAtype.MIFA,'UniformOutput',false);
+    dat = vertcat(dat{:});
+    MIFACCA(:,count) = abs(nanmean(dat(:,75:end),2)-nanmean(dat(:,1:74),2));
+    figure,
+    suptitle(num2str(CCA_timeLags(count).timeLag))
+    subplot(121),customBoxplot([hitCCA(:,count), missCCA(:,count)]),title('Hit Miss'),axis square
+    subplot(122),customBoxplot([MIhitCCA(:,count), MIFACCA(:,count)]),title('MIHit MIFA'),axis square
+    count = count+1;
+end
+figure,errorbar(arrayfun(@(x) x.timeLag,CCA_timeLags),mean(hitCCA),std(hitCCA)/sqrt(10),'ko-')
+box off, set(gca,'tickdir','out','fontsize',16),xlabel('Lag (ms)'),ylabel('CC Coefficient'),axis square,hold on,xlim([ -30 30])
+[~,~,stats] = anova1(hitCCA);
+[c,~,~,gnames] = multcompare(stats);
+
+figure,errorbar(arrayfun(@(x) x.timeLag,CCA_timeLags),mean(missCCA),std(missCCA)/sqrt(10))
+box off, set(gca,'tickdir','out','fontsize',16),xlabel('Lag (ms)'),ylabel('CC Coefficient'),axis square,hold on,xlim([ -25 25]),ylim([0 0.0350])
+
+figure,errorbar(arrayfun(@(x) x.timeLag,CCA_timeLags),mean(MIFACCA),std(MIFACCA)/sqrt(10))
+box off, set(gca,'tickdir','out','fontsize',16),xlabel('Lag (ms)'),ylabel('CC Coefficient'),axis square,hold on,xlim([ -25 25]),ylim([0 0.0350])
+
 %% MOUSE Day 2 Cooling
 %% reaction time
 h = IntanBehaviour.hitTemp>-10;
@@ -198,6 +237,16 @@ blah2 = (id+70)*20
 
 blah1-blah2
 %% Significant dimensions of correlation analysis
+CCAtype = CCA.hit;
+
+f = figure;
+dat = [];
+for n = 1:length(CCAtype)
+dat(n,:) = mean(CCAtype(n).rVec,2);
+end
+errorbar(1:5,mean(dat),std(dat),'ko-'),hold on
+xlim([0.5 5.5])
+
 
 CCAtype = CCABaseline.hit;
 
@@ -230,6 +279,10 @@ box off, set(gca,'tickdir','out','fontsize',16),xlabel('Cononical Dimension'),yl
 legend('Original','Cooled')
 
 %%
+figure
+CCAtype = CCA;
+plot(mean(CCAtype.miss(1).rVec,2)./std(CCAtype.miss(1).rVec,[],2),'ko-'),hold on
+
 CCAtype = CCA_timeLag10;
 plot(mean(CCAtype.hit(1).rVec,2),'ro-'),hold on
 CCAtype = CCA_timeLag10neg;
@@ -240,7 +293,7 @@ CCAtype = CCA_timeLag20neg;
 plot(mean(CCAtype.hit(1).rVec,2),'bo--'),hold on
 legend('Original','200ms M1 Lags','200ms M2 Lags','400ms M1 Lags','400ms M2 Lags')
 %% Response compared to shuffle response
-CCAtype  = CCABaseline;
+CCAtype  = CCA;
 dat = arrayfun(@(x) x.rVec(1,:),CCAtype.hit,'UniformOutput',false);
 dat = vertcat(dat{:});
 hitCCA = abs(mean(dat(:,75:end),2)-mean(dat(:,1:74),2));
@@ -335,11 +388,11 @@ for nn = 1:iter
                     Ym = squeeze(ym(:,:,n+timeLag));
                     Ymh = squeeze(ymh(:,:,n+timeLag));
                     Ymf = squeeze(ymf(:,:,n+timeLag));
-                else
-                    Yh = squeeze(yh(:,:,n)); %unless we reach the end of the timepoints
-                    Ym = squeeze(ym(:,:,n));
-                    Ymh = squeeze(ymh(:,:,n));
-                    Ymf = squeeze(ymf(:,:,n));
+                else 
+                    Yh = squeeze(yh(:,:,abs(size(M1rh,3)-n+timeLag))); %unless we reach the end of the timepoints
+                    Ym = squeeze(ym(:,:,abs(size(M1rh,3)-n+timeLag)));
+                    Ymh = squeeze(ymh(:,:,abs(size(M1rh,3)-n+timeLag)));
+                    Ymf = squeeze(ymf(:,:,abs(size(M1rh,3)-n+timeLag)));
                 end
                 
         elseif timeLag<0
@@ -350,10 +403,10 @@ for nn = 1:iter
                     Xmh = squeeze(xmh(:,:,n+abs(timeLag)));
                     Xmf = squeeze(xmf(:,:,n+abs(timeLag)));
                 else
-                    Xh = squeeze(xh(:,:,n)); %unless we reach the end of the timepoints
-                    Xm = squeeze(xm(:,:,n));
-                    Xmh = squeeze(xmh(:,:,n));
-                    Xmf = squeeze(xmf(:,:,n));
+                    Xh = squeeze(xh(:,:,abs(size(M1rh,3)-n+abs(timeLag)))); %unless we reach the end of the timepoints
+                    Xm = squeeze(xm(:,:,abs(size(M1rh,3)-n+abs(timeLag))));
+                    Xmh = squeeze(xmh(:,:,abs(size(M1rh,3)-n+abs(timeLag))));
+                    Xmf = squeeze(xmf(:,:,abs(size(M1rh,3)-n+abs(timeLag))));
                 end
                 Yh = squeeze(yh(:,:,n));
                 Ym = squeeze(ym(:,:,n));
