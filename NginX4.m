@@ -335,7 +335,8 @@ if exist('mat_results','dir'),rmdir('mat_results','s'),end
 close all
 %% Neural Trajectory Analysis
 IntanBehaviour1.parameters = parameters;
-neuralTrajAnalysis(Spikes,Waves1,IntanBehaviour1);
+%neuralTrajAnalysis(Spikes,Waves1,IntanBehaviour1);
+[M2neuralDynamics,M2waveDynamics] = neuralTrajAnalysis2(M2Spikes,[],IntanBehaviour);
 %%
 figure,
 for n = 1:111
