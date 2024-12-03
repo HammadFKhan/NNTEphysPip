@@ -6,23 +6,23 @@ file = dir(fullfile(fpath,'*.mat'));
 
 %%%
 M1Data = struct();
-M1Datahit = struct();
-M1Datamiss = struct();
-M1DataMIFA = struct();
+M2Datahit = struct();
+M2Datamiss = struct();
+M2DataMIFA = struct();
 count1 = 1;count2 = 1;count3 = 1;
 
 for fileNum = 1:length(file)
     load(fullfile(file(fileNum).folder,file(fileNum).name))
     for n = 1:length(Spikes.PSTH.hit.spks)
-        M1Datahit(count1).spikes = logical(Spikes.PSTH.hit.spks{n});
+        M2Datahit(count1).spikes = logical(Spikes.PSTH.hit.spks{n});
         count1 = count1+1;
     end
     for n = 1:length(Spikes.PSTH.miss.spks)
-        M1Datamiss(count2).spikes = logical(Spikes.PSTH.miss.spks{n});
+        M2Datamiss(count2).spikes = logical(Spikes.PSTH.miss.spks{n});
         count2 = count2+1;
     end
     for n = 1:length(Spikes.PSTH.MIFA.spks)
-        M1DataMIFA(count3).spikes = logical(Spikes.PSTH.MIFA.spks{n});
+        M2DataMIFA(count3).spikes = logical(Spikes.PSTH.MIFA.spks{n});
         count3 = count3+1;
     end
 end
