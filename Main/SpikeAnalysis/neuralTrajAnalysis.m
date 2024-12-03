@@ -35,6 +35,9 @@ hittrials = 1:length(Behaviour.cueHitTrace);
 misstrials = length(Behaviour.cueHitTrace)+1:size(X,3);
 rh = meanTraj(X,hittrials,6)'; %trajectory variable and predefined conditional trial indexes
 rm = meanTraj(X,misstrials,6)'; %trajectory variable and predefined conditional trial indexes
+%%
+[r,s] = meanTraj(X,hittrials,6);
+%%
 % rhminit = abs(rh(1,:)-rm(1,:));
 % rm = rm-rhminit;
 t = linspace(-Behaviour.parameters.windowBeforeCue,Behaviour.parameters.windowAfterCue,size(rh,1));
@@ -137,6 +140,9 @@ MIHittrials = 1:length(Behaviour.MIHitTrace);
 MIFAtrials = length(Behaviour.MIHitTrace)+1:size(X,3);
 rmih = meanTraj(X,MIHittrials,6)'; %trajectory variable and predefined conditional trial indexes
 rmif = meanTraj(X,MIFAtrials,6)'; %trajectory variable and predefined conditional trial indexes
+%%
+[r,s] = meanTraj(X,MIFAtrials,6);
+%%
 rmihfinit = abs(rmih(1,:)-rmif(1,:));
 rmif = rmif-rmihfinit;
 t = linspace(-Behaviour.parameters.windowBeforePull,Behaviour.parameters.windowAfterPull,size(rmih,1));
@@ -418,10 +424,17 @@ end
 
 
 
+
 %% Local functions
 
-function r = meanTraj(X,trials,components)
-r = squeeze(mean(X(1:components,:,trials),3));
+function [r,s] = meanTraj(X,trials,components)
+matrix = X(1:components,:,trials);
+r = squeeze(mean(matrix,3));
+% Subtract the mean from each element
+centered_matrix = matrix - r;
+
+% Calculate the Euclidean distance for each row
+s = squeeze(sqrt(sum(centered_matrix.^2, 2)));
 end
 
 function [neuralTrajSim,neuralTrajdiff,rprimehnorm,rprimemnorm] = neuralTrajDiff(r1,r2,varargin)
