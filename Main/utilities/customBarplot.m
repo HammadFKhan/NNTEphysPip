@@ -10,20 +10,21 @@ else
 end
 
 labels = [];buff = [];
+if scatterOn
+    for i = 1:size(data,2)
+        t = data(:,i);
+        scatter(i*ones(length(t(t~=0)),1),t(t~=0),'filled','jitter','on','jitterAmount',0.1),hold on
+    end
+end
 for i = 1:size(data,2)
     t = data(:,i);
     buff = t(t~=0);
     labels = i*ones(length(buff),1);
-    bar(i,mean(buff)), hold on
-    err = std(buff)/sqrt(length(buff));
-    errorbar(i,mean(buff),err),hold on
+    bar(i,nanmean(buff)), hold on
+    err = nanstd(buff)/sqrt(length(buff));
+    errorbar(i,nanmean(buff),err),hold on
 end
 
 h=findobj('LineStyle','--'); set(h, 'LineStyle','-');
 
-if scatterOn
-    for i = 1:size(data,2)
-        t = data(:,i);
-        scatter(i*ones(length(t(t~=0)),1),t(t~=0),'filled','jitter','on','jitterAmount',0.1)
-    end
-end
+
