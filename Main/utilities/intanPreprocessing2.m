@@ -7,27 +7,37 @@
 % output should be a downsampled amplifer data to 5000 Hz, deleted Intan
 % amplifier data and kilosort prepped data file. Then data is send to memory mapped file. This allows for proper
 % memory management
-function ds_filename = intanPreprocessing2(intandsFlag)
+function ds_filename = intanPreprocessing2(chanMapFile,intandsFlag,activeElectrodes)
 addpath(genpath('Main'));
-% chanMapFile = 'UCLA_chanmap_64F2.mat';
-chanMapFile = 'UCLA_chanmap_fixed.mat'; %UCLA Sharp
+pathname = uigetdir(pwd,'Input Directory');
+pathname = fullfile(pathname);
 disp(['Using ' chanMapFile ' as electrode map'])
 pause(1)
 load(chanMapFile)
-pathname = uigetdir(pwd,'Input Directory');
 pathname = fullfile(pathname);
 directory = dir(fullfile(pathname,'*.rhd')); %Parses RHD files
 targetedFs = 2000;
 L = length(directory);
 % Now we build the memory map file if file doesnt exist % only for LFP/behaviour
 % data. Spikes are sent to .bin files for kilosort
-ds_filename = fullfile(pathname,'intan_ds_data.mat'); % check incremented file name for image
-kilosort_filename = fullfile(pathname,'kilosort.bin');
+
+%because of kilosort we have to make seperate .bin folders for correct execution of data
+if ~exist(fullfile(pathname,chanMapFile(1:end-4)),'dir')
+    dirFlag = mkdir(pathname,chanMapFile(1:end-4));
+    if ~dirFlag
+        error('Failed directory creation')
+    end
+    disp('New directory made for .bin file!')
+end
+npathname = fullfile(pathname,chanMapFile(1:end-4));
+ds_filename = fullfile(npathname,['intan_ds_data_',chanMapFile(1:end-4),'.mat']); % check incremented file name for recordings
+kilosort_filename = fullfile(npathname,['kilosort_',chanMapFile(1:end-4),'.bin']);
 if exist(ds_filename,'file') %check if downsampled data file already exists
     warning('Preprocessed file already exists! Data will now be overrided')
 end
 
 data = matfile(ds_filename,'Writable',true);
+kname = ['kilosort_',chanMapFile(1:end-4)];
 % Grab parameters and generate structures based on first file
 idx = 1;
 path = directory(idx).folder;
@@ -36,23 +46,21 @@ Intan = read_Intan_RHD2000_file(path,file);
 data.Fs =  Intan.frequency_parameters.amplifier_sample_rate;
 data.path = path;
 intanOffset = 1;
-% Removing first second of data6
+% Removing first second of data
 disp(['Adjusting for ' num2str(intanOffset) ' second offset']);
-Intan.amplifier_data = Intan.amplifier_data(1:64,data.Fs*intanOffset:size(Intan.amplifier_data,2));
+Intan.amplifier_data = Intan.amplifier_data(activeElectrodes,data.Fs*intanOffset:size(Intan.amplifier_data,2));
 Intan.t_amplifier = Intan.t_amplifier(:,data.Fs*intanOffset:size(Intan.t_amplifier,2));
 
 % running kilosort prep file
 if ~exist(kilosort_filename,'file')
-    Intan.amplifier_data = Intan.amplifier_data(1:64,:);
     temp = Intan.amplifier_data(s.sorted_electrodes,:); % sort electrodes since we use sorted electrodes in kilosort
-    kilosortPrep2(temp,path)
+    kilosortPrep2(temp,path,kname)
 else
     warning('An existing kilosort.bin file exists! Deleting existing kilosort version')
     pause(1)
     delete(kilosort_filename)
-    Intan.amplifier_data = Intan.amplifier_data(1:64,:);
     temp = Intan.amplifier_data(s.sorted_electrodes,:);
-    kilosortPrep2(Intan.amplifier_data,path)
+    kilosortPrep2(temp,path,kname)
 end
 % Now downsample data for LFP
 amplifierData{idx} = resample(Intan.amplifier_data',targetedFs,data.Fs)';
@@ -72,9 +80,10 @@ for idx = 2:L
     path = directory(idx).folder;
     file = directory(idx).name;
     Intan = read_Intan_RHD2000_file(path,file);
+    Intan.amplifier_data = Intan.amplifier_data(activeElectrodes,:);
     if idx== L %subtract the last second off the recording
         disp(['Adjusting for ' num2str(intanOffset) ' second offset']);
-        Intan.amplifier_data = Intan.amplifier_data(1:64,1:(size(Intan.amplifier_data,2)-data.Fs*intanOffset));
+        Intan.amplifier_data = Intan.amplifier_data(:,1:(size(Intan.amplifier_data,2)-data.Fs*intanOffset));
         Intan.t_amplifier = Intan.t_amplifier(:,1:(size(Intan.t_amplifier,2)-data.Fs*intanOffset));
         if exist('digitalChannels','var')
             Intan.board_dig_in_data = Intan.board_dig_in_data(:,1:(size(Intan.board_dig_in_data,2)-data.Fs*intanOffset));
@@ -83,9 +92,8 @@ for idx = 2:L
             Intan.board_adc_data = Intan.board_adc_data(:,1:(size(Intan.board_adc_data,2)-data.Fs*intanOffset));
         end
     end
-    Intan.amplifier_data = Intan.amplifier_data(1:64,:);
     temp = Intan.amplifier_data(s.sorted_electrodes,:);
-    kilosortPrep2(temp,path)
+    kilosortPrep2(temp,path,kname)
     amplifierData{idx} = resample(Intan.amplifier_data',targetedFs,data.Fs)';
     amplifierTime{idx} = downsample(Intan.t_amplifier',round(data.Fs/targetedFs),1)';
     if exist('digitalChannels','var')
@@ -117,7 +125,8 @@ if intandsFlag % If we want to make an intan file (save time for hdd loading
     fprintf('done\n')
 end
 data.targetedFs = targetedFs;
-data.fpath = Intan.path;
+fpath = fileparts(ds_filename);
+data.fpath = fpath;
 clearvars -except ds_filename
 end
 
