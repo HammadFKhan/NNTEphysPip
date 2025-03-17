@@ -35,6 +35,9 @@ end
 [M1rh,M1rm,M1rmh,M1rmf] = trajNorm(M1Spikes,IntanBehaviour);
 [M2rh,M2rm,M2rmh,M2rmf] = trajNorm(M2Spikes,IntanBehaviour);
 
+%% Make M1 and M2 based on binned spike data
+[M1rh,M1rm,M1rmh,M1rmf] = makeSpikeCCA(M1Spikes);
+[M2rh,M2rm,M2rmh,M2rmf] = makeSpikeCCA(M2Spikes);
 
 %% Sparse CCA Analysis
 % Here we take the high dimensional neural trajectory data and perform CCA
@@ -45,7 +48,7 @@ end
 % lets say we only use 80% of the data to check for validity.
 
 nModes = 5;
-iter = 10; %Number of training rounds
+iter = 1; %Number of training rounds
 dataKeep = 0.8; % Percentage we keep for CCA model
 
 timeLag = NaN;
@@ -67,7 +70,7 @@ else
 end
 [fpath,name,exts] = fileparts(ds_filename1);
 %%%
-sessionName = [fpath,'/','CCA_data.mat'];
+sessionName = [fpath,'/','CCA_dataRedo.mat'];
 % save(sessionName,"IntanBehaviour","fpath","parameters","-v7.3");
 if IntanBehaviour.parameters.cool
     save(sessionName,"IntanBehaviour","parameters","M1Spikes","M2Spikes","CCABaseline","CCACool","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
@@ -111,32 +114,32 @@ subplot(122),imagesc(CCA.miss.rVec-mean(mean(CCA.hit.rVec))),colormap(jet),hold 
 %% Plot average of Mode 1 to 3
 f = figure;
 
-CCAtype = CCA_timeLag20;
-kernalWin = 20;
+CCAtype = CCA;
+kernalWin = 10;
 dat = [];
 for n = 1:3
-    dat = arrayfun(@(x) x.rVec(n,:),CCAtype.hit,'UniformOutput',false);
-    dat = vertcat(dat{:});
-    subplot(3,1,n),plot(smoothdata(mean(dat),'gaussian',kernalWin),'b'),hold on
-    plot(smoothdata(mean(dat)+std(dat)/sqrt(iter),'gaussian',kernalWin),'b')
-    plot(smoothdata(mean(dat)-std(dat)/sqrt(iter),'gaussian',kernalWin),'b')
-    
     dat = arrayfun(@(x) x.rVec(n,:),CCAtype.miss,'UniformOutput',false);
     dat = vertcat(dat{:});
+    subplot(1,3,n),plot(smoothdata(mean(dat),'gaussian',kernalWin),'b'),hold on
+    %plot(smoothdata(mean(dat)+std(dat)/sqrt(iter),'gaussian',kernalWin),'b')
+    %plot(smoothdata(mean(dat)-std(dat)/sqrt(iter),'gaussian',kernalWin),'b')
+    
+    dat = arrayfun(@(x) x.rVec(n,:),CCAtype.hit,'UniformOutput',false);
+    dat = vertcat(dat{:});
     plot(smoothdata(mean(dat),'gaussian',kernalWin),'r'),hold on
-    plot(smoothdata(mean(dat)+std(dat)/sqrt(iter),'gaussian',kernalWin),'r')
-    plot(smoothdata(mean(dat)-std(dat)/sqrt(iter),'gaussian',kernalWin),'r')
+    %plot(smoothdata(mean(dat)+std(dat)/sqrt(iter),'gaussian',kernalWin),'r')
+    %plot(smoothdata(mean(dat)-std(dat)/sqrt(iter),'gaussian',kernalWin),'r')
     box off, set(gca,'tickdir','out','fontsize',16),xlabel('Time'),ylabel('CC Coefficient'),axis square
     title('\color{blue} Hit \color{red} Miss')
 end
-f.Position = [681 159 560 800];
+f.Position = [681 159 760 600];
 
 f = figure;
 
 for n = 1:3
     dat = arrayfun(@(x) x.rVec(n,:),CCAtype.MIhit,'UniformOutput',false);
     dat = vertcat(dat{:});
-    subplot(3,1,n),plot(smoothdata(mean(dat),'gaussian',kernalWin),'b'),hold on
+    subplot(1,3,n),plot(smoothdata(mean(dat),'gaussian',kernalWin),'b'),hold on
     plot(smoothdata(mean(dat)+std(dat)/sqrt(iter),'gaussian',kernalWin),'b')
     plot(smoothdata(mean(dat)-std(dat)/sqrt(iter),'gaussian',kernalWin),'b')
     
@@ -148,7 +151,7 @@ for n = 1:3
     box off, set(gca,'tickdir','out','fontsize',16),xlabel('Time'),ylabel('CC Coefficient'),axis square
     title('\color{blue} Hit \color{red} FA')
 end
-f.Position = [681 159 560 800];
+f.Position = [681 159 760 600];
 %% Peak CCA Response as a function of time lag
 
 hitCCA = [];missCCA = [];MIhitCCA = [];MIFACCA = [];
@@ -194,7 +197,7 @@ rt = arrayfun(@(x) x.reactionTime, IntanBehaviour.cueHitTrace);
 rtB = mean(rt(h))-0.2;
 h = IntanBehaviour.hitTemp<=-10;
 rtC = mean(rt(h));
-
+iter = 10;
 f = figure;
 
 CCAtype = CCABaseline;
@@ -212,9 +215,8 @@ xline(75+rtB*20)
 ylim([0.92 0.97])
 [~,id] = max(smoothdata(mean(dat(:,70:end)),'gaussian',kernalWin));
 xline(id+70)
-xlim([70 150])
+xlim([0 150])
 
-blah1 = (id+70)*20
 
 CCAtype = CCACool;
 kernalWin = 25;
@@ -231,11 +233,10 @@ xline(75+rtC*20)
 [~,id] = max(smoothdata(mean(dat(:,70:end)),'gaussian',kernalWin));
 xline(id+70)
 ylim([0.77 1])
-xlim([70 150])
+xlim([0 150])
+% ylim([0.77 1])
+% xlim([70 150])
 
-blah2 = (id+70)*20
-
-blah1-blah2
 %% Significant dimensions of correlation analysis
 CCAtype = CCA.hit;
 
@@ -247,24 +248,24 @@ end
 errorbar(1:5,mean(dat),std(dat),'ko-'),hold on
 xlim([0.5 5.5])
 
-
+%% Cooled
 CCAtype = CCABaseline.hit;
 
 f = figure;
-dat = [];
+baselineData = [];
 for n = 1:length(CCAtype)
-dat(n,:) = mean(CCAtype(n).rVec,2);
+baselineData(n,:) = mean(CCAtype(n).rVec,2);
 end
-errorbar(1:5,mean(dat),std(dat),'ko-'),hold on
+errorbar(1:5,mean(baselineData),std(baselineData)*3,'ko-'),hold on
 xlim([0.5 5.5])
 
 CCAtype = CCACool.hit;
 
-dat = [];
+coolingData = [];
 for n = 1:length(CCAtype)
-dat(n,:) = mean(CCAtype(n).rVec,2);
+coolingData(n,:) = mean(CCAtype(n).rVec,2);
 end
-errorbar(1:5,mean(dat),std(dat),'bo-'),hold on
+errorbar(1:5,mean(coolingData),std(coolingData)*3,'bo-'),hold on
 xlim([0.5 5.5])
 
 % CCAtype = CCA_shuf.hit;
@@ -277,6 +278,35 @@ box off, set(gca,'tickdir','out','fontsize',16),xlabel('Cononical Dimension'),yl
 
 
 legend('Original','Cooled')
+
+%% Stats
+coolingDataFix = nan(max([size(baselineData,1),size(coolingData,1)]),5);
+coolingDataFix(1:size(coolingData,1),:) = coolingData;
+all_data = [baselineData; coolingDataFix];
+
+
+% Create grouping variables
+num_samples = size(baselineData, 1); % Number of rows in baseline
+dimensions = repmat(1:5, num_samples * 2, 1); % Dimension grouping (1-6)
+conditions = [repmat({'Baseline'}, num_samples, 5); repmat({'Cooling'}, num_samples, 5)]; % Condition grouping
+
+% Reshape data into column vector for ANOVA
+all_data_vector = all_data(:);
+dimensions_vector = dimensions(:);
+conditions_vector = conditions(:);
+
+% Perform two-way ANOVA
+[p, tbl, stats] = anovan(all_data_vector, {dimensions_vector, conditions_vector}, ...
+    'model', 'interaction', 'varnames', {'Dimension', 'Condition'});
+
+% Display results
+disp('ANOVA Table:');
+disp(tbl);
+
+% Perform post-hoc analysis if necessary
+disp('Post-hoc comparisons:');
+multcompare(stats, 'Dimension',1) % compare over neural dimensions
+multcompare(stats, 'Dimension',2) % Compare over baseline and cooled
 
 %%
 figure
@@ -434,10 +464,10 @@ for nn = 1:iter
             Ymf = squeeze(ymf(:,:,randperm(size(M1rm,3),1)));
         end
         
-        [CCA.hit(nn).wxMat(:,:,n),CCA.hit(nn).wyMat(:,:,n),CCA.hit(nn).rVec(:,n)]=SparseCCA(Xh,Yh,2,2,1,nModes);
-        [CCA.miss(nn).wxMat(:,:,n),CCA.miss(nn).wyMat(:,:,n),CCA.miss(nn).rVec(:,n)]=SparseCCA(Xm,Ym,2,2,1,nModes);
-        [CCA.MIhit(nn).wxMat(:,:,n),CCA.MIhit(nn).wyMat(:,:,n),CCA.MIhit(nn).rVec(:,n)]=SparseCCA(Xmh,Ymh,2,2,1,nModes);
-        [CCA.MIFA(nn).wxMat(:,:,n),CCA.MIFA(nn).wyMat(:,:,n),CCA.MIFA(nn).rVec(:,n)]=SparseCCA(Xmf,Ymf,2,2,1,nModes);
+        [CCA.hit(nn).wxMat(:,:,n),CCA.hit(nn).wyMat(:,:,n),CCA.hit(nn).rVec(:,n)]=SparseCCA(Xh',Yh',2,2,1,nModes);
+        [CCA.miss(nn).wxMat(:,:,n),CCA.miss(nn).wyMat(:,:,n),CCA.miss(nn).rVec(:,n)]=SparseCCA(Xm',Ym',2,2,1,nModes);
+        [CCA.MIhit(nn).wxMat(:,:,n),CCA.MIhit(nn).wyMat(:,:,n),CCA.MIhit(nn).rVec(:,n)]=SparseCCA(Xmh',Ymh',2,2,1,nModes);
+        [CCA.MIFA(nn).wxMat(:,:,n),CCA.MIFA(nn).wyMat(:,:,n),CCA.MIFA(nn).rVec(:,n)]=SparseCCA(Xmf',Ymf',2,2,1,nModes);
         disp(['Timestep ' num2str(n) ' on iteration ' num2str(nn) '...'])
     end
 end
@@ -447,4 +477,59 @@ CCA.params.nModes = nModes;
 CCA.params.dataKeep = dataKeep;
 CCA.params.timeLag = timeLag;
 CCA.params.shufFlag = shuf;
+end
+
+function [rh,rm,rmh,rmf] = makeSpikeCCA(Spikes)
+rh = horzcat(Spikes.rawPSTH.hit.spks{:});
+rh = reshape(rh,size(Spikes.rawPSTH.hit.spks{1},1),size(Spikes.rawPSTH.hit.spks{1},2),[]);
+rh = permute(rh,[3 1 2]);
+kernal = [0 0 0;];
+temp = [];
+fprintf('Cleaning up hit spikes...\n')
+for n = 1:size(rh,1)
+    dat  = squeeze(rh(n,:,:));
+    dat(:,1500:end) = conv2(dat(:,1500:end),kernal,'same');
+    dat = smoothdata(dat,2,'gaussian',15);
+    temp(n,:,:) = dat;
+end
+rh = temp;
+
+fprintf('Cleaning up miss spikes...\n')
+rm = horzcat(Spikes.rawPSTH.miss.spks{:});
+rm = reshape(rm,size(Spikes.rawPSTH.miss.spks{1},1),size(Spikes.rawPSTH.miss.spks{1},2),[]);
+rm = permute(rm,[3 1 2]);
+temp = [];
+for n = 1:size(rm,1)
+    dat  = squeeze(rm(n,:,:));
+    dat(:,1500:end) = conv2(dat(:,1500:end),kernal,'same');
+    dat = smoothdata(dat,2,'gaussian',25);
+    temp(n,:,:) = dat;
+end
+rm = temp;
+
+fprintf('Cleaning up MI spikes...\n')
+rmh = horzcat(Spikes.rawPSTH.MIHit.spks{:});
+rmh = reshape(rmh,size(Spikes.rawPSTH.MIHit.spks{1},1),size(Spikes.rawPSTH.MIHit.spks{1},2),[]);
+rmh = permute(rmh,[3 1 2]);
+temp = [];
+for n = 1:size(rmh,1)
+    dat  = squeeze(rmh(n,:,:));
+    dat(:,1500:end) = conv2(dat(:,1500:end),kernal,'same');
+    dat = smoothdata(dat,2,'gaussian',25);
+    temp(n,:,:) = dat;
+end
+rmh = temp;
+
+fprintf('Cleaning up FA spikes...\n')
+rmf = horzcat(Spikes.rawPSTH.MIFA.spks{:});
+rmf = reshape(rmf,size(Spikes.rawPSTH.MIFA.spks{1},1),size(Spikes.rawPSTH.MIFA.spks{1},2),[]);
+rmf = permute(rmf,[3 1 2]);
+temp = [];
+for n = 1:size(rmf,1)
+    dat  = squeeze(rmf(n,:,:));
+    dat(:,1500:end) = conv2(dat(:,1500:end),kernal,'same');
+    dat = smoothdata(dat,2,'gaussian',25);
+    temp(n,:,:) = dat;
+end
+rmf = temp;
 end

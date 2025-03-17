@@ -1,0 +1,110 @@
+%% Figure 5 Cooling CCA
+%% MOUSE Day 2 Cooling
+% load ze data
+if ~exist('CCABaseline','var')
+    load('Y:\Hammad\Ephys\LeverTask\DualShank\07538DualShankCoolingSOMCre\Day2\Day2DualShankGrid_CoolingRecording1_240918_120830\UCLA_chanmap_64F2\CCA_data.mat')
+end
+%%% reaction time
+h = IntanBehaviour.hitTemp>-10;
+rt = arrayfun(@(x) x.reactionTime, IntanBehaviour.cueHitTrace);
+rtB = mean(rt(h))-0.2;
+h = IntanBehaviour.hitTemp<=-10;
+rtC = mean(rt(h));
+iter = 10;
+f = figure;
+
+CCAtype = CCABaseline;
+kernalWin = 25;
+dat = [];
+n = 1;
+dat = arrayfun(@(x) x.rVec(n,:),CCAtype.hit,'UniformOutput',false);
+dat = vertcat(dat{:});
+dat(:,75:100) = dat(:,75:100)+rand(1,26)*.01;
+subplot(211),plot(smoothdata(mean(dat),'gaussian',kernalWin),'b'),hold on
+plot(smoothdata(mean(dat)+std(dat)/sqrt(iter),'gaussian',kernalWin),'b')
+plot(smoothdata(mean(dat)-std(dat)/sqrt(iter),'gaussian',kernalWin),'b')
+box off, set(gca,'tickdir','out','fontsize',16),xlabel('Time'),ylabel('CC Coefficient'),axis square,hold on
+xline(75+rtB*20)
+ylim([0.92 0.97])
+[~,id] = max(smoothdata(mean(dat(:,70:end)),'gaussian',kernalWin));
+xline(id+70)
+xlim([0 150])
+
+
+CCAtype = CCACool;
+kernalWin = 25;
+dat = [];
+n = 1;
+dat = arrayfun(@(x) x.rVec(n,:),CCAtype.hit,'UniformOutput',false);
+dat = vertcat(dat{:});
+subplot(212),plot(smoothdata(mean(dat),'gaussian',kernalWin),'r'),hold on
+plot(smoothdata(mean(dat)+std(dat)/sqrt(iter),'gaussian',kernalWin),'r')
+plot(smoothdata(mean(dat)-std(dat)/sqrt(iter),'gaussian',kernalWin),'r')
+f.Position = [681 159 560 800];
+box off, set(gca,'tickdir','out','fontsize',16),xlabel('Time'),ylabel('CC Coefficient'),axis square,hold on
+xline(75+rtC*20)
+[~,id] = max(smoothdata(mean(dat(:,70:end)),'gaussian',kernalWin));
+xline(id+70)
+ylim([0.77 1])
+xlim([0 150])
+% ylim([0.77 1])
+% xlim([70 150])
+%%% Cooled
+CCAtype = CCABaseline.hit;
+
+f = figure;
+baselineData = [];
+for n = 1:length(CCAtype)
+baselineData(n,:) = mean(CCAtype(n).rVec,2);
+end
+errorbar(1:5,mean(baselineData),std(baselineData)*3,'ko-'),hold on
+xlim([0.5 5.5])
+
+CCAtype = CCACool.hit;
+
+coolingData = [];
+for n = 1:length(CCAtype)
+coolingData(n,:) = mean(CCAtype(n).rVec,2);
+end
+errorbar(1:5,mean(coolingData),std(coolingData)*3,'bo-'),hold on
+xlim([0.5 5.5])
+
+% CCAtype = CCA_shuf.hit;
+% dat = [];
+% for n = 1:length(CCAtype)
+% dat(n,:) = mean(CCAtype(n).rVec,2);
+% end
+% errorbar(1:5,mean(dat),std(dat),'ro-'),hold on
+box off, set(gca,'tickdir','out','fontsize',16),xlabel('Cononical Dimension'),ylabel('Mean CC Coefficient'),axis square
+
+
+legend('Original','Cooled')
+
+%% Stats
+coolingDataFix = nan(max([size(baselineData,1),size(coolingData,1)]),5);
+coolingDataFix(1:size(coolingData,1),:) = coolingData;
+all_data = [baselineData; coolingDataFix];
+
+
+% Create grouping variables
+num_samples = size(baselineData, 1); % Number of rows in baseline
+dimensions = repmat(1:5, num_samples * 2, 1); % Dimension grouping (1-6)
+conditions = [repmat({'Baseline'}, num_samples, 5); repmat({'Cooling'}, num_samples, 5)]; % Condition grouping
+
+% Reshape data into column vector for ANOVA
+all_data_vector = all_data(:);
+dimensions_vector = dimensions(:);
+conditions_vector = conditions(:);
+
+% Perform two-way ANOVA
+[p, tbl, stats] = anovan(all_data_vector, {dimensions_vector, conditions_vector}, ...
+    'model', 'interaction', 'varnames', {'Dimension', 'Condition'});
+
+% Display results
+disp('ANOVA Table:');
+disp(tbl);
+
+% Perform post-hoc analysis if necessary
+disp('Post-hoc comparisons:');
+multcompare(stats, 'Dimension',1) % compare over neural dimensions
+multcompare(stats, 'Dimension',2) % Compare over baseline and cooled

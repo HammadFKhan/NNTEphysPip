@@ -11,17 +11,14 @@ addpath(genpath('Main'));
 addpath(genpath('npy-matlab'));
 addpath(genpath('spikes-master'));
 intandsFlag = 1; %make LFPs
-%activeElectrodes = 1:64;
-activeElectrodes = 33:96;
+activeElectrodes = 1:64;
 %chanMapFile = 'UCLA_chanmap_fixed.mat'; %UCLA Sharp
 chanMapFile = 'UCLA_chanmap_64F2.mat';
 if ~exist('pathname','var')
     pathname = uigetdir(pwd,'Input Directory');
 end
 ds_filename1 = intanPreprocessingDualShanks(pathname,chanMapFile,intandsFlag,activeElectrodes);
-%activeElectrodes = 65:128;
-activeElectrodes = 97:160;
-
+activeElectrodes = 65:128;
 chanMapFile = 'UCLA_chanmap_fixed.mat'; %UCLA Sharp
 %chanMapFile = 'UCLA_chanmap_64F2.mat';
 ds_filename2 = intanPreprocessingDualShanks(pathname,chanMapFile,intandsFlag,activeElectrodes);
@@ -29,7 +26,7 @@ fpath = pathname;
 savepath = fullfile(fpath,['loadme','.mat']);
 save(savepath,'ds_filename1','ds_filename2','fpath');
 clearvars -except ds_filename1 ds_filename2
-%%% Run Kilosort3 
+%% Run Kilosort3 
 % load only neccessary variables from memory mapped file
 % Analysis of dual shank
 data = matfile(ds_filename1);
@@ -51,7 +48,7 @@ data = matfile(ds_filename1); % ds_filename comes from loadme.mat
 % the new directory path
 parameters.experiment = 'cue'; % self - internally generated, cue - cue initiated
 parameters.opto = 0; % 1 - opto ON , 0 - opto OFF
-parameters.cool = 0; % No Cool 
+parameters.cool = 1; % No Cool 
 parameters.windowBeforePull = 1.5; % in seconds
 parameters.windowAfterPull = 1.5; % in seconds
 parameters.windowBeforeCue = 1.5; % in seconds
