@@ -61,8 +61,8 @@ disp(poly_mdl);
 
 poly_mdlFull = fitlm(y', downSampledLeverFull', 'quadratic');
 disp(poly_mdlFull);
-figure,plot(poly_mdlFull)
-quickExport('figure1')
+%figure,plot(poly_mdlFull)
+
 %%% Extract predictors (PCs) and response from mdl
 predictors = poly_mdlFull.Variables{:, 1:end-1}; % All columns except the last one (response)
 response = poly_mdlFull.Variables{:, end};       % Last column is the response
@@ -85,21 +85,15 @@ for n = 1:15
     ylabel('Fitted Lever Trace');
     title(['PC' num2str(n)]);
 end
-quickExport('figure2')
 %%
 residuals = poly_mdlFull.Residuals.Raw;
 
 figure;
-histogram(residuals, 'Normalization', 'probability', 'FaceColor', [0, 0.4470, 0.7410], 'EdgeColor', 'none');
-xlabel('Residuals', 'FontSize', 14, 'FontWeight', 'bold');
-ylabel('Probability', 'FontSize', 14, 'FontWeight', 'bold');
-title('Residuals of Predicted Motor Behaviour', 'FontSize', 16, 'FontWeight', 'bold');
+scatter(downSampledLeverFull, residuals);
+xlabel('Observed Lever Trace');
+ylabel('Residuals');
+title('Residuals vs Observed Lever Trace');
 
-% Improve figure aesthetics for publication
-set(gca, 'FontSize', 12); % Set axis font size
-set(gca, 'LineWidth', 1); % Set axis line width
-box on; % Add box around the plot
-quickExport('figure3')
 %% Compute R^2 for each individual PC
 num_PCs = size(predictors, 2); % Number of PCs
 R_squared_values = zeros(num_PCs, 1);
@@ -160,7 +154,6 @@ scatter(Y, predict(mdl, X), 'filled');
 xlabel('Observed Lever Trace');
 ylabel('Predicted Lever Trace');
 title('Decoder Performance: Observed vs Predicted Lever Trace');
-quickExport('figure4')
 %%
 X = y';
 % Predict lever trace using the trained decoder
@@ -190,7 +183,11 @@ xlim([150 175])
 xlabel('Time (s)')
 ylabel('Latent Values (au)')
 
-quickExport('figure5')
+% Set up figure for vector export
+set(gcf, 'Renderer', 'painters'); % Ensure vector rendering[4][14]
+exportgraphics(gcf, '\\nas01.itap.purdue.edu\puhome\desktop\Figures\figure.pdf', 'ContentType', 'vector'); % Post-2022 method[4][10]
+% Legacy EPS export (pre-2022)
+print -depsc -painters figure.eps; % Maintain vector elements[4][6]
 %%
 % Compute error rate and accuracy over time
 % we shift to correct for negative values
