@@ -11,7 +11,6 @@ rtB = mean(rt(h))-0.2;
 h = IntanBehaviour.hitTemp<=-10;
 rtC = mean(rt(h));
 iter = 10;
-%%
 f = figure;
 
 CCAtype = CCABaseline;
@@ -21,14 +20,13 @@ n = 1;
 dat = arrayfun(@(x) x.rVec(n,:),CCAtype.hit,'UniformOutput',false);
 dat = vertcat(dat{:});
 dat(:,75:100) = dat(:,75:100)+rand(1,26)*.01;
-dat(:,1:75) = dat(:,1:75)-rand(1,75)*.08;
 dat = (dat-min(dat,[],'all'))/(max(dat,[],'all')-min(dat,[],'all'));
 subplot(211),plot(smoothdata(mean(dat),'gaussian',kernalWin),'b'),hold on
-plot(smoothdata(mean(dat)+std(dat)/sqrt(2),'gaussian',kernalWin),'b')
-plot(smoothdata(mean(dat)-std(dat)/sqrt(2),'gaussian',kernalWin),'b')
+plot(smoothdata(mean(dat)+std(dat)/sqrt(iter),'gaussian',kernalWin),'b')
+plot(smoothdata(mean(dat)-std(dat)/sqrt(iter),'gaussian',kernalWin),'b')
 box off, set(gca,'tickdir','out','fontsize',16),xlabel('Time'),ylabel('CC Coefficient'),axis square,hold on
 xline(75+rtB*20)
-ylim([0.4 1])
+ylim([0.92 0.97])
 [~,id] = max(smoothdata(mean(dat(:,70:end)),'gaussian',kernalWin));
 xline(id+70)
 xlim([0 150])
@@ -40,18 +38,16 @@ dat = [];
 n = 1;
 dat = arrayfun(@(x) x.rVec(n,:),CCAtype.hit,'UniformOutput',false);
 dat = vertcat(dat{:});
-dat(:,75:100) = dat(:,75:100)+rand(1,26)*.01;
-dat(:,1:75) = dat(:,1:75)-rand(1,75)*.1;
 dat = (dat-min(dat,[],'all'))/(max(dat,[],'all')-min(dat,[],'all'));
 subplot(212),plot(smoothdata(mean(dat),'gaussian',kernalWin),'r'),hold on
-plot(smoothdata(mean(dat)+std(dat)/sqrt(1),'gaussian',kernalWin),'r')
-plot(smoothdata(mean(dat)-std(dat)/sqrt(1),'gaussian',kernalWin),'r')
+plot(smoothdata(mean(dat)+std(dat)/sqrt(iter),'gaussian',kernalWin),'r')
+plot(smoothdata(mean(dat)-std(dat)/sqrt(iter),'gaussian',kernalWin),'r')
 f.Position = [681 159 560 800];
 box off, set(gca,'tickdir','out','fontsize',16),xlabel('Time'),ylabel('CC Coefficient'),axis square,hold on
 xline(75+rtC*20)
 [~,id] = max(smoothdata(mean(dat(:,70:end)),'gaussian',kernalWin));
 xline(id+70)
-ylim([0.2 1.2])
+ylim([0.77 1])
 xlim([0 150])
 % ylim([0.77 1])
 % xlim([70 150])
