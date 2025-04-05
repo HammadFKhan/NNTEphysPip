@@ -8,8 +8,8 @@ for fileNum = 1:length(M1neuralDynamics)
     [M1neuralDynamics(fileNum).neuralDynamics,M1waveDynamics] = neuralTrajAnalysis2(M1neuralDynamics(fileNum).Spikes,[],M1neuralDynamics(fileNum).IntanBehaviour);
 end
 %%
-neuralDynamics = M1neuralDynamics(5).neuralDynamics;
-IntanBehaviour = M1neuralDynamics(5).IntanBehaviour;
+neuralDynamics = M1neuralDynamics(4).neuralDynamics;
+IntanBehaviour = M1neuralDynamics(4).IntanBehaviour;
 leverTrace = arrayfun(@(x) x.trace',IntanBehaviour.cueHitTrace,'uniformoutput',0);
 leverTrace = vertcat(leverTrace{:});
 reconstructedData = getPCALever(leverTrace);

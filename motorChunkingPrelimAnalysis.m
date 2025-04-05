@@ -30,7 +30,7 @@ for fileNum = 1:length(files)
     for n = length(IntanBehaviour.MIHitTrace)+1:length(Spikes.GPFA.MIHitFA.dat) %fix trials
         Spikes.GPFA.MIHitFA.dat(n).trialId = n;
     end
-    addpath(genpath('C:\Users\khan332\Documents\GitHub\Ephy2\NeuralTraj'));
+    addpath(genpath('C:\Users\khan332\Documents\GitHub\NeuralTraj'));
     addpath(genpath('mat_results'));
     if exist('mat_results','dir'),rmdir('mat_results','s'),end
     [Spikes.GPFA.resultHit,Spikes.GPFA.seqTrainHit] = gpfaAnalysis(Spikes.GPFA.hit.dat,1); %Run index
