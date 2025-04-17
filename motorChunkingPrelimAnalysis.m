@@ -7,7 +7,7 @@ for fileNum = 1:length(files)
     if ~isfield(IntanBehaviour, 'parameters')
         parameters.experiment = 'cue'; % self - internally generated, cue - cue initiated
         parameters.opto = 0; % 1 - opto ON , 0 - opto OFF
-        parameters.cool = 1; % No Cool
+        parameters.cool = 0; % No Cool
         parameters.windowBeforePull = 1.5; % in seconds
         parameters.windowAfterPull = 1.5; % in seconds
         parameters.windowBeforeCue = 1.5; % in seconds

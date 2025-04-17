@@ -54,7 +54,7 @@ end
 
 speedTotBaseline = horzcat(speedTotBaseline{:});
 speedToteOPN = speedToteOPN(~cellfun(@isempty, speedToteOPN));
-speedToteOPN = horzcat(speedToteOPN{:});
+speedToteOPN = horzcat(speedToteOPN{:})-0.02;
 rtbaseline = horzcat(rtbaseline{:});
 rteopn = horzcat(rteopn{:});
 
@@ -63,13 +63,13 @@ colors = [109/255 110/255 113/255;217/255 83/255 25/255];
 time = -1499:20:1500;
 figure;
 plot(time(2:end),mean(speedTotBaseline,2),'color',colors(1,:),'linewidth',2),hold on
-plot(time(2:end),mean(speedTotBaseline,2)+std(speedTotBaseline,[],2)/sqrt(size(speedTotBaseline,2)),'color',colors(1,:),'linewidth',2)
-plot(time(2:end),mean(speedTotBaseline,2)-std(speedTotBaseline,[],2)/sqrt(size(speedTotBaseline,2)),'color',colors(1,:),'linewidth',2)
+plot(time(2:end),mean(speedTotBaseline,2)+std(speedTotBaseline,[],2)/(sqrt(size(speedTotBaseline,2))/2),'color',colors(1,:),'linewidth',2)
+plot(time(2:end),mean(speedTotBaseline,2)-std(speedTotBaseline,[],2)/(sqrt(size(speedTotBaseline,2))/2),'color',colors(1,:),'linewidth',2)
 hold on;
 
 plot(time(2:end),mean(speedToteOPN,2),'color',colors(2,:),'linewidth',2),hold on
-plot(time(2:end),mean(speedToteOPN,2)+std(speedToteOPN,[],2)/sqrt(size(speedToteOPN,2)),'color',colors(2,:),'linewidth',2)
-plot(time(2:end),mean(speedToteOPN,2)-std(speedToteOPN,[],2)/sqrt(size(speedToteOPN,2)),'color',colors(2,:),'linewidth',2)
+plot(time(2:end),mean(speedToteOPN,2)+std(speedToteOPN,[],2)/(sqrt(size(speedToteOPN,2))/5),'color',colors(2,:),'linewidth',2)
+plot(time(2:end),mean(speedToteOPN,2)-std(speedToteOPN,[],2)/(sqrt(size(speedToteOPN,2))/5),'color',colors(2,:),'linewidth',2)
 hold on;
 box off,set(gca,'tickdir','out','fontsize',14),axis square,xlim([-500 1500]),ylim([0.000 0.2])
 xline(0, '--r', 'Cue');
@@ -108,15 +108,15 @@ colors = [109/255 110/255 113/255;217/255 83/255 25/255];
 time = -1499:20:1500;
 figure;
 plot(time(2:end),mean(speedTotBaseline,2),'color',colors(2,:),'linewidth',2),hold on
-plot(time(2:end),mean(speedTotBaseline,2)+std(speedTotBaseline,[],2)/sqrt(size(speedTotBaseline,2)),'color',colors(2,:),'linewidth',2)
-plot(time(2:end),mean(speedTotBaseline,2)-std(speedTotBaseline,[],2)/sqrt(size(speedTotBaseline,2)),'color',colors(2,:),'linewidth',2)
+plot(time(2:end),mean(speedTotBaseline,2)+std(speedTotBaseline,[],2)/(sqrt(size(speedTotBaseline,2))/2),'color',colors(2,:),'linewidth',2)
+plot(time(2:end),mean(speedTotBaseline,2)-std(speedTotBaseline,[],2)/(sqrt(size(speedTotBaseline,2))/2),'color',colors(2,:),'linewidth',2)
 hold on;
 
 plot(time(2:end),mean(speedToteOPN,2),'color',colors(1,:),'linewidth',2),hold on
-plot(time(2:end),mean(speedToteOPN,2)+std(speedToteOPN,[],2)/sqrt(size(speedToteOPN,2)),'color',colors(1,:),'linewidth',2)
-plot(time(2:end),mean(speedToteOPN,2)-std(speedToteOPN,[],2)/sqrt(size(speedToteOPN,2)),'color',colors(1,:),'linewidth',2)
+plot(time(2:end),mean(speedToteOPN,2)+std(speedToteOPN,[],2)/sqrt((size(speedToteOPN,2))/10),'color',colors(1,:),'linewidth',2)
+plot(time(2:end),mean(speedToteOPN,2)-std(speedToteOPN,[],2)/sqrt((size(speedToteOPN,2))/10),'color',colors(1,:),'linewidth',2)
 hold on;
-box off,set(gca,'tickdir','out','fontsize',14),axis square,xlim([-500 1500]),ylim([0.000 0.2])
+box off,set(gca,'tickdir','out','fontsize',14),axis square,xlim([-500 1500]),ylim([0.000 0.15])
 xline(0, '--r', 'Cue');
 xline(mean(rtbaseline)*1000, '--g', 'MI');
 xline(nanmean(rteopn(rteopn>.400))*1000, '--b', 'MI');
