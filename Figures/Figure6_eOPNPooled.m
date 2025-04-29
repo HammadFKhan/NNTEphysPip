@@ -25,7 +25,7 @@ end
 % is the metric we want to track over this experiment. That's not to say we
 % should check the other conditions. We do; but it is a supplemental
 % finding.
-
+addpath(genpath('Main'));
 % Plot speed over time, highlighting different states
 if ~exist('M1eOPN','var')
     load('D:\eOPNData\combined');

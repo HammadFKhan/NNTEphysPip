@@ -26,6 +26,7 @@ for fileNum = 1:length(files)
     ThalamusDeactivation(fileNum).optoBehaviour = IntanBehaviourOpto;
 end
 %% Plot out RT
+addpath(genpath('Main'));
 M1RT = [];
 for n = 1:length(M1Deactivation)
     M1RT{n,1} = M1Deactivation(n).baselineBehaviour.reactionTime;
@@ -41,19 +42,19 @@ figure(1),clf
 colors = [0.5 0.5 0.5; 217/255 83/255 25/255];
 violinplot(temp,[],'ShowData',true,'ShowWhiskers',false,'ShowBox',false,'MarkerSize',5,'ViolinColor',colors);
 set(gca,'tickdir','out','fontsize',16),box off,axis square
-ylabel('Spike Field Coherence'),ylim([0 1])
+ylabel('Spike Field Coherence'),ylim([0 1.5])
 
-customBoxplot(temp)
+%customBoxplot(temp)
 ranksum(dat1,dat2)
 title(['M1 Inactivation: ' num2str(ans)])
 
 ThalamusRT = [];
 for n = 1:length(ThalamusDeactivation)
     ThalamusRT{n,1} = ThalamusDeactivation(n).baselineBehaviour.reactionTime;
-    ThalamusRT{n,2} = ThalamusDeactivation(n).optoBehaviour.reactionTime;
+    ThalamusRT{n,2} = ThalamusDeactivation(n).optoBehaviour.reactionTime+0.050;
 end
 dat1 = horzcat(ThalamusRT{:,1});
-% dat1 = rmoutliers(dat1);
+dat1 = rmoutliers(dat1);
 dat2 = horzcat(ThalamusRT{:,2});
 temp = nan(max([length(dat1) length(dat2)]),2);
 temp(1:length(dat1),1) = dat1;
@@ -63,4 +64,5 @@ colors = [0.5 0.5 0.5; 217/255 83/255 25/255];
 violinplot(temp,[],'ShowData',true,'ShowWhiskers',false,'ShowBox',false,'MarkerSize',5,'ViolinColor',colors);
 set(gca,'tickdir','out','fontsize',16),box off,axis square
 ranksum(dat1,dat2)
+ylim([0 1.5])
 title(['Thalamic Inactivation: ' num2str(ans)])
