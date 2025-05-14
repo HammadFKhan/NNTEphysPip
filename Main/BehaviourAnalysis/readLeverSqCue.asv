@@ -4,7 +4,7 @@ parameters.cool = 0; % No Cool
 parameters.windowBeforePull = 1.5; % in seconds
 parameters.windowAfterPull = 1.5; % in seconds
 parameters.windowBeforeCue = 1.5; % in seconds
-parameters.windowAfterCue = 1.5; % in seconds
+parameters.windowAfterCue = 3.5; % in seconds
 parameters.windowBeforeMI = 1.5; % in seconds 
 parameters.windowAfterMI = 1.5; % in seconds 
 parameters.Fs = 1000; % Eventual downsampled data
@@ -13,7 +13,7 @@ parameters.rows = 64;
 parameters.cols = 1;
 BehaviourSq = struct();
 BehaviourSingle = struct();
-fname = "Y:\Hammad\Ephys\SeqProject\Behavior\Rbp4M1Seq_Cue2025_04_27_11.53.AM.csv";
+fname = "Y:\Hammad\Ephys\SeqProject\Behavior\COM32025_05_11_03.01.PM.csv";
 [BehaviourSq] = readLeverSqTrials(parameters,[],fname);
 [BehaviourSingle] = readLeverSingleTrials(parameters,[],fname);
 %%
@@ -28,7 +28,7 @@ for n = 1:length(BehaviourSq.hitTrace)
 end
 %%
 
-allPulls = arrayfun(@(x) x.pullCount, BehaviourSq.hitTrace, 'UniformOutput', false);
+allPulls = arrayfun(@(x) x.pullCount, BehaviourSq.cueHitTrace, 'UniformOutput', false);
 
 % Determine the correct size (number of rows) from the first array
 correctNumRows = size(allPulls{1}, 1);
@@ -44,7 +44,7 @@ allPulls = horzcat(validPulls{:})';
 
 [cleanedpullCounts, hasTimeout] = cleanTimeoutSequences(allPulls);
 %%
-data = allPulls;
+data = cleanedpullCounts;
 figure('Color', 'w', 'Position', [100, 100, 600, 900]);
 imagesc([-1500 1500], [1 size(data,1)], data);
 
@@ -66,10 +66,10 @@ title('Lever Pull Sequence Alignment to Reward', 'FontSize', 16, 'FontWeight', '
 hold on;
 plot([0 0], ylim, 'r--', 'LineWidth', 2);
 text(30, size(data,1)-5, 'Reward', 'Color', 'r', 'FontSize', 12, 'FontWeight', 'bold', 'Rotation', 90);
-
-hold on;
-plot([-150 -150], ylim, 'r--', 'LineWidth', 2);
-text(30, size(data,1)-5, 'Reward', 'Color', 'r', 'FontSize', 12, 'FontWeight', 'bold', 'Rotation', 90);
+% 
+% hold on;
+% plot([-150 -150], ylim, 'r--', 'LineWidth', 2);
+% text(30, size(data,1)-5, 'Reward', 'Color', 'r', 'FontSize', 12, 'FontWeight', 'bold', 'Rotation', 90);
 
 % Improve axis ticks
 set(gca, 'FontSize', 12, 'XTick', -1500:500:1500, 'YDir', 'normal');

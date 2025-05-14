@@ -4,7 +4,7 @@ parameters.cool = 0; % No Cool
 parameters.windowBeforePull = 1.5; % in seconds
 parameters.windowAfterPull = 1.5; % in seconds
 parameters.windowBeforeCue = 1.5; % in seconds
-parameters.windowAfterCue = 1.5; % in seconds
+parameters.windowAfterCue = 3.5; % in seconds
 parameters.windowBeforeMI = 1.5; % in seconds 
 parameters.windowAfterMI = 1.5; % in seconds 
 parameters.Fs = 1000; % Eventual downsampled data
@@ -28,7 +28,7 @@ for n = 1:length(BehaviourSq.hitTrace)
 end
 %%
 
-allPulls = arrayfun(@(x) x.pullCount, BehaviourSingle.hitTrace, 'UniformOutput', false);
+allPulls = arrayfun(@(x) x.pullCount, BehaviourSq.cueHitTrace, 'UniformOutput', false);
 
 % Determine the correct size (number of rows) from the first array
 correctNumRows = size(allPulls{1}, 1);
@@ -46,7 +46,7 @@ allPulls = horzcat(validPulls{:})';
 %%
 data = cleanedpullCounts;
 figure('Color', 'w', 'Position', [100, 100, 600, 900]);
-imagesc([-1500 1500], [1 size(data,1)], data);
+imagesc([-1500 3500], [1 size(data,1)], data);
 
 % Use a perceptually uniform colormap
 

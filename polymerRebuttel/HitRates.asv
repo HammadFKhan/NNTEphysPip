@@ -73,7 +73,7 @@ xline(laseridxt(1), 'r--', 'LineWidth', 2);
 xline(laseridxt(2), 'r--', 'LineWidth', 2);
 
 % Beautify axes and labels
-xlabel('Time (seconds)', 'FontSize', 14, 'FontWeight', 'bold');
+xlabel('Time (minutes)', 'FontSize', 14, 'FontWeight', 'bold');
 ylabel('Hits per Minute', 'FontSize', 14, 'FontWeight', 'bold');
 title('Hit Rate Over Time', 'FontSize', 16, 'FontWeight', 'bold');
 set(gca, 'FontSize', 12, 'LineWidth', 1.5);
@@ -84,10 +84,10 @@ set(gca, 'GridLineStyle', ':', 'GridAlpha', 0.7);
 
 % Add legend
 legend({'Hit Count', 'Laser ON/OFF', 'Laser Period'}, ...
-    'Location', 'eastoutside', 'FontSize', 12);
+    'Location', 'northeast', 'FontSize', 12);
 
 hold off
-axis square
+
 % Extract timestamps of hits
 hitRate= arrayfun(@(x) x.t1, Behaviour.missTrace);
 
@@ -100,7 +100,7 @@ binEdges = floor(minTime/60)*60:60:ceil(maxTime/60)*60;
 
 % Count hits in each bin
 hitCounts = histcounts(hitRate, binEdges);
-hitCounts(13:35) = hitCounts(13:35)+6;
+% hitCounts(13:35) = hitCounts(13:35)+6;
 % Create time vector for plotting (center of each bin)
 timeVector = binEdges(1:end-1) + 30;
 subplot(122)
@@ -124,7 +124,7 @@ xline(laseridxt(1), 'r--', 'LineWidth', 2);
 xline(laseridxt(2), 'r--', 'LineWidth', 2);
 
 % Beautify axes and labels
-xlabel('Time (seconds)', 'FontSize', 14, 'FontWeight', 'bold');
+xlabel('Time (minutes)', 'FontSize', 14, 'FontWeight', 'bold');
 ylabel('Misses per Minute', 'FontSize', 14, 'FontWeight', 'bold');
 title('Miss Rate Over Time', 'FontSize', 16, 'FontWeight', 'bold');
 set(gca, 'FontSize', 12, 'LineWidth', 1.5);
@@ -135,10 +135,9 @@ set(gca, 'GridLineStyle', ':', 'GridAlpha', 0.7);
 
 % Add legend
 legend({'Miss Count', 'Laser ON/OFF', 'Laser Period'}, ...
-    'Location', 'eastoutside', 'FontSize', 12);
+    'Location', 'northeast', 'FontSize', 12);
 
 hold off
-axis square
 %%
 
 hitTimePre = arrayfun(@(x) x.t1, BehaviourPreLaser.hitTrace);

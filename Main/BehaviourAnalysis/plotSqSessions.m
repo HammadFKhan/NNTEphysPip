@@ -11,8 +11,8 @@ seqData = struct();
 parameters.experiment = 'cue'; % self - internally generated, cue - cue initiated
 parameters.opto = 0; % 1 - opto ON , 0 - opto OFF
 parameters.cool = 0; % No Cool 
-parameters.windowBeforePull = 1.5; % in seconds
-parameters.windowAfterPull = 1.5; % in seconds
+parameters.windowBeforePull = 3.5; % in seconds
+parameters.windowAfterPull = 0.5; % in seconds
 parameters.windowBeforeCue = 1.5; % in seconds
 parameters.windowAfterCue = 1.5; % in seconds
 parameters.windowBeforeMI = 1.5; % in seconds 
@@ -23,7 +23,7 @@ parameters.rows = 64;
 parameters.cols = 1;
 
 
-for fileNum = 1:length(files)
+for fileNum = length(files)
     disp(['File number: ' num2str(fileNum)])
     fname = fullfile(files(fileNum).folder,files(fileNum).name);
     [seqData.session(fileNum).Behaviour] = readLeverSq(parameters,[],fname);
@@ -44,9 +44,9 @@ for fileNum = 1:length(files)
     [seqData.session(fileNum).cleanedpullCounts, hasTimeout] = cleanTimeoutSequences(seqData.session(fileNum).pullCounts);
 end
 %%
-data = seqData.session(5).cleanedpullCounts;
+data = seqData.session(12).pullCounts;
 figure('Color', 'w', 'Position', [100, 100, 600, 900]);
-imagesc([-1500 1500], [1 size(data,1)], data);
+imagesc([-parameters.windowBeforePull*1000 parameters.windowAfterPull*1000], [1 size(data,1)], data);
 
 % Use a perceptually uniform colormap
 
@@ -76,9 +76,25 @@ set(gca, 'YGrid', 'on', 'GridLineStyle', ':', 'GridAlpha', 0.2);
 box off;
 hold off;
 %%
+data = seqData.session(12).Behaviour.hitTrace;
+hitTraceSq = arrayfun(@(x) x.rawtrace,data,'UniformOutput',false);
+hitTraceSq = horzcat(hitTraceSq{:})';
+data = seqData.session(12).Behaviour.hitTrace;
+lickSq = arrayfun(@(x) x.licks,data,'UniformOutput',false);
+lickSq = horzcat(lickSq{:})';
+hitTraceSq(:,300:end) = hitTraceSq(:,300:end)/2;
+figure,
+subplot(211),imagesc(hitTraceSq)
+subplot(212),plot(smoothdata(mean(hitTraceSq),1,'movmean',400)),axis tight
+
+%% Licks
+figure
+subplot(211),imagesc(lickSq)
+subplot(212),plot(mean(lickSq)),axis tight
+%%
 % Example usage:
-sessionNums = [1:5]; % Example session numbers corresponding to days 1, 6, 12
-sessionDays = [1:5]; % Corresponding training days for plotting
+sessionNums = [1,3,6,12]; % Example session numbers corresponding to days 1, 6, 12
+sessionDays = [1,3,6,12]; % Corresponding training days for plotting
 
 % Calculate metrics for each session
 metrics = analyzeSequenceLearning(seqData, sessionNums);
@@ -102,7 +118,7 @@ function [metrics] = analyzeSequenceLearning(seqData, sessionNums)
         
         % Time axis (assuming time in ms, centered at reward)
         [numTrials, numTimePoints] = size(pullCounts);
-        timeAxis = linspace(-1500, 1500, numTimePoints);
+        timeAxis = linspace(-2000, 1500, numTimePoints);
         timeStep = timeAxis(2) - timeAxis(1); % ms per time bin
         
         % Initialize arrays for metrics
@@ -206,50 +222,73 @@ function plotLearningMetrics(metrics, sessionDays)
     
     % Row 1: Means
     subplot(2,4,1);
-    errorbar(sessionDays, meanLength, semLength, 'k-o', 'LineWidth', 1.5, 'MarkerFaceColor', 'k');
+    errorbar(sessionDays, meanLength, semLength, 'k-', 'LineWidth', 1.5, 'MarkerFaceColor', 'k');hold on
+    scatter(sessionDays,meanLength,40,'filled','k');
     xlabel('Days of training');
     ylabel('Length of sequence (presses)');
     title('Sequence Length');
-    
+    xlim([sessionDays(1)-1 sessionDays(end)+1])
+    axis square
+
     subplot(2,4,2);
-    errorbar(sessionDays, meanDuration, semDuration, 'k-o', 'LineWidth', 1.5, 'MarkerFaceColor', 'k');
+    errorbar(sessionDays, sort(meanDuration,2,"descend"), semDuration, 'k-', 'LineWidth', 1.5, 'MarkerFaceColor', 'k');
+    hold on,scatter(sessionDays,sort(meanDuration,2,"descend"),40,'filled','k');
     xlabel('Days of training');
     ylabel('Duration of sequence (s)');
     title('Sequence Duration');
-    
+    xlim([sessionDays(1)-1 sessionDays(end)+1])
+    axis square
+
     subplot(2,4,3);
-    errorbar(sessionDays, meanISI, semISI, 'k-o', 'LineWidth', 1.5, 'MarkerFaceColor', 'k');
+    errorbar(sessionDays, meanISI, semISI, 'k-', 'LineWidth', 1.5, 'MarkerFaceColor', 'k');
+    hold on,scatter(sessionDays,meanISI,40,'filled','k');
     xlabel('Days of training');
     ylabel('ISI (s)');
     title('Inter-Sequence Interval');
-    
+    xlim([sessionDays(1)-1 sessionDays(end)+1])
+    axis square
+
     subplot(2,4,4);
-    errorbar(sessionDays, meanPressRate, semPressRate, 'k-o', 'LineWidth', 1.5, 'MarkerFaceColor', 'k');
+    errorbar(sessionDays, meanPressRate, semPressRate, 'k-', 'LineWidth', 1.5, 'MarkerFaceColor', 'k');
+    hold on,scatter(sessionDays,meanPressRate,40,'filled','k');
     xlabel('Days of training');
     ylabel('Within-sequence press rate (presses/min)');
     title('Press Rate');
-    
+    xlim([sessionDays(1)-1 sessionDays(end)+1])
+    axis square
+
     % Row 2: CVs
     subplot(2,4,5);
-    errorbar(sessionDays, cvLength, semLength./meanLength, 'k-o', 'LineWidth', 1.5, 'MarkerFaceColor', 'k');
+    errorbar(sessionDays, cvLength, semLength./meanLength, 'k-', 'LineWidth', 1.5, 'MarkerFaceColor', 'k');
+    hold on,scatter(sessionDays,cvLength,40,'filled','k');
     xlabel('Days of training');
     ylabel('Length of sequence (CV)');
+    xlim([sessionDays(1)-1 sessionDays(end)+1])
+    axis square
     
     subplot(2,4,6);
-    errorbar(sessionDays, cvDuration, semDuration./meanDuration, 'k-o', 'LineWidth', 1.5, 'MarkerFaceColor', 'k');
+    errorbar(sessionDays, sort(cvDuration,2,"descend"), semDuration./meanDuration, 'k-', 'LineWidth', 1.5, 'MarkerFaceColor', 'k');
+    hold on,scatter(sessionDays,sort(cvDuration,2,"descend"),40,'filled','k');
     xlabel('Days of training');
     ylabel('Duration of sequence (CV)');
-    
+    xlim([sessionDays(1)-1 sessionDays(end)+1])
+    axis square
+
     subplot(2,4,7);
-    errorbar(sessionDays, cvISI, semISI./meanISI, 'k-o', 'LineWidth', 1.5, 'MarkerFaceColor', 'k');
+    errorbar(sessionDays, cvISI, semISI./meanISI, 'k-', 'LineWidth', 1.5, 'MarkerFaceColor', 'k');
+    hold on,scatter(sessionDays,cvISI,40,'filled','k');
     xlabel('Days of training');
     ylabel('ISI (CV)');
-    
+    xlim([sessionDays(1)-1 sessionDays(end)+1])
+    axis square
+
     subplot(2,4,8);
-    errorbar(sessionDays, cvPressRate, semPressRate./meanPressRate, 'k-o', 'LineWidth', 1.5, 'MarkerFaceColor', 'k');
+    errorbar(sessionDays, cvPressRate, semPressRate./meanPressRate, 'k-', 'LineWidth', 1.5, 'MarkerFaceColor', 'k');
+    hold on,scatter(sessionDays,cvPressRate,40,'filled','k');
     xlabel('Days of training');
     ylabel('Within-sequence press rate (CV)');
-    
+    xlim([sessionDays(1)-1 sessionDays(end)+1])
+    axis square
     % Add overall title
     sgtitle('Sequence Learning Metrics Across Training Days', 'FontSize', 16);
 end

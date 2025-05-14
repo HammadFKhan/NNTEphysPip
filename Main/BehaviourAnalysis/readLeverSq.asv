@@ -51,7 +51,6 @@ B = readmatrix([enpath,'/',enfile]);
 Behaviour.leverTrace = (B(2:end,1) - resting_position)*flip;
 Behaviour.time = (B(2:end,2) - B(2,2))/1e6; % time in seconds
 Behaviour.pullCount = B(2:end,3);
-
 Behaviour.nHit = B(end,4);
 Behaviour.nMiss = B(end,5);
 if cue==1 
@@ -59,11 +58,8 @@ if cue==1
     Behaviour.nCueHit = Behaviour.nHit;
     Behaviour.nCueMiss = Behaviour.nCue-Behaviour.nCueHit;
 end   
-if size(B,2)>6  %% Grab licks as well
+if size(Behaviour.B,2)>6
     lickD = 1;
-    Behaviour.licks = B(2:end,6);
-else 
-    lickD = 0;
 end
 Behaviour.B = B(2:end,:);
 
@@ -184,7 +180,6 @@ for i=1:Behaviour.nHit
     Behaviour.hitTrace(i).t0 = Behaviour.hit(i,2);
     Behaviour.hitTrace(i).t2 = Behaviour.time(Behaviour.hitTrace(i).i2);
     Behaviour.hitTrace(i).pullCount = Behaviour.pullCount(Behaviour.hitTrace(i).i1:Behaviour.hitTrace(i).i2);
-    Behaviour.hitTrace(i).licks = Behaviour.licks(Behaviour.hitTrace(i).i1:Behaviour.hitTrace(i).i2);
     if expFlag == 1
         [Behaviour.hitTrace(i).trace,Behaviour.hitTrace(i).time] = resample(Behaviour.hitTrace(i).rawtrace,Behaviour.hitTrace(i).rawtime,parameters.Fs,'spline');
         if (size(Behaviour.hitTrace(i).trace,1)<nlength)
