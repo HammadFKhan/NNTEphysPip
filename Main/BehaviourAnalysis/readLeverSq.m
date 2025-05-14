@@ -1,4 +1,4 @@
-function [Behaviour] = readLeverSq(parameters,lfpTime)
+function [Behaviour] = readLeverSq(parameters,lfpTime,fname)
 
 if ~exist('parameters.experiment','var')
     parameters.experiment = 'self';
@@ -14,18 +14,29 @@ else
 end
 
 if exist("lfpTime",'var')
-    expFlag = 1;
-    disp('Intan time data passed. Function set to experiment.');
+    if ~isempty(lfpTime)
+        expFlag = 1;
+        disp('Intan time data passed. Function set to experiment.');
+    else
+        expFlag = 0;
+        disp('Intan time data not passed. Function set to training.');
+    end
 else
     expFlag = 0;
     disp('Intan time data not passed. Function set to training.');
 end
 %% Reading file from arduino 
-[enfile,enpath] = uigetfile('*.csv');
-if isequal(enfile,0)
-   disp('User selected Cancel');
+if ~exist('fname','var')
+    [enfile,enpath] = uigetfile('Y:\Hammad\Ephys\SeqProject\*.csv');
+    if isequal(enfile,0)
+        disp('User selected Cancel');
+    else
+        disp(['User selected ', fullfile(enpath,enfile)]);
+    end
 else
-   disp(['User selected ', fullfile(enpath,enfile)]);
+    [enpath,enfile,ext] = fileparts(fname);
+    disp(['User selected ', fullfile(enpath,enfile)]);
+    enfile = [enfile,ext];
 end
 
 resting_position = 550;
@@ -165,6 +176,7 @@ for i=1:Behaviour.nHit
     Behaviour.hitTrace(i).t1 = Behaviour.time(Behaviour.hitTrace(i).i1);
     Behaviour.hitTrace(i).t0 = Behaviour.hit(i,2);
     Behaviour.hitTrace(i).t2 = Behaviour.time(Behaviour.hitTrace(i).i2);
+    Behaviour.hitTrace(i).pullCount = Behaviour.pullCount(Behaviour.hitTrace(i).i1:Behaviour.hitTrace(i).i2);
     if expFlag == 1
         [Behaviour.hitTrace(i).trace,Behaviour.hitTrace(i).time] = resample(Behaviour.hitTrace(i).rawtrace,Behaviour.hitTrace(i).rawtime,parameters.Fs,'spline');
         if (size(Behaviour.hitTrace(i).trace,1)<nlength)
