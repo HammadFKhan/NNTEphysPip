@@ -1,9 +1,9 @@
 parameters.experiment = 'cue'; % self - internally generated, cue - cue initiated
 parameters.opto = 0; % 1 - opto ON , 0 - opto OFF
 parameters.cool = 0; % No Cool 
-parameters.windowBeforePull = 1.5; % in seconds
-parameters.windowAfterPull = 1.5; % in seconds
-parameters.windowBeforeCue = 1.5; % in seconds
+parameters.windowBeforePull = 3.5; % in seconds
+parameters.windowAfterPull = 0.5; % in seconds
+parameters.windowBeforeCue = 0.5; % in seconds
 parameters.windowAfterCue = 3.5; % in seconds
 parameters.windowBeforeMI = 1.5; % in seconds 
 parameters.windowAfterMI = 1.5; % in seconds 
@@ -28,7 +28,7 @@ for n = 1:length(BehaviourSq.hitTrace)
 end
 %%
 
-allPulls = arrayfun(@(x) x.pullCount, BehaviourSq.cueHitTrace, 'UniformOutput', false);
+allPulls = arrayfun(@(x) x.pullCount, BehaviourSingle.cueHitTrace, 'UniformOutput', false);
 
 % Determine the correct size (number of rows) from the first array
 correctNumRows = size(allPulls{1}, 1);
@@ -46,7 +46,7 @@ allPulls = horzcat(validPulls{:})';
 %%
 data = cleanedpullCounts;
 figure('Color', 'w', 'Position', [100, 100, 600, 900]);
-imagesc([-1500 3500], [1 size(data,1)], data);
+imagesc([-3500 500], [1 size(data,1)], data);
 
 % Use a perceptually uniform colormap
 
@@ -72,7 +72,7 @@ text(30, size(data,1)-5, 'Reward', 'Color', 'r', 'FontSize', 12, 'FontWeight', '
 % text(30, size(data,1)-5, 'Reward', 'Color', 'r', 'FontSize', 12, 'FontWeight', 'bold', 'Rotation', 90);
 
 % Improve axis ticks
-set(gca, 'FontSize', 12, 'XTick', -1500:500:1500, 'YDir', 'normal');
+set(gca, 'FontSize', 12, 'XTick', -2500:500:500, 'YDir', 'normal');
 
 % Optional: Add subtle gridlines
 set(gca, 'YGrid', 'on', 'GridLineStyle', ':', 'GridAlpha', 0.2);

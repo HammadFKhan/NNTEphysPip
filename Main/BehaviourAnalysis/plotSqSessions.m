@@ -68,7 +68,7 @@ plot([0 0], ylim, 'r--', 'LineWidth', 2);
 text(30, size(data,1)-5, 'Reward', 'Color', 'r', 'FontSize', 12, 'FontWeight', 'bold', 'Rotation', 90);
 
 % Improve axis ticks
-set(gca, 'FontSize', 12, 'XTick', -1500:500:1500, 'YDir', 'normal');
+set(gca, 'FontSize', 12, 'XTick', -3500:500:1500, 'YDir', 'normal');
 
 % Optional: Add subtle gridlines
 set(gca, 'YGrid', 'on', 'GridLineStyle', ':', 'GridAlpha', 0.2);
@@ -82,15 +82,17 @@ hitTraceSq = horzcat(hitTraceSq{:})';
 data = seqData.session(12).Behaviour.hitTrace;
 lickSq = arrayfun(@(x) x.licks,data,'UniformOutput',false);
 lickSq = horzcat(lickSq{:})';
-hitTraceSq(:,300:end) = hitTraceSq(:,300:end)/2;
+hitTraceSq(:,300:end) = hitTraceSq(:,300:end)/5;
+time = linspace(-3.5,0.5,401);
+
 figure,
-subplot(211),imagesc(hitTraceSq)
-subplot(212),plot(smoothdata(mean(hitTraceSq),1,'movmean',400)),axis tight
+subplot(211),imagesc(time,[1 size(hitTraceSq,1)],hitTraceSq)
+subplot(212),plot(time,smoothdata(mean(hitTraceSq),2,'movmean',20)),axis tight
 
 %% Licks
 figure
-subplot(211),imagesc(lickSq)
-subplot(212),plot(mean(lickSq)),axis tight
+subplot(211),imagesc(time,[1 size(lickSq,1)],lickSq)
+subplot(212),plot(time,smoothdata(mean(lickSq),2,'movmean',5)),axis tight
 %%
 % Example usage:
 sessionNums = [1,3,6,12]; % Example session numbers corresponding to days 1, 6, 12
