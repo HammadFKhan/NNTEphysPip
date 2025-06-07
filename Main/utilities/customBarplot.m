@@ -6,7 +6,7 @@ if ~isempty(varargin) && (strcmp(varargin{1},'Scatter') || strcmp(varargin{1},'s
         scatterOn = 0;
     end
 else
-    scatterOn = 0;
+    scatterOn = 1;
 end
 
 labels = [];buff = [];
