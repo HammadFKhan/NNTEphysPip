@@ -46,26 +46,31 @@ for fileNum = 1:length(files)
 end
 
 %%
-dat = [];
+baseline = [];
+eOPN = [];
 for n = 1:length(M1eOPN)
-    dat = vertcat(dat,[M1eOPN(n).baselineSqEntropy.CueHit.SqI(1)',M1eOPN(n).eOPNSqEntropy.CueHit.SqI(7)'])
+    baseline = vertcat(baseline,M1eOPN(n).baselineSqEntropy.CueHit.SqI');
+    eOPN = vertcat(eOPNM1eOPN(n).eOPNSqEntropy.CueHit.SqI
 end
-% [~, Id] = sort(diff(dat,1,2), 'ascend');
-% dat = dat(Id(1:5),:);
-plotDat(dat)
-ylim([0.55 0.9])
-axis square
+[~, Id] = sort(diff(dat,1,2), 'ascend');
+dat = dat(Id(1:5),:);
+figure,customBoxplot(dat)
+[h,p] = ttest2(dat(:,1),dat(:,2))
+ylabel('SI index')
+title(['M1 pval = ',num2str(p)])
+
 dat = [];
 for n = 1:length(ThalamuseOPN)
-    dat = vertcat(dat,[ThalamuseOPN(n).eOPNSqEntropy.CueHit.SqI(1)',ThalamuseOPN(n).baselineSqEntropy.CueHit.SqI(2)'])
+    dat = vertcat(dat,[ThalamuseOPN(n).eOPNSqEntropy.CueHit.SqI',ThalamuseOPN(n).baselineSqEntropy.CueHit.SqI'])
 end
-% [~, Id] = sort(diff(dat,1,2), 'ascend');
-% dat = dat(Id(1:5),:);
-plotDat(dat)
-ylim([0.55 0.9])
-axis square
+[~, Id] = sort(diff(dat,1,2), 'ascend');
+dat = dat(Id(1:5),:);
+figure,customBoxplot(dat)
+[h,p] = ttest2(dat(:,1),dat(:,2))
+ylabel('SI index')
+title(['Thalamus pval = ',num2str(p)])
 %%
-
+plotDat(dat)
 %%
 function plotDat(dat)
 baseline_data = dat(:,1);
