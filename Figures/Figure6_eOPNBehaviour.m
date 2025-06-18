@@ -43,7 +43,7 @@ colors = [0.5 0.5 0.5; 217/255 83/255 25/255];
 violinplot(temp,[],'ShowData',true,'ShowWhiskers',false,'ShowBox',false,'MarkerSize',5,'ViolinColor',colors);
 set(gca,'tickdir','out','fontsize',16),box off,axis square
 ylabel('Spike Field Coherence'),ylim([0 1.5])
-
+disp([num2str(length(dat1)+length(dat2)), ' trials'])
 %customBoxplot(temp)
 ranksum(dat1,dat2)
 title(['M1 Inactivation: ' num2str(ans)])
@@ -66,3 +66,4 @@ set(gca,'tickdir','out','fontsize',16),box off,axis square
 ranksum(dat1,dat2)
 ylim([0 1.5])
 title(['Thalamic Inactivation: ' num2str(ans)])
+disp([num2str(length(dat1)+length(dat2)), ' trials'])

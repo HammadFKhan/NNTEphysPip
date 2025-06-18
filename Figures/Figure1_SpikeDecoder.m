@@ -1,5 +1,5 @@
 %% Load CNN spike decoder data for M1
-filename = 'C:\Users\khan332\Box\ET_NNT\Results\spk_total_confidences.npy';
+filename = 'C:\Users\khan332\Box\ET_NNT\Results\phase_total_confidences.npy';
 data = readNPY(filename);
 %% Plot out data
 t = -1.5:0.001:1.5;

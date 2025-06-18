@@ -49,10 +49,10 @@ histogram(deepdat2,-pi:pi/8:pi,'normalization','probability','edgecolor','none')
 xlabel('Max PPA Angle'),ylabel('Probability')
 [pval, k, K] = circ_kuipertest(deepdat1(:), deepdat2(:), 60, 0);title(['Deep ' num2str(pval)]);
 %% Superficial and Deep PPA Amplitude for Hits
-supdat1 = Baseline_PA.MIFAPA(linearProbe(1:10),:);
-supdat2 = eOPN_PA.MIFAPA(linearProbe(1:10),:);
-deepdat1 = Baseline_PA.MIFAPA(linearProbe(11:22),:);
-deepdat2 = eOPN_PA.MIFAPA(linearProbe(11:22),:);
+supdat1 = Baseline_PA.hitPA(linearProbe(1:10),:);
+supdat2 = eOPN_PA.hitPA(linearProbe(1:10),:);
+deepdat1 = Baseline_PA.hitPA(linearProbe(11:22),:);
+deepdat2 = eOPN_PA.hitPA(linearProbe(11:22),:);
 statSup = ranksum(max(supdat1,[],2),max(supdat2,[],2));
 statDeep = ranksum(max(deepdat1,[],2),max(deepdat2,[],2));
 time = (-1500:1500)/1000;

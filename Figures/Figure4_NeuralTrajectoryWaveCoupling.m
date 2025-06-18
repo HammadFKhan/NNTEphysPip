@@ -3,8 +3,10 @@ clear
 load('D:\TrajectoryWaveCoupling\notagSomDay4_SpikeWave.mat')
 %% Overlaying traveling wave dynamics across neural trajectories
 figure,
-plot3(neuralDynamics.hit.r(1,:),neuralDynamics.hit.r(2,:),neuralDynamics.hit.r(3,:))
-plotNeuralTrajWave(neuralDynamics.hit.r(1,:),neuralDynamics.hit.r(2,:),waveDynamics)
+t = mean(waveDynamics.rawWaveSpeedhit)';
+t = t(1:20:end-1);
+col = [smoothdata((t),'gaussian',10)'];
+plotNeuralTrajWave(neuralDynamics.hit.r(1,:),neuralDynamics.hit.r(2,:),col)
 %% Do stats on the trajectory and wave coupling
 close all
 [wavePGDCoupling,waveSpeedCoupling] = getTrajectoryWaveStats(neuralDynamics,waveDynamics);
@@ -81,17 +83,15 @@ ax.GridAlpha = 0.3;
 
 
 %%  LOCAL FUNCTIONS
-function plotNeuralTrajWave(x,y,waveDynamics)
+function plotNeuralTrajWave(x,y,col)
 % TODO: Plotting the data like this makes the rendering all messed up; need
 % to adapt from Lyles GP phase code for plotting....
 
 % x = neuralDynamics.hit.r(1,:)';
 % y = neuralDynamics.hit.r(2,:)';
-cd = [uint8((parula(150))*255) uint8(ones(150,1))].';
+colorList=slanCM(100,150);
+cd = [uint8((colorList)*255) uint8(ones(150,1))].';
 n = 150;
-t = mean(waveDynamics.rawWavePGDhit)';
-t = t(1:20:end-1);
-col = [0 smoothdata(diff(t),'gaussian',10)'];
 %col = smoothdata(t,'movmean',10);
 % Interp to make the line smoother
 xin = interp1(1:150,x,1:0.05:150);
@@ -112,7 +112,7 @@ box off, axis off
 load myMap
 figure,
 h4 = cline( xin, yin, [], col);
-colormap((jet))
+colormap(colorList)
 set( h4, 'linestyle', '-', 'linewidth', 2  );axis off
 
 end
