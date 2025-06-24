@@ -1,4 +1,4 @@
-ThalamuseOPN%% Sequentiality index for spiking activity during eopn perturbations
+%% Sequentiality index for spiking activity during eopn perturbations
 % Combining eOPN data together
 M1eOPN = struct();
 ThalamuseOPN = struct();

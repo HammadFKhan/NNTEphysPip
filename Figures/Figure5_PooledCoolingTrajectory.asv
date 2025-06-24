@@ -88,21 +88,7 @@ ylabel('Average Speed');
 %% Do bootstrap
 % Shuffle baseline and cooled and see how different the effect is to
 % baseline
-%   speedTotBaseline: [n_baseline × time] matrix
-%   speedTotCooled: [n_cooled × time] matrix
 
-% 1. Combine data
-tot = [speedTotBaseline, speedTotCooled]';
-n_baseline = size(speedTotBaseline, 2);
-n_cooled = size(speedTotCooled, 2);
-
-% 2. Run test
-n_permutations = 1000;
-[p_values, obs_diff, perm_diffs] = permutation_test(tot, n_baseline, n_cooled, n_permutations);
-
-% 3. Interpret results
-significant_cue_mov = mean(p_values(75:90));
-disp(['Significant val ', num2str((significant_cue_mov))]);
 
 %% Miss
 dimension = 1;
@@ -399,46 +385,4 @@ for n = 1:length(IntanBehaviour.missTrace)
     IntanBehaviour.FATemp(n,1) = IntanBehaviour.temperature(IntanBehaviour.missTrace(n).LFPIndex(1));
 end
 IntanBehaviour.FATemp = IntanBehaviour.FATemp-IntanBehaviour.temperature(100);
-end
-
-function [p_value, observed_difference, perm_diffs] = permutation_test(data, n_baseline, n_cooled, n_permutations)
-    % Inputs:
-    %   data: Combined matrix [n_baseline + n_cooled × time_points]
-    %   n_baseline: Number of baseline trials
-    %   n_cooled: Number of cooled trials
-    %   n_permutations: Number of permutations (default 1000)
-    
-    if nargin < 4
-        n_permutations = 1000;
-    end
-    
-    % 1. Compute observed difference
-    baseline_mean = mean(data(1:n_baseline, :), 1);
-    cooled_mean = mean(data(n_baseline+1:end, :), 1);
-    observed_difference = baseline_mean - cooled_mean;
-    
-    % 2. Initialize permutation results
-    perm_diffs = zeros(n_permutations, size(data, 2));
-    
-    % 3. Permutation loop
-    for i = 1:n_permutations
-        % Shuffle rows without replacement
-        shuffled_idx = randperm(size(data, 1));
-        shuffled_data = data(shuffled_idx, :);
-        
-        % Split into pseudo-groups
-        perm_baseline = shuffled_data(1:n_baseline, :);
-        perm_cooled = shuffled_data(n_baseline+1:end, :);
-        
-        % Compute permutation difference
-        perm_diffs(i, :) = mean(perm_baseline, 1) - mean(perm_cooled, 1);
-    end
-    
-    % 4. Calculate p-value (two-tailed test)
-    abs_observed = (observed_difference);
-    abs_permutations = (perm_diffs);
-    
-    % Count where permuted difference >= observed difference
-    extreme_count = sum(abs_permutations >= abs_observed, 1);
-    p_value = extreme_count / n_permutations;
 end
