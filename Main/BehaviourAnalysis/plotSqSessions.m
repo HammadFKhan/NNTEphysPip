@@ -1,6 +1,4 @@
 
-
-
 files = dir(fullfile('Y:\Hammad\Ephys\SeqProject\Behavior\NoCueCleanedUp','*.csv'));
 files = files(~[files.isdir]);
 [~,idx] = sort([files.datenum]);
@@ -15,18 +13,19 @@ parameters.windowBeforePull = 3.5; % in seconds
 parameters.windowAfterPull = 0.5; % in seconds
 parameters.windowBeforeCue = 1.5; % in seconds
 parameters.windowAfterCue = 1.5; % in seconds
-parameters.windowBeforeMI = 1.5; % in seconds 
-parameters.windowAfterMI = 1.5; % in seconds 
+parameters.windowBeforeMI = 0.5; % in seconds 
+parameters.windowAfterMI = 3.5; % in seconds 
 parameters.Fs = 1000; % Eventual downsampled data
 parameters.ts = 1/parameters.Fs;
 parameters.rows = 64;
 parameters.cols = 1;
+parameters.delay = 0.0; %reward delay
 
-
-for fileNum = length(files)
+for fileNum = 1:length(files)
     disp(['File number: ' num2str(fileNum)])
     fname = fullfile(files(fileNum).folder,files(fileNum).name);
     [seqData.session(fileNum).Behaviour] = readLeverSq(parameters,[],fname);
+    seqData.session(fileNum).Behaviour.parameters = parameters;
     allPulls = arrayfun(@(x) x.pullCount, seqData.session(fileNum).Behaviour.hitTrace, 'UniformOutput', false);
 
     % Determine the correct size (number of rows) from the first array
@@ -41,11 +40,11 @@ for fileNum = length(files)
     % Horizontally concatenate and transpose as you did
     allPulls = horzcat(validPulls{:})';
     seqData.session(fileNum).pullCounts = allPulls;
-    [seqData.session(fileNum).cleanedpullCounts, hasTimeout] = cleanTimeoutSequences(seqData.session(fileNum).pullCounts);
+    [seqData.session(fileNum).cleanedpullCounts, hasTimeout] = cleanTimeoutSequences(seqData.session(fileNum).pullCounts,seqData.session(fileNum).Behaviour,0);
 end
 %%
-data = seqData.session(12).pullCounts;
-figure('Color', 'w', 'Position', [100, 100, 600, 900]);
+data = seqData.session(29).cleanedpullCounts;
+figure('Color', 'w', 'Position', [100, 100, 500, 800]);
 imagesc([-parameters.windowBeforePull*1000 parameters.windowAfterPull*1000], [1 size(data,1)], data);
 
 % Use a perceptually uniform colormap
@@ -76,7 +75,7 @@ set(gca, 'YGrid', 'on', 'GridLineStyle', ':', 'GridAlpha', 0.2);
 box off;
 hold off;
 %%
-data = seqData.session(12).Behaviour.hitTrace;
+data = seqData.session(29).Behaviour.hitTrace;
 hitTraceSq = arrayfun(@(x) x.rawtrace,data,'UniformOutput',false);
 hitTraceSq = horzcat(hitTraceSq{:})';
 data = seqData.session(12).Behaviour.hitTrace;
@@ -95,8 +94,8 @@ subplot(211),imagesc(time,[1 size(lickSq,1)],lickSq)
 subplot(212),plot(time,smoothdata(mean(lickSq),2,'movmean',5)),axis tight
 %%
 % Example usage:
-sessionNums = [1,3,6,12]; % Example session numbers corresponding to days 1, 6, 12
-sessionDays = [1,3,6,12]; % Corresponding training days for plotting
+sessionNums = [1,3,6,12,15,20,25,29]; % Example session numbers corresponding to days 1, 6, 12
+sessionDays = [1,3,6,12,15,20,25,29]; % Corresponding training days for plotting
 
 % Calculate metrics for each session
 metrics = analyzeSequenceLearning(seqData, sessionNums);
@@ -120,7 +119,7 @@ function [metrics] = analyzeSequenceLearning(seqData, sessionNums)
         
         % Time axis (assuming time in ms, centered at reward)
         [numTrials, numTimePoints] = size(pullCounts);
-        timeAxis = linspace(-2000, 1500, numTimePoints);
+        timeAxis = linspace(-seqData.session(i).Behaviour.parameters.windowBeforePull*1000, seqData.session(i).Behaviour.parameters.windowAfterPull*1000, numTimePoints);
         timeStep = timeAxis(2) - timeAxis(1); % ms per time bin
         
         % Initialize arrays for metrics
@@ -233,8 +232,10 @@ function plotLearningMetrics(metrics, sessionDays)
     axis square
 
     subplot(2,4,2);
-    errorbar(sessionDays, sort(meanDuration,2,"descend"), semDuration, 'k-', 'LineWidth', 1.5, 'MarkerFaceColor', 'k');
-    hold on,scatter(sessionDays,sort(meanDuration,2,"descend"),40,'filled','k');
+   % errorbar(sessionDays, sort(meanDuration,2,"descend"), semDuration, 'k-', 'LineWidth', 1.5, 'MarkerFaceColor', 'k');
+    %hold on,scatter(sessionDays,sort(meanDuration,2,"descend"),40,'filled','k');
+    errorbar(sessionDays, meanDuration, semDuration, 'k-', 'LineWidth', 1.5, 'MarkerFaceColor', 'k');
+    hold on,scatter(sessionDays,meanDuration,40,'filled','k');
     xlabel('Days of training');
     ylabel('Duration of sequence (s)');
     title('Sequence Duration');

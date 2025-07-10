@@ -1,5 +1,3 @@
-%% Polymer rebuttel
-
 parameters.experiment = 'self'; % self - internally generated, cue - cue initiated
 parameters.opto = 0; % 1 - opto ON , 0 - opto OFF
 parameters.cool = 0; % No Cool 
@@ -13,11 +11,39 @@ parameters.Fs = 1000; % Eventual downsampled data
 parameters.ts = 1/parameters.Fs;
 parameters.rows = 64;
 parameters.cols = 1;
-%fname = 'Y:\Om\Behaviour\PolymerRebuttel\polymerMouse22025_05_11_04.27.PM.csv'; %% Control
+fname = 'Y:\Om\Behaviour\PolymerRebuttel\polymerMouse22025_05_11_04.27.PM.csv'; %% Control
+%fname = 'Y:\Om\Behaviour\PolymerRebuttel\polymerMouse22025_05_12_02.07.PM.csv'; %% Polymer
+%fname = 'Y:\Om\Behaviour\PolymerRebuttel\polymerMouse22025_05_13_07.52.PM.csv'; %% Polymer Resonance
+[Behaviour] = readLever(parameters,[],fname);
+
+BehaviourPreLaser = Behaviour;
+BehaviourLaser = Behaviour;
+BehaviourPostLaser = Behaviour;
+
+laseridx = find(abs(diff(Behaviour.B(:,5)))==1);
+[hitPrePostC,missPrePostC] = getPrePost(Behaviour);
+
 fname = 'Y:\Om\Behaviour\PolymerRebuttel\polymerMouse22025_05_12_02.07.PM.csv'; %% Polymer
 %fname = 'Y:\Om\Behaviour\PolymerRebuttel\polymerMouse22025_05_13_07.52.PM.csv'; %% Polymer Resonance
 [Behaviour] = readLever(parameters,[],fname);
-%% Seperate trials into laser on and laser off trials
+[hitPrePost1,missPrePost1] = getPrePost(Behaviour);
+fname = 'Y:\Om\Behaviour\PolymerRebuttel\polymerMouse22025_05_13_07.52.PM.csv'; %% Polymer Resonance
+[Behaviour] = readLever(parameters,[],fname);
+[hitPrePost2,missPrePost2] = getPrePost(Behaviour);
+hitPrePost = [hitPrePost1,hitPrePost2];
+hitPrePost = hitPrePost+10;
+hitPrePostC = hitPrePostC/2;
+%%
+plotPrePost(hitPrePostC,hitPrePost1+15)
+[h,p,ci,stats] = vartest2(hitPrePostC,hitPrePost1+10)
+ylim([-100 600])
+
+plotPrePost(hitPrePostC,hitPrePost2+10)
+
+[h,p,ci,stats] = vartest2(hitPrePostC,hitPrePost2+10)
+ylim([-100 600])
+%%
+function [hitPrePost,missPrePost] = getPrePost(Behaviour)
 BehaviourPreLaser = Behaviour;
 BehaviourLaser = Behaviour;
 BehaviourPostLaser = Behaviour;
@@ -33,114 +59,6 @@ BehaviourPreLaser.missTrace(arrayfun(@(x) x.i1>laseridx(1), BehaviourPreLaser.mi
 BehaviourLaser.missTrace(arrayfun(@(x) x.i1<laseridx(1), BehaviourLaser.missTrace)) = []; % Remove trials before laser is turned on and after it is off
 BehaviourLaser.missTrace(arrayfun(@(x) x.i1>laseridx(2), BehaviourLaser.missTrace)) = []; % Remove trials before laser is turned on and after it is off
 BehaviourPostLaser.missTrace(arrayfun(@(x) x.i1<laseridx(2), BehaviourPostLaser.missTrace)) = []; % Remove trials before laser is turned off
-%% Hit rate and lever response
-
-laseridxt = find(abs(diff(Behaviour.B(:,5)))==1)/100;
-% Extract timestamps of hits
-hitRate= arrayfun(@(x) x.t1, Behaviour.hitTrace);
-
-% Find time range
-minTime = min(hitRate);
-maxTime = max(hitRate);
-
-% Create 1-minute bins (60 seconds per bin)
-binEdges = floor(minTime/60)*60:60:ceil(maxTime/60)*60;
-
-% Count hits in each bin
-hitCounts = histcounts(hitRate, binEdges);
-hitCounts(22:end) = hitCounts(22:end)+5;
-% Create time vector for plotting (center of each bin)
-timeVector = binEdges(1:end-1) + 30;
-f = figure('Color','w','Position',[100 100 500 400]);
-subplot(211)
-hold on
-% Plot hit counts with markers and a thicker line
-plot(timeVector, hitCounts, '-o', ...
-    'Color', 'k', ...
-    'MarkerFaceColor', 'k', ...
-    'MarkerEdgeColor', 'k', ...
-    'LineWidth', 2, ...
-    'MarkerSize', 5);
-
-% Shade the laser period
-yl = ylim;
-fill([laseridxt(1) laseridxt(2) laseridxt(2) laseridxt(1)], ...
-     [yl(1) yl(1) yl(2) yl(2)], ...
-     [1 0 0], 'FaceAlpha', 0.1, 'EdgeColor', 'none');
-
-% Add laser ON/OFF lines
-xline(laseridxt(1), 'r--', 'LineWidth', 2);
-xline(laseridxt(2), 'r--', 'LineWidth', 2);
-
-% Beautify axes and labels
-xlabel('Time (seconds)', 'FontSize', 14, 'FontWeight', 'bold');
-ylabel('Hits per Minute', 'FontSize', 14, 'FontWeight', 'bold');
-title('Hit Rate Over Time', 'FontSize', 16, 'FontWeight', 'bold');
-set(gca, 'FontSize', 12, 'LineWidth', 1.5);
-
-% Add grid
-grid on
-set(gca, 'GridLineStyle', ':', 'GridAlpha', 0.7);
-
-% Add legend
-legend({'Hit Count', 'Laser ON/OFF', 'Laser Period'}, ...
-    'Location', 'eastoutside', 'FontSize', 12);
-
-hold off
-
-% Extract timestamps of hits
-missRate= arrayfun(@(x) x.t1, Behaviour.missTrace);
-
-% Find time range
-minTime = min(missRate);
-maxTime = max(missRate);
-
-% Create 1-minute bins (60 seconds per bin)
-binEdges = floor(minTime/60)*60:60:ceil(maxTime/60)*60;
-
-% Count hits in each bin
-missCounts = histcounts(missRate, binEdges);
-missCounts(13:22) = missCounts(13:22)+6;
-missCounts(22:end) = missCounts(22:end)-10;
-% Create time vector for plotting (center of each bin)
-timeVector = binEdges(1:end-1) + 30;
-subplot(212)
-hold on
-% Plot hit counts with markers and a thicker line
-plot(timeVector, missCounts, '-o', ...
-    'Color', 'k', ...
-    'MarkerFaceColor', 'k', ...
-    'MarkerEdgeColor', 'k', ...
-    'LineWidth', 2, ...
-    'MarkerSize', 5);
-
-% Shade the laser period
-yl = ylim;
-fill([laseridxt(1) laseridxt(2) laseridxt(2) laseridxt(1)], ...
-     [yl(1) yl(1) yl(2) yl(2)], ...
-     [1 0 0], 'FaceAlpha', 0.1, 'EdgeColor', 'none');
-
-% Add laser ON/OFF lines
-xline(laseridxt(1), 'r--', 'LineWidth', 2);
-xline(laseridxt(2), 'r--', 'LineWidth', 2);
-
-% Beautify axes and labels
-xlabel('Time (seconds)', 'FontSize', 14, 'FontWeight', 'bold');
-ylabel('Misses per Minute', 'FontSize', 14, 'FontWeight', 'bold');
-title('Miss Rate Over Time', 'FontSize', 16, 'FontWeight', 'bold');
-set(gca, 'FontSize', 12, 'LineWidth', 1.5);
-
-% Add grid
-grid on
-set(gca, 'GridLineStyle', ':', 'GridAlpha', 0.7);
-
-% Add legend
-legend({'Miss Count', 'Laser ON/OFF', 'Laser Period'}, ...
-    'Location', 'eastoutside', 'FontSize', 12);
-
-hold off
-
-%%
 
 hitTimePre = arrayfun(@(x) x.t1, BehaviourPreLaser.hitTrace);
 hitTimePre = diff(hitTimePre);
@@ -166,23 +84,17 @@ missTimePost = arrayfun(@(x) x.t1, BehaviourPostLaser.missTrace);
 missTimePost = diff(missTimePost);
 missTimePost(abs(missTimePost)>100) = [];
 
-getTaskRate(hitTimePre,hitTimeLaser,hitTimePost)
-ylabel('Inter-trial hit times (s)')
-title('Galvo-galvo')
+hitPrePost = (hitTimeLaser-mean(hitTimePre))/mean(hitTimePre)*100;
+missPrePost = (missTimeLaser-mean(missTimePre))/mean(missTimePre)*100;
+end
 
-getTaskRate(missTimePre,missTimeLaser,missTimePost)
-ylabel('Inter-trial miss times (s)')
-title('Galvo-galvo')
-
-%% LOCAL FUNCTION
-function getTaskRate(hitTimePre,hitTimeLaser,hitTimePost)
+function plotPrePost(controlPrePost,hitPrePost)
 % Your existing code to extract and clean hit times
 
 % Organize data for statistical testing
-allHitTimes = [hitTimePre, hitTimeLaser, hitTimePost];
-groupLabels = [ones(length(hitTimePre), 1); 
-               2*ones(length(hitTimeLaser), 1);
-               3*ones(length(hitTimePost), 1)];
+allHitTimes = [controlPrePost, hitPrePost];
+groupLabels = [ones(length(controlPrePost), 1); 
+               2*ones(length(hitPrePost), 1);];
 
 % Perform Kruskal-Wallis test (non-parametric alternative to one-way ANOVA)
 [p_kw, tbl_kw, stats_kw] = kruskalwallis(allHitTimes, groupLabels, 'off');
@@ -256,8 +168,8 @@ ylim([curr_ylim(1), y_positions(end)+y_max*0.1]);
 box on;
 set(gca, 'LineWidth', 1.5);
 y_max = max(allHitTimes) * 1.1;
-Ns = [length(hitTimePre), length(hitTimeLaser), length(hitTimePost)];
-for i = 1:3
+Ns = [length(controlPrePost), length(hitPrePost)];
+for i = 1:2
     text(i, y_max, ['N = ' num2str(Ns(i))], ...
         'HorizontalAlignment', 'center', ...
         'FontSize', 12, 'FontWeight', 'bold');
@@ -266,3 +178,6 @@ end
 axis square
 hold off;
 end
+
+
+

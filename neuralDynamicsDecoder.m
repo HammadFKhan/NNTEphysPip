@@ -20,7 +20,7 @@ leverTraceFull = leverTraceFull-min(leverTraceFull);
 leverTraceFull = smoothdata(leverTraceFull,'gaussian',300);
 leverTrace = (leverTrace-min(leverTrace,[],2))./(max(leverTrace,[],2)-min(leverTrace,[],2));
 %%% Prime data up
-dim = 15;
+dim = 6;
 latentDynamicsSequence = squeeze(neuralDynamics.hit.X(1:dim,:,:));
 latentDynamicsSequence = reshape(latentDynamicsSequence,dim,[])';
 

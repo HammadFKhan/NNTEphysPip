@@ -15,7 +15,4 @@ stability = 1 ./ (s + eps);
 % Alternative: Z-score stability relative to baseline period
 baseline_stability = stability(1:70, :, :); % Pre-cue period
 stability = (stability - mean(baseline_stability(:))) ./ std(baseline_stability(:));
-
-
-
 end

@@ -1,4 +1,4 @@
-function [Behaviour] = readLever(parameters,lfpTime)
+function [Behaviour] = readLeverSq(parameters,lfpTime,fname)
 
 if ~exist('parameters.experiment','var')
     parameters.experiment = 'self';
@@ -14,28 +14,38 @@ else
 end
 
 if exist("lfpTime",'var')
-    expFlag = 1;
-    disp('Intan time data passed. Function set to experiment.');
+    if ~isempty(lfpTime)
+        expFlag = 1;
+        disp('Intan time data passed. Function set to experiment.');
+    else
+        expFlag = 0;
+        disp('Intan time data not passed. Function set to training.');
+    end
 else
     expFlag = 0;
     disp('Intan time data not passed. Function set to training.');
 end
 %% Reading file from arduino 
-[enfile,enpath] = uigetfile('*.csv');
-if isequal(enfile,0)
-   disp('User selected Cancel');
+if ~exist('fname','var')
+    [enfile,enpath] = uigetfile('Y:\Hammad\Ephys\SeqProject\*.csv');
+    if isequal(enfile,0)
+        disp('User selected Cancel');
+    else
+        disp(['User selected ', fullfile(enpath,enfile)]);
+    end
 else
-   disp(['User selected ', fullfile(enpath,enfile)]);
+    [enpath,enfile,ext] = fileparts(fname);
+    disp(['User selected ', fullfile(enpath,enfile)]);
+    enfile = [enfile,ext];
 end
 
-resting_position = 284;
+resting_position = 550;
 flip = 1;
 nlengthBeforePull = round(parameters.windowBeforePull/parameters.ts);
 nlength = round(parameters.windowBeforePull/parameters.ts + parameters.windowAfterPull/parameters.ts + 1);
 nlengthBeforeCue = round(parameters.windowBeforeCue/parameters.ts);
 nlengthCue = round(parameters.windowBeforeCue/parameters.ts + parameters.windowAfterCue/parameters.ts + 1);
 
-lfpTime = downsample(lfpTime,round(parameters.IntanFs/parameters.Fs),1); % time in seconds based on initial downsample
 
 B = readmatrix([enpath,'/',enfile]);
 Behaviour.leverTrace = (B(2:end,1) - resting_position)*flip;
@@ -50,9 +60,13 @@ end
 Behaviour.B = B(2:end,:);
 
 %% Getting hit and miss timings
-hitIndex = find(diff(B(:,3)) == 1);
+hitIndex = find(diff(B(:,3)) == 1); % If we have reward delays we look at index 5 instead of 3 to align to movement
+if  ~exist('parameters.delay','var')
+    hitIndex = hitIndex-parameters.delay*100;
+end
 hitTime = Behaviour.time(hitIndex);
 if expFlag == 1
+    lfpTime = downsample(lfpTime,round(parameters.IntanFs/parameters.Fs),1); % time in seconds based on initial downsampl
     hitLFPIndex = zeros(Behaviour.nHit,1);
     hitLFPTime = zeros(Behaviour.nHit,1);
     for i=1:Behaviour.nHit
@@ -153,9 +167,11 @@ if isempty(sp_hitend)
 end
 
 for i=1:Behaviour.nHit
-    Behaviour.hitTrace(i).i1 = max(find(Behaviour.time < Behaviour.hit(i,2)-parameters.windowBeforePull));
+    target = Behaviour.hit(i,2) - parameters.windowBeforePull;
+    [~,  Behaviour.hitTrace(i).i1] = min(abs(Behaviour.time - target));
     Behaviour.hitTrace(i).i0 = Behaviour.hit(i,1);
-    Behaviour.hitTrace(i).i2 = max(find(Behaviour.time < Behaviour.hit(i,2)+parameters.windowAfterPull));
+    target = Behaviour.hit(i,2) + parameters.windowAfterPull;
+    [~,  Behaviour.hitTrace(i).i2] = min(abs(Behaviour.time - target));
     Behaviour.hitTrace(i).rawtrace = Behaviour.leverTrace(Behaviour.hitTrace(i).i1:Behaviour.hitTrace(i).i2);
     Behaviour.hitTrace(i).rawtime = Behaviour.time(Behaviour.hitTrace(i).i1:Behaviour.hitTrace(i).i2) - Behaviour.time(Behaviour.hitTrace(i).i1);
     Behaviour.hitTrace(i).time1 = Behaviour.time(Behaviour.hitTrace(i).i1:Behaviour.hitTrace(i).i2);
@@ -192,9 +208,11 @@ if isempty(sp_missend)
 end
 
 for i=1:Behaviour.nMiss
-    Behaviour.missTrace(i).i1 = max(find(Behaviour.time < Behaviour.miss(i,2)-parameters.windowBeforePull));
+    target = Behaviour.miss(i,2) - parameters.windowBeforePull;
+    [~,  Behaviour.missTrace(i).i1] = min(abs(Behaviour.time - target));
     Behaviour.missTrace(i).i0 = Behaviour.miss(i,1);
-    Behaviour.missTrace(i).i2 = max(find(Behaviour.time < Behaviour.miss(i,2)+parameters.windowAfterPull));
+    target = Behaviour.miss(i,2) + parameters.windowAfterPull;
+    [~,  Behaviour.missTrace(i).i2] = min(abs(Behaviour.time - target));
     Behaviour.missTrace(i).rawtrace = Behaviour.leverTrace(Behaviour.missTrace(i).i1:Behaviour.missTrace(i).i2);
     Behaviour.missTrace(i).rawtime = Behaviour.time(Behaviour.missTrace(i).i1:Behaviour.missTrace(i).i2) - Behaviour.time(Behaviour.missTrace(i).i1);
     Behaviour.missTrace(i).time1 = Behaviour.time(Behaviour.missTrace(i).i1:Behaviour.missTrace(i).i2);

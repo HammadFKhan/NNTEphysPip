@@ -53,13 +53,13 @@ hold off;
 % Assume pullCounts is [trials x time] and timeAxis is the time vector (e.g., -1500:bin:1500)
 allPulls = seqData.session(n).cleanedpullCounts;
 [numTrials, numBins] = size(allPulls);
-timeAxis = linspace(-1500, 1500, numBins); % adjust as needed
+timeAxis = linspace(-3500, 500, numBins); % adjust as needed
 
 durations = nan(numTrials,1);
 
 for t = 1:numTrials
     % Only consider pulls before reward (time < 0)
-    pulls = find(allPulls(t,:) > 0 & timeAxis < 0);
+    pulls = find(allPulls(t,:) > 0 & allPulls(t,:)< 4 & timeAxis < 0);
     if ~isempty(pulls)
         durations(t) = timeAxis(pulls(end)) - timeAxis(pulls(1));
     end

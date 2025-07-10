@@ -17,15 +17,23 @@ fname = "Y:\Hammad\Ephys\SeqProject\Behavior\COM32025_05_11_03.01.PM.csv";
 [BehaviourSq] = readLeverSqTrials(parameters,[],fname);
 [BehaviourSingle] = readLeverSingleTrials(parameters,[],fname);
 %%
+time = linspace(-parameters.windowBeforePull,parameters.windowAfterPull,401);
+dat = horzcat(BehaviourSingle.hitTrace.rawtrace);
 figure,
 for n = 1:length(BehaviourSingle.hitTrace)
-    plot(smoothdata(BehaviourSingle.hitTrace(n).rawtrace),'color',[0.5 0.5 0.5 0.25]),hold on
+    plot(time,smoothdata(BehaviourSingle.hitTrace(n).rawtrace,'gaussian',5),'color',[0.5 0.5 0.5 0.25]),hold on
 end
-
+plot(time,smoothdata(mean(dat,2),'gaussian',5),'linewidth',2)
+xline(-BehaviourSingle.meanReactionTime,'r')
+xlim([-2.5 0.5])
 figure,
 for n = 1:length(BehaviourSq.hitTrace)
-    plot(smoothdata(BehaviourSq.hitTrace(n).rawtrace),'color',[0.5 0.5 0.5 0.25]),hold on
+    plot(time,smoothdata(BehaviourSq.hitTrace(n).rawtrace,'gaussian',5),'color',[0.5 0.5 0.5 0.25]),hold on
 end
+dat = horzcat(BehaviourSq.hitTrace.rawtrace);
+plot(time,smoothdata(mean(dat,2),'gaussian',5),'linewidth',2)
+xline(-BehaviourSq.meanReactionTime,'r')
+xlim([-2.5 0.5])
 %%
 
 allPulls = arrayfun(@(x) x.pullCount, BehaviourSingle.cueHitTrace, 'UniformOutput', false);

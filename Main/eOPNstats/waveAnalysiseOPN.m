@@ -4,11 +4,33 @@
 
 %%
 t = [];
-t = zeros(max([size(baseRho,1) size(eOPNRho,1)]),2);
+% figure,customBoxplot(t),box off,set(gca,'tickdir','out','fontsize',14)
+% Prepare data for violinplot
+t = nan(max([size(baseRho,1) size(eOPNRho,1)]),2);
 t(1:size(baseRho,1),1) = baseRho(:,2);
 t(1:size(eOPNRho,1),2) = eOPNRho(:,2);
-figure,customBoxplot(t),box off,set(gca,'tickdir','out','fontsize',14)
+colors = [0.6 0.6 0.6;0.85 0.35 0.1];
+figure; % Create a new figure
+h_violin = violinplot(t, {'Baseline', 'eOPN'},'ShowWhiskers',false,'ShowBox',false,'MarkerSize',10,'ViolinColor' ,colors);
+% --- Axis and Figure Customization ---
+ax = gca; % Get current axes handle
+
+ax.TickDir = 'out'; % Ticks point outwards
+ax.FontSize = 14; % Font size for tick labels
+ax.Box = 'off'; % Turn off the box around the plot
+
+% Y-axis label
+ylabel('PGD', 'FontSize', 16);
+
+% Y-axis limits (adjust if needed based on your data range)
+% You can let MATLAB auto-set or define explicitly like:
+% ax.YLim = [0 1.6]; % Example, adjust based on your data max
+
+% Remove X-axis label (the 'Baseline', 'eOPN' are sufficient from violinplot)
+ax.XTickLabel = {'Baseline', 'eOPN'}; % Ensure labels are correctly set
+ax.XAxis.FontSize = 14; % Font size for x-axis labels
 title(['PGD difference ' num2str(ranksum(baseRho(:,2),eOPNRho(:,2)))])
+axis square
 %%
 figure,errorbar(1:2,[nanmean(baseRho(:,2)) nanmean(eOPNRho(:,2))],[nanstd(baseRho(:,2)) nanstd(eOPNRho(:,2))]),xlim([0.9 2.1])
 %% Pre/Post wave Dir
@@ -65,10 +87,13 @@ figure,subplot(121),errorbar(1:2,[nanmean(horzcat(speedWavePreBase{:})) nanmean(
 subplot(122),errorbar(1:2,[nanmean(horzcat(speedWavePreOpto{:})) nanmean(horzcat(speedWavePostOpto{:}))],[nanstd(horzcat(speedWavePreOpto{:})) nanstd(horzcat(speedWavePostOpto{:}))]),xlim([0.9 2.1])
 %%
 t = [];
-t = zeros(max([size(dat1,1) size(dat2,1)]),2);
+t = nan(max([size(dat1,2) size(dat2,2)]),2);
 t(1:size(dat1,2),1) = dat1;
 t(1:size(dat2,2),2) = dat2;
-figure,customBoxplot(t),box off,set(gca,'tickdir','out','fontsize',14)
+figure,violinplot(t, {'Baseline', 'eOPN'},'ShowWhiskers',false,'ShowBox',false,'MarkerSize',10,'ViolinColor' ,colors),box off,set(gca,'tickdir','out','fontsize',14)
+ylim([0 40])
+axis square
+
 %%
 figure,customErrorplot(t),box off,set(gca,'tickdir','out','fontsize',14),xlim([0.9 2.1])
 %% LOCAL FUNCTIONS

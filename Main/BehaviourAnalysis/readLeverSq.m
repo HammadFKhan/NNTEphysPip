@@ -40,20 +40,28 @@ else
 end
 
 resting_position = 550;
-flip = 1;
+flip = 0;
 nlengthBeforePull = round(parameters.windowBeforePull/parameters.ts);
 nlength = round(parameters.windowBeforePull/parameters.ts + parameters.windowAfterPull/parameters.ts + 1);
 nlengthBeforeCue = round(parameters.windowBeforeCue/parameters.ts);
 nlengthCue = round(parameters.windowBeforeCue/parameters.ts + parameters.windowAfterCue/parameters.ts + 1);
 
-
+parameters.Fs = 100;
 B = readmatrix([enpath,'/',enfile]);
-Behaviour.leverTrace = (B(2:end,1) - resting_position)*flip;
+Behaviour.leverTrace = (B(2:end,1) - resting_position);
 Behaviour.time = (B(2:end,2) - B(2,2))/1e6; % time in seconds
-Behaviour.pullCount = B(2:end,3);
-
-Behaviour.nHit = B(end,4);
-Behaviour.nMiss = B(end,5);
+if size(B,2)<6
+    disp('No explicit pullcount detected...')
+    Behaviour.pullCount = B(2:end,3);
+    Behaviour.nHit = B(end,3);
+    Behaviour.nMiss = B(end,4);
+    pullCountFlag = 0;
+else
+    Behaviour.pullCount = B(2:end,3);
+    Behaviour.nHit = B(end,4);
+    Behaviour.nMiss = B(end,5);
+    pullCountFlag = 1;
+end
 if cue==1 
     Behaviour.nCue = B(end,5); 
     Behaviour.nCueHit = Behaviour.nHit;
@@ -63,12 +71,17 @@ if size(B,2)>6  %% Grab licks as well
     lickD = 1;
     Behaviour.licks = B(2:end,6);
 else 
+    disp('No lick sensor detected...')
     lickD = 0;
 end
 Behaviour.B = B(2:end,:);
 
 %% Getting hit and miss timings
-hitIndex = find(diff(B(:,4)) == 1);
+if pullCountFlag
+    hitIndex = find(diff(B(:,4)) == 1);
+else
+    hitIndex = find(diff(B(:,3)) == 1);
+end
 hitTime = Behaviour.time(hitIndex);
 if expFlag == 1
     lfpTime = downsample(lfpTime,round(parameters.IntanFs/parameters.Fs),1); % time in seconds based on initial downsampl
@@ -83,9 +96,11 @@ else
     Behaviour.hit = [hitIndex hitTime];
 end
 
-
-
-missIndex = find(diff(B(:,5)) == 1);
+if pullCountFlag
+    missIndex = find(diff(B(:,5)) == 1);
+else
+    missIndex = find(diff(B(:,4)) == 1);
+end
 missTime = Behaviour.time(missIndex);
 if expFlag == 1
     missLFPIndex = zeros(Behaviour.nMiss,1);
@@ -179,12 +194,18 @@ for i=1:Behaviour.nHit
     [~,  Behaviour.hitTrace(i).i2] = min(abs(Behaviour.time - target));
     Behaviour.hitTrace(i).rawtrace = Behaviour.leverTrace(Behaviour.hitTrace(i).i1:Behaviour.hitTrace(i).i2);
     Behaviour.hitTrace(i).rawtime = Behaviour.time(Behaviour.hitTrace(i).i1:Behaviour.hitTrace(i).i2) - Behaviour.time(Behaviour.hitTrace(i).i1);
+    Behaviour.hitTrace(i).rewardindex = 0; % calculated by the reward index and starting point of MI
+    Behaviour.hitTrace(i).rewardtime = (Behaviour.hitTrace(i).rewardindex/parameters.Fs)-parameters.delay; % Time of reward from sequence (ie. sequence length)
     Behaviour.hitTrace(i).time1 = Behaviour.time(Behaviour.hitTrace(i).i1:Behaviour.hitTrace(i).i2);
     Behaviour.hitTrace(i).t1 = Behaviour.time(Behaviour.hitTrace(i).i1);
     Behaviour.hitTrace(i).t0 = Behaviour.hit(i,2);
     Behaviour.hitTrace(i).t2 = Behaviour.time(Behaviour.hitTrace(i).i2);
     Behaviour.hitTrace(i).pullCount = Behaviour.pullCount(Behaviour.hitTrace(i).i1:Behaviour.hitTrace(i).i2);
-    Behaviour.hitTrace(i).licks = Behaviour.licks(Behaviour.hitTrace(i).i1:Behaviour.hitTrace(i).i2);
+    if lickD
+        Behaviour.hitTrace(i).licks = Behaviour.licks(Behaviour.hitTrace(i).i1:Behaviour.hitTrace(i).i2);
+    else
+        Behaviour.hitTrace(i).licks = NaN;
+    end
     if expFlag == 1
         [Behaviour.hitTrace(i).trace,Behaviour.hitTrace(i).time] = resample(Behaviour.hitTrace(i).rawtrace,Behaviour.hitTrace(i).rawtime,parameters.Fs,'spline');
         if (size(Behaviour.hitTrace(i).trace,1)<nlength)
@@ -261,6 +282,8 @@ if cue == 1
         Behaviour.cueHitTrace(i).i2 = max(find(Behaviour.time < Behaviour.cueHit(i,2)+parameters.windowAfterCue));
         Behaviour.cueHitTrace(i).rawtrace = Behaviour.leverTrace(Behaviour.cueHitTrace(i).i1:Behaviour.cueHitTrace(i).i2);
         Behaviour.cueHitTrace(i).rawtime = Behaviour.time(Behaviour.cueHitTrace(i).i1:Behaviour.cueHitTrace(i).i2) - Behaviour.time(Behaviour.cueHitTrace(i).i1);
+        Behaviour.cueHitTrace(i).rewardindex = Behaviour.hitTrace(i).i0-Behaviour.MIHitTrace(i).MIIndex; % calculated by the reward index and starting point of MI
+        Behaviour.cueHitTrace(i).rewardtime = (Behaviour.MIHitTrace(i).rewardindex/parameters.Fs)-parameters.delay; % Time of reward from sequence (ie. sequence length)
         Behaviour.cueHitTrace(i).time1 = Behaviour.time(Behaviour.cueHitTrace(i).i1:Behaviour.cueHitTrace(i).i2);
         Behaviour.cueHitTrace(i).t1 = Behaviour.time(Behaviour.cueHitTrace(i).i1);
         Behaviour.cueHitTrace(i).t0 = Behaviour.cueHit(i,2);
@@ -320,5 +343,59 @@ if cue == 1
                 Behaviour.cueMissTrace(i).LFPIndex = ([Behaviour.cueMiss(i,3)-nlengthBeforeCue:1:nlengthBeforeCue+Behaviour.cueMiss(i,3)])';
             end
         end
+    end
+end
+%% Getting cue Hit traces with allignment at MI 
+ %Estimating the threshold for reward
+Behaviour.threshold = mean(Behaviour.leverTrace(Behaviour.hit(:,1)),'all');
+meanMotionTrace = mean(horzcat(Behaviour.hitTrace(1:end-1).rawtrace),2);
+Behaviour.meanRestingPositionCue = mean(meanMotionTrace(1:100));
+Behaviour.MIcutoffHit = 0.2*(Behaviour.threshold-Behaviour.meanRestingPositionCue) + Behaviour.meanRestingPositionCue;
+
+badTrials = [];
+
+for i=1:size(Behaviour.hit,1)
+    f = Behaviour.hitTrace(i).rawtrace - Behaviour.MIcutoffHit;
+    if flip
+        fAbove = f.*(f <= 0);
+        fCross = find(diff(fAbove<0)==1);
+    else
+        fAbove = f.*(f >= 0);
+        fCross = find(diff(fAbove>0)==1);
+    end
+    try
+    if isempty(fCross)
+        badTrials = [badTrials,i];
+        disp('Bad trial in Motion Allignment Detected');
+%         IntanBehaviour.MIHitTrace(i).MIIndex = IntanBehaviour.hitTrace(i).LFPIndex(fCross(end));
+%         IntanBehaviour.MIHitTrace(i).trace = IntanBehaviour.leverTrace(IntanBehaviour.MIHitTrace(i).MIIndex-parameters.windowBeforeMI*parameters.Fs:IntanBehaviour.MIHitTrace(i).MIIndex+parameters.windowAfterMI*parameters.Fs)';
+%         IntanBehaviour.MIHitTrace(i).time = (0:1/parameters.Fs:(size(IntanBehaviour.MIHitTrace(i).trace,1)-1)*1/parameters.Fs)' - parameters.windowBeforeMI;
+%         IntanBehaviour.MIHitTrace(i).LFPIndex = ([IntanBehaviour.MIHitTrace(i).MIIndex-parameters.windowBeforeMI*parameters.Fs:1:IntanBehaviour.MIHitTrace(i).MIIndex+parameters.windowAfterMI*parameters.Fs])';
+%         IntanBehaviour.MIHitTrace(i).LFPtime = IntanBehaviour.time(IntanBehaviour.MIHitTrace(i).MIIndex-parameters.windowBeforeMI*parameters.Fs:IntanBehaviour.MIHitTrace(i).MIIndex+parameters.windowAfterMI*parameters.Fs)';
+    else
+        trialInd = Behaviour.hitTrace(i).i1:Behaviour.hitTrace(i).i2;
+        Behaviour.MIHitTrace(i).MIIndex = trialInd(fCross(1));
+        target = Behaviour.MIHitTrace(i).MIIndex/parameters.Fs - parameters.windowBeforeMI;
+        [~,  Behaviour.MIHitTrace(i).i1] = min(abs(Behaviour.time - target));
+        Behaviour.MIHitTrace(i).i0 = Behaviour.MIHitTrace(i).MIIndex;
+        target = Behaviour.MIHitTrace(i).MIIndex/parameters.Fs + parameters.windowAfterMI;
+        [~,  Behaviour.MIHitTrace(i).i2] = min(abs(Behaviour.time - target));
+        Behaviour.MIHitTrace(i).rawtrace = Behaviour.leverTrace(Behaviour.MIHitTrace(i).MIIndex-parameters.windowBeforeMI*parameters.Fs:Behaviour.MIHitTrace(i).MIIndex+parameters.windowAfterMI*parameters.Fs);
+        Behaviour.MIHitTrace(i).index = ([Behaviour.MIHitTrace(i).MIIndex-parameters.windowBeforeMI*parameters.Fs:1:Behaviour.MIHitTrace(i).MIIndex+parameters.windowAfterMI*parameters.Fs])';
+        Behaviour.MIHitTrace(i).rawtime = Behaviour.time(Behaviour.MIHitTrace(i).MIIndex-parameters.windowBeforeMI*parameters.Fs:Behaviour.MIHitTrace(i).MIIndex+parameters.windowAfterMI*parameters.Fs);
+        Behaviour.MIHitTrace(i).rewardindex = Behaviour.hitTrace(i).i0-Behaviour.MIHitTrace(i).MIIndex; % calculated by the reward index and starting point of MI
+        Behaviour.MIHitTrace(i).rewardtime = (Behaviour.MIHitTrace(i).rewardindex/parameters.Fs)-parameters.delay; % Time of reward from sequence (ie. sequence length)
+        Behaviour.MIHitTrace(i).t1 = Behaviour.time(Behaviour.MIHitTrace(i).i1);
+        Behaviour.MIHitTrace(i).t0 = Behaviour.MIHitTrace(i).MIIndex/parameters.Fs;
+        Behaviour.MIHitTrace(i).t2 = Behaviour.time(Behaviour.MIHitTrace(i).i2);
+        Behaviour.MIHitTrace(i).pullCount = Behaviour.pullCount(Behaviour.MIHitTrace(i).MIIndex-parameters.windowBeforeMI*parameters.Fs:Behaviour.MIHitTrace(i).MIIndex+parameters.windowAfterMI*parameters.Fs);
+        if lickD
+            Behaviour.MIHitTrace(i).licks = Behaviour.licks(Behaviour.MIHitTrace(i).MIIndex-parameters.windowBeforeMI*parameters.Fs:Behaviour.MIHitTrace(i).MIIndex+parameters.windowAfterMI*parameters.Fs);
+        end
+    end
+    catch ME
+        badTrials = [badTrials,i];
+        disp('Bad trial in Motion Allignment Detected');
+        continue
     end
 end
