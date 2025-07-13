@@ -48,8 +48,8 @@ parameters.IntanFs = data.targetedFs;
 parameters.rows = 64;
 parameters.cols = 1;
 
-[Behaviour] = readLeverSq(parameters);
-[IntanBehaviour] = readLeverIntan(parameters,data.amplifierTime,data.analogChannels(1,:),data.digitalChannels,Behaviour,1);
+[Behaviour] = readLeverSq(parameters,data.amplifierTime);
+[IntanBehaviour] = readLeverIntanSq(parameters,data.amplifierTime,data.analogChannels(1,:),data.digitalChannels,Behaviour,0);
 
 % Calculate ITI time for trials and reward/no reward sequence
 temp1 = arrayfun(@(x) x.LFPtime(1), IntanBehaviour.cueHitTrace);
@@ -62,23 +62,26 @@ IntanBehaviour.ITI = temp(:,idx);
 IntanBehaviour.parameters = parameters;
 %% Plot behaviour
 figure
-for i=1:IntanBehaviour.nCueHit
-    plot(0:3000,smoothdata(IntanBehaviour.cueHitTrace(i).trace),'Color',[0 0 0 0.2],'LineWidth',1.5);
+for i=1:length(IntanBehaviour.hitTrace)
+    plot(0:5000,smoothdata(IntanBehaviour.hitTrace(i).trace),'Color',[0 0 0 0.2],'LineWidth',1.5);
     hold on;
     try
-        hitTrace(i,:) = smoothdata(IntanBehaviour.cueHitTrace(i).rawtrace);
+        hitTrace(i,:) = smoothdata(IntanBehaviour.hitTrace(i).rawtrace);
     catch
         continue
     end
 end
-for n = 1:IntanBehaviour.nCueHit
-    IntanBehaviour.AvgHitTrace(n,:) = IntanBehaviour.cueHitTrace(n).trace;
+for n = 1:length(IntanBehaviour.hitTrace)
+    IntanBehaviour.AvgHitTrace(n,:) = IntanBehaviour.hitTrace(n).trace;
 end
-IntanBehaviour.AvgHitTrace = mean(IntanBehaviour.AvgHitTrace,1);
-for n = 1:IntanBehaviour.nCueMiss
-    IntanBehaviour.AvgMissTrace(n,:) = IntanBehaviour.cueMissTrace(n).trace;
+IntanBehaviour.AvgHitTrace = mean(IntanBehaviour.hitTrace,1);
+figure,
+for n = 1:length(IntanBehaviour.missTrace)
+    plot(0:5000,smoothdata(IntanBehaviour.missTrace(n).trace),'Color',[0 0 0 0.2],'LineWidth',1.5);
+    hold on;
+    missTrace(n,:) = IntanBehaviour.missTrace(n).trace;
 end
-IntanBehaviour.AvgMissTrace = mean(IntanBehaviour.AvgMissTrace,1);
+IntanBehaviour.AvgMissTrace = mean(missTrace,1);
 IntanBehaviour.AvgHitTrace = mean(IntanBehaviour.AvgHitTrace,1);
 
 %% LFP probe setup for 64F and analysis
@@ -158,4 +161,3 @@ sessionName = [fpath,'/','Spikes.mat'];
 % save(sessionName,"IntanBehaviour","fpath","parameters","-v7.3");
 save(sessionName,"Spikes","IntanBehaviour","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
 disp('Saved!')
-
