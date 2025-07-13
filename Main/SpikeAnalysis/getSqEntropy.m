@@ -4,7 +4,7 @@ function SqEntropy = getSqEntropy(Spikes)
 % Calculate sequencial entropy as this is useful for check MIHIT to CueHit
 % data which is not captured in the initial figure 1. 
 CueHit = struct(); CueMiss = struct(); MIFA = struct(); MIHit = struct();
-bin = 100:100:1500;
+bin = 50:200:1500;
 for n = 1:length(bin)
     disp(['Calculating with bin length: ' num2str(bin(n))])
     NumEntropyBins = bin(n);
