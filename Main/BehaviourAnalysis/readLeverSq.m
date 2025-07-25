@@ -221,7 +221,8 @@ for i=1:Behaviour.nHit
         Behaviour.hitTrace(i).LFPIndex = ([Behaviour.hit(i,3)-nlengthBeforePull:1:nlengthBeforePull+Behaviour.hit(i,3)])';
     end
 end
-
+SqNum = horzcat(Behaviour.hitTrace(1:end-1).pullCount);
+Behaviour.SqNum = mode(SqNum(parameters.windowBeforePull*parameters.Fs-parameters.delay*parameters.Fs,:));
 st_miss1 = max(find(Behaviour.time < Behaviour.miss(1,2)-parameters.windowBeforePull));
 if isempty(st_miss1)
     disp('First miss rejected');

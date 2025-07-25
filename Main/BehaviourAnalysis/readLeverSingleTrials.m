@@ -48,6 +48,9 @@ nlengthCue = round(parameters.windowBeforeCue/parameters.ts + parameters.windowA
 
 
 B = readmatrix(fullfile(enpath,enfile));
+corrected_times = correct_timer_overflow(B(2:end,2));
+B(2:end,2) = corrected_times;
+
 Behaviour.leverTrace = (B(2:end,1) - resting_position)*flip;
 Behaviour.time = (B(2:end,2) - B(2,2))/1e6; % time in seconds
 Behaviour.pullCount = B(2:end,3);
@@ -311,6 +314,20 @@ if cue == 1
                 end
                 Behaviour.cueMissTrace(i).LFPTime = Behaviour.cueMissTrace(i).time + (Behaviour.cueMiss(i,4)-(nlengthBeforeCue*parameters.ts));
                 Behaviour.cueMissTrace(i).LFPIndex = ([Behaviour.cueMiss(i,3)-nlengthBeforeCue:1:nlengthBeforeCue+Behaviour.cueMiss(i,3)])';
+            end
+        end
+    end
+end
+end
+function corrected_times = correct_timer_overflow(times)
+    corrected_times = times; % Initialize with original data
+    overflow_id = find(diff(times)<0)+1;
+    if ~isempty(overflow_id)
+        for n = 1:length(overflow_id)
+            if length(overflow_id)==n
+                corrected_times(overflow_id(n):end) = corrected_times(overflow_id(n):end)+corrected_times(overflow_id(n)-1);
+            else
+                corrected_times(overflow_id(n):overflow_id(n+1)) = corrected_times(overflow_id(n):overflow_id(n+1))+corrected_times(overflow_id(n)-1);
             end
         end
     end

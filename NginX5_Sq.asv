@@ -15,7 +15,7 @@ ds_filename = intanPreprocessing2(chanMapFile,intandsFlag,activeElectrodes); %In
 fpath = kilosortbinCombine();
 %% Run Kilosort3 
 % load only neccessary variables from memory mapped file
-data = matfile(ds_filename,'Writable',true);
+data = matfile(ds_filename);
 fpath = data.fpath;
 % Kilosort264FTestcode
 Kilosort264SharpTestcode
@@ -67,7 +67,7 @@ Behaviour.parameters = parameters;
 %% Plot behaviour
 figure
 for i=1:length(IntanBehaviour.hitTrace)
-    plot(0:5000,smoothdata(IntanBehaviour.hitTrace(i).trace),'Color',[0 0 0 0.2],'LineWidth',1.5);
+    plot(0:4000,smoothdata(IntanBehaviour.hitTrace(i).trace),'Color',[0 0 0 0.2],'LineWidth',1.5);
     hold on;
     try
         hitTrace(i,:) = smoothdata(IntanBehaviour.hitTrace(i).rawtrace);
@@ -255,7 +255,7 @@ for neuron = [3 4 23 24]
     title(['Neuron ' num2str(neuron)])
     count = count+1;
     for n = 1:size(trialMask,1)
-        scatter(time(ft(n)),n*trialMask(firstPull(n),ft(n)),5,'filled','MarkerEdgeColor','none','MarkerFaceColor',color),hold on
+        scatter(time(ft(n)),n*trialMask(firstPull(n),ft(n)),5,'filled','MarkerEdgeColor',color,'MarkerFaceColor','none'),hold on
     end
 end
 %% sort to second pull

@@ -1,15 +1,31 @@
-function [cleanedPullCounts, Behaviour,hasTimeout, sequenceStartedBeforeWindow] = cleanTimeoutSequences(pullCounts,Behaviour,MIFlag)
+function [cleanedPullCounts, pullIndices,Behaviour,hasTimeout, sequenceStartedBeforeWindow] = cleanTimeoutSequences(Behaviour,MIFlag)
+
+
+if ~exist('MIFlag','var')
+    MIFlag = 1;
+    disp('Cleaning up MI flags')
+    allPulls = arrayfun(@(x) x.pullCount, Behaviour.MIhitTrace, 'UniformOutput', false);
+end
+if MIFlag == 0
+    disp('Cleaning up hit trace')
+    allPulls = arrayfun(@(x) x.pullCount, Behaviour.hitTrace, 'UniformOutput', false);
+end
+% Determine the correct size (number of rows) from the first array
+correctNumRows = size(allPulls{1}, 1);
+
+% Find which arrays have the correct number of rows
+validIdx = cellfun(@(c) size(c,1) == correctNumRows, allPulls);
+
+% Keep only valid arrays
+validPulls = allPulls(validIdx);
+
+% Horizontally concatenate and transpose as you did
+pullCounts = horzcat(validPulls{:})';
 [numTrials, numTimePoints] = size(pullCounts);
 cleanedPullCounts = zeros(size(pullCounts));
 hasTimeout = false(numTrials, 1);
 sequenceStartedBeforeWindow = false(numTrials, 1);
-if ~exist('MIFlag','var')
-    MIFlag = 1;
-    disp('Cleaning up MI flags')
-end
-if MIFlag == 0
-    disp('Cleaning up hit trace')
-end
+pullIndices = cell(numTrials,1);
 % Check if we want to cleanup based on movement initiation or reward
 % aligned data
 if MIFlag == 1
@@ -38,7 +54,7 @@ if MIFlag == 1
                 end
 
                 % Check for timeouts (non-monotonic counting)
-                if length(unique(sequence)) > 1
+                if length(unique(sequence)) > 0
                     diffs = diff(sequence);
 
                     % If any difference is negative, we have a timeout/reset
@@ -96,9 +112,10 @@ else
                 end
 
                 % Check for timeouts (non-monotonic counting)
-                if length(unique(sequence)) > 1
+                if length(unique(sequence)) > 0
                     diffs = diff(sequence);
-
+                    pullStart = find(diffs==1)+1;
+                    pullIndices{trial} = [timeIndices(1),timeIndices(pullStart)];
                     % If any difference is negative, we have a timeout/reset
                     if any(diffs < 0)
                         hasTimeout(trial) = true;

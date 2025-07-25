@@ -7,15 +7,39 @@ parameters.windowBeforeCue = 0.5; % in seconds
 parameters.windowAfterCue = 3.5; % in seconds
 parameters.windowBeforeMI = 1.5; % in seconds 
 parameters.windowAfterMI = 1.5; % in seconds 
+parameters.delay = 0.5;
 parameters.Fs = 1000; % Eventual downsampled data
 parameters.ts = 1/parameters.Fs;
 parameters.rows = 64;
 parameters.cols = 1;
+
 BehaviourSq = struct();
 BehaviourSingle = struct();
-fname = "Y:\Hammad\Ephys\SeqProject\Behavior\COM32025_05_11_03.01.PM.csv";
+%fname = "Y:\Hammad\Ephys\SeqProject\Behavior\COM32025_05_11_03.01.PM.csv";
+fname = "Y:\Hammad\Ephys\SeqProject\Behavior\Cue\RbpM2Sq_Cue2025_06_09_06.51.PM.csv";
+%fname = "Y:\Hammad\Ephys\SeqProject\Behavior\Cue\RbpM2Sq_Cue2025_05_28_02.54.PM.csv"
 [BehaviourSq] = readLeverSqTrials(parameters,[],fname);
+BehaviourSq.parameters = parameters;
 [BehaviourSingle] = readLeverSingleTrials(parameters,[],fname);
+BehaviourSingle.parameters = parameters;
+%%
+time = linspace(-parameters.windowBeforeCue,parameters.windowAfterCue,400);
+dat = horzcat(BehaviourSingle.cueHitTrace.rawtrace);
+figure,
+for n = 1:length(BehaviourSingle.cueHitTrace)
+    plot(time,smoothdata(BehaviourSingle.cueHitTrace(n).rawtrace,'gaussian',5),'color',[0.5 0.5 0.5 0.25]),hold on
+end
+plot(time,smoothdata(mean(dat,2),'gaussian',5),'linewidth',2)
+xline(-BehaviourSingle.meanReactionTime,'r')
+xlim([-0.5 3.5])
+figure,
+for n = 1:length(BehaviourSq.cueHitTrace)
+    plot(time,smoothdata(BehaviourSq.cueHitTrace(n).rawtrace,'gaussian',5),'color',[0.5 0.5 0.5 0.25]),hold on
+end
+dat = horzcat(BehaviourSq.cueHitTrace.rawtrace);
+plot(time,smoothdata(mean(dat,2),'gaussian',5),'linewidth',2)
+xline(-BehaviourSq.meanReactionTime,'r')
+xlim([-0.5 3.5])
 %%
 time = linspace(-parameters.windowBeforePull,parameters.windowAfterPull,401);
 dat = horzcat(BehaviourSingle.hitTrace.rawtrace);
@@ -25,7 +49,9 @@ for n = 1:length(BehaviourSingle.hitTrace)
 end
 plot(time,smoothdata(mean(dat,2),'gaussian',5),'linewidth',2)
 xline(-BehaviourSingle.meanReactionTime,'r')
-xlim([-2.5 0.5])
+xline(-0.5,'r','Sq Complete')
+xline(0,'r','Reward')
+xlim([-3.5 0.5])
 figure,
 for n = 1:length(BehaviourSq.hitTrace)
     plot(time,smoothdata(BehaviourSq.hitTrace(n).rawtrace,'gaussian',5),'color',[0.5 0.5 0.5 0.25]),hold on
@@ -33,24 +59,12 @@ end
 dat = horzcat(BehaviourSq.hitTrace.rawtrace);
 plot(time,smoothdata(mean(dat,2),'gaussian',5),'linewidth',2)
 xline(-BehaviourSq.meanReactionTime,'r')
-xlim([-2.5 0.5])
+xline(-0.5,'r','Sq Complete')
+xline(0,'r','Reward')
+xlim([-3.5 0.5])
 %%
 
-allPulls = arrayfun(@(x) x.pullCount, BehaviourSingle.cueHitTrace, 'UniformOutput', false);
 
-% Determine the correct size (number of rows) from the first array
-correctNumRows = size(allPulls{1}, 1);
-
-% Find which arrays have the correct number of rows
-validIdx = cellfun(@(c) size(c,1) == correctNumRows, allPulls);
-
-% Keep only valid arrays
-validPulls = allPulls(validIdx);
-
-% Horizontally concatenate and transpose as you did
-allPulls = horzcat(validPulls{:})';
-
-[cleanedpullCounts, hasTimeout] = cleanTimeoutSequences(allPulls);
 %%
 data = cleanedpullCounts;
 figure('Color', 'w', 'Position', [100, 100, 600, 900]);
