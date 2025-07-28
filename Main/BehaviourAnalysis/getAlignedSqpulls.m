@@ -79,7 +79,7 @@ for neuron = [3 4 23 24]
     nexttile
     bin = 20;
     binnedSpk= getBin(spkTemp,bin);
-    plot(linspace(warpTime(1), warpTime(end),length(binnedSpk)),smoothdata(sum(binnedSpk)*(1000/bin),'gaussian',20))
+    plot(linspace(warpTime(1), warpTime(end),size(binnedSpk,2)),smoothdata(sum(binnedSpk)*(1000/bin),'gaussian',20))
     xlim([warpTime(1), warpTime(end)])
     xlabel('Time from pull (s)'),box off,set(gca,'tickdir','out')
 end

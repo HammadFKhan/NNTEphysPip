@@ -15,7 +15,7 @@ ds_filename = intanPreprocessing2(chanMapFile,intandsFlag,activeElectrodes); %In
 fpath = kilosortbinCombine();
 %% Run Kilosort3 
 % load only neccessary variables from memory mapped file
-data = matfile(ds_filename);
+data = matfile(ds_filename,'Writable',true);
 fpath = data.fpath;
 % Kilosort264FTestcode
 Kilosort264SharpTestcode
@@ -62,12 +62,11 @@ parameters.cols = 1;
 IntanBehaviour.parameters = parameters;
 Behaviour.parameters = parameters;
 [Behaviour.cleanedpullCounts, Behaviour.pullIndices] = cleanTimeoutSequences(Behaviour,0);
-%%
-[trialMask] = getAUTOResponse(IntanBehaviour,1); %expFlag = 1
+
 %% Plot behaviour
 figure
 for i=1:length(IntanBehaviour.hitTrace)
-    plot(0:4000,smoothdata(IntanBehaviour.hitTrace(i).trace),'Color',[0 0 0 0.2],'LineWidth',1.5);
+    plot(0:5000,smoothdata(IntanBehaviour.hitTrace(i).trace),'Color',[0 0 0 0.2],'LineWidth',1.5);
     hold on;
     try
         hitTrace(i,:) = smoothdata(IntanBehaviour.hitTrace(i).rawtrace);
@@ -202,6 +201,7 @@ disp('Data Saved for warping')
 % than by earliest second pull
 [ft,firstPull] = sort(pullIndex(:,1));
 [sc,secondPull] = sort(pullIndex(:,2));
+[trialMask] = getAUTOResponse(IntanBehaviour,1); %expFlag = 1
 figure,
 time = linspace(-IntanBehaviour.parameters.windowBeforePull,IntanBehaviour.parameters.windowAfterPull,size(trialMask,2));
 figure
@@ -210,7 +210,7 @@ for n = 1:size(trialMask,1)
     scatter(time,n*trialMask(n,:),10,'filled','MarkerFaceColor',color),hold on
 end
 xlim([-2.5, 0.5])
-ylim([1 100])
+ylim([1 290])
 xline(0,'k','reward')
 axis square
 
@@ -221,7 +221,7 @@ for n = 1:size(trialMask,1)
     scatter(time,n*trialMask(firstPull(n),:),10,'filled','MarkerFaceColor',color),hold on
 end
 xlim([-2.5, 0.5])
-ylim([1 100])
+ylim([1 290])
 xline(0,'k','reward')
 axis square
 subplot(122),
@@ -230,7 +230,7 @@ for n = 1:size(trialMask,1)
     scatter(time,n*trialMask(secondPull(n),:),10,'filled','MarkerFaceColor',color),hold on
 end
 xlim([-2.5, 0.5])
-ylim([1 100])
+ylim([1 290])
 xline(0,'k','reward')
 axis square
 %% sort to first pull
@@ -242,20 +242,20 @@ color = [46,49 149]/255;
 for neuron = [3 4 23 24]
     subplot(3,2,count)
     xlim([-2.5, 0.5])
-    ylim([1 100])
+    ylim([1 290])
     xline(0,'k','reward')
     spkTemp = squeeze(SqSpikes(:,:,neuron));
     spkTemp(spkTemp==0) = NaN;
     for n = 1:size(trialMask,1)
         scatter(time,n*spkTemp(firstPull(n),:),0.5,'filled','MarkerFaceColor',[0,0,0]),hold on
     end
-    ylim([1 100])
+    ylim([1 290])
     xline(0,'k','reward')
     xlim([-2.5, 0.5])
     title(['Neuron ' num2str(neuron)])
     count = count+1;
     for n = 1:size(trialMask,1)
-        scatter(time(ft(n)),n*trialMask(firstPull(n),ft(n)),5,'filled','MarkerEdgeColor',color,'MarkerFaceColor','none'),hold on
+        scatter(time(ft(n)),n*trialMask(firstPull(n),ft(n)),5,'filled','MarkerEdgeColor','none','MarkerFaceColor',color),hold on
     end
 end
 %% sort to second pull
@@ -304,45 +304,50 @@ all_pulls = warpedSpks.warpSpikes;
 
 % Calculate the number of bins after binning
 n_time_binned = floor(num_timebins / bin_size);
-
+binTime = linspace(warpedSpks.warpedTime(1,3),warpedSpks.warpedTime(end,3),n_time_binned);
 % Preallocate binned data array
-binned_all_pulls = zeros(num_trials, n_time_binned, num_neurons, num_pulls);
+binned_all_pulls = zeros(n_time_binned, num_neurons, num_pulls);
 
 % Apply binning per neuron and pull
 for p = 1:num_pulls
     for n = 1:num_neurons
         data = squeeze(all_pulls(:, :, n, p)); % trials × time
-        binned_data = getBin(data, bin_size);  % trials × binned_time
-        binned_all_pulls(:, :, n, p) = binned_data;
+        binned_data = sum(getBin(data,bin_size))*(1000/bin_size);  % trials × binned_time
+        binned_all_pulls(:, n, p) = binned_data;
     end
 end
 
+mean_baseline_neuron = squeeze(mean(binned_all_pulls(binTime<-2,:,:),[1,3]));
+%%
 % Preallocate mean response matrix: neurons × pulls
 mean_responses = zeros(num_neurons, num_pulls);
-wTime = warpedSpks.warpedTime(1:bin:end-1,:);
-trials_per_pull = size(binned_all_pulls, 1);
-
-per_trial_response = zeros(trials_per_pull, num_neurons, num_pulls);
+wTime = warpedSpks.warpedTime;
+binnedSpk = [];
 % Calculate mean firing rate within analysis window per neuron/pull
+% We want to normalize by the mean baseline
 for pull = 1:num_pulls
     win = find(wTime(:,pull)>=analysis_window(1) & wTime(:,pull)<=analysis_window(2));
-    data = squeeze(binned_all_pulls(:, win, :, pull)); % trials × bins × neurons
-    
-    avg_window = mean(data, 2);    % average over time bin dimension -> trials × 1 × neurons
-    avg_window = squeeze(avg_window)*(1000/bin); % trials × neurons
-    
-    mean_responses(:, pull) = mean(avg_window, 1); % mean over trials, result is 1 × neurons
-    for n = 1:num_neurons
-        trial_data = squeeze(binned_all_pulls(:, win, n, pull));
-        per_trial_response(:, n, pull) = mean(trial_data, 2);
+    data = squeeze(all_pulls(:, win, :, pull)); % trials × bins × neurons
+    % Here we calculate the binned z score response of the neurons
+    for neuron = 1:num_neurons
+        spkTemp = squeeze(data(:,:,neuron));
+        binnedSpk(:,:,neuron) = getBin(spkTemp,bin_size);
     end
+    avg_window = sum(binnedSpk,1);    % average over time bin dimension -> trials × 1 × neurons
+    avg_window = squeeze(avg_window)*(1000/bin_size); % trials × neurons
+
+    mean_responses(:, pull) = mean(avg_window, 1); % mean over trials, result is 1 × neurons
 end
 %%
+%here we subtract the baseline response to calculate the residuals so we
+%now know how responsive the neuron was to the stimulus
+residuals = mean_responses-mean_baseline_neuron'; 
+modulationIndex = (mean_responses-mean_baseline_neuron')/(mean_responses+mean_baseline_neuron)'
 selectivity_index = zeros(num_neurons, 1);
 best_pull = zeros(num_neurons, 1);
 
 for n = 1:num_neurons
-    responses = mean_responses(n, :);
+    responses = abs(residuals(n, :));
     [R_best, idx_best] = max(responses);
     R_other = mean(responses(setdiff(1:num_pulls, idx_best)));
     responseTot(n,:) = responses;
