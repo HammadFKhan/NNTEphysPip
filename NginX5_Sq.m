@@ -11,8 +11,6 @@ activeElectrodes = 1:64;
 chanMapFile = 'UCLA_chanmap_fixed.mat'; %UCLA Sharp
 %chanMapFile = 'UCLA_chanmap_64F2.mat';
 ds_filename = intanPreprocessing2(chanMapFile,intandsFlag,activeElectrodes); %IntanDs flag  %% double check file type
-%% Combine intan data if needed
-fpath = kilosortbinCombine();
 %% Run Kilosort3 
 % load only neccessary variables from memory mapped file
 data = matfile(ds_filename,'Writable',true);
@@ -35,7 +33,9 @@ data = matfile(ds_filename); % ds_filename comes from loadme.mat
 parameters.experiment = 'self'; % self - internally generated, cue - cue initiated
 parameters.opto = 0; % 1 - opto ON , 0 - opto OFF
 parameters.cool = 0; % No Cool 
-parameters.windowBeforePull = 3.5; % in seconds
+parameters.perturbEffort = 0; %perturb effort after first pull
+
+parameters.windowBeforePull = 3.5; % in seconds % technically window before reward
 parameters.windowAfterPull = 1.5; % in seconds
 parameters.windowBeforeCue = 1.5; % in seconds
 parameters.windowAfterCue = 3.5; % in seconds
@@ -66,7 +66,7 @@ Behaviour.parameters = parameters;
 %% Plot behaviour
 figure
 for i=1:length(IntanBehaviour.hitTrace)
-    plot(0:5000,smoothdata(IntanBehaviour.hitTrace(i).trace),'Color',[0 0 0 0.2],'LineWidth',1.5);
+    plot(0:5000,smoothdata(IntanBehaviour.MIHitTrace(i).trace),'Color',[0 0 0 0.2],'LineWidth',1.5);
     hold on;
     try
         hitTrace(i,:) = smoothdata(IntanBehaviour.hitTrace(i).rawtrace);
@@ -86,7 +86,9 @@ for n = 1:length(IntanBehaviour.missTrace)
 end
 IntanBehaviour.AvgMissTrace = mean(missTrace,1);
 IntanBehaviour.AvgHitTrace = mean(IntanBehaviour.AvgHitTrace,1);
-
+%%% sequence dynamics
+pullIndex = vertcat(IntanBehaviour.hitTrace.pullCount);
+figure,imagesc(Behaviour.cleanedpullCounts)
 %% LFP probe setup for 64F and analysis
 % Since there are two probes we want to seperate everything into linear
 % maps for CSD and depthwise LFP analysis and then we do filtering
@@ -115,6 +117,7 @@ path = [fpath,'/kilosort3/'];
 mergename = 'merged';
 Kilosort3AutoMergeTester
 path = [fpath,'/kilosort3/' mergename];
+addpath(genpath('C:\Users\khan332\Documents\GitHub\Kilosort')) % path to kilosort folder
 %%% Spike preprocessing (includes merging (optional) and channel info
 %%% return)
 % Read in kilosort data for matlab analysis
@@ -157,7 +160,7 @@ if exist('goodSpkComponents','var')
 else 
     Spikes.goodSpkComponents = 1:length(Spikes.Clusters);
 end
-Spikes = rejectSpikes(Spikes,0.4,0.25,IntanBehaviour.parameters); % Reject spikes here for further analysis
+Spikes = rejectSpikes(Spikes,0.1,0.15,IntanBehaviour.parameters); % Reject spikes here for further analysis
 IntanBehaviour.reactionTime = 0;
 [Spikes] = sortSpkLever(Spikes,IntanBehaviour);
 [fpath,name,exts] = fileparts(ds_filename);
@@ -165,40 +168,13 @@ sessionName = [fpath,'/','Spikes.mat'];
 % save(sessionName,"IntanBehaviour","fpath","parameters","-v7.3");
 save(sessionName,"Spikes","IntanBehaviour","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
 disp('Saved!')
-%%
-SqSpikes = zeros(size(Spikes.PSTH.hit.spks{1},1),size(Spikes.PSTH.hit.spks{1},2),length(Spikes.PSTH.hit.spks));
-for n = 1:size(SqSpikes,3)
-    SqSpikes(:,:,n) = Spikes.PSTH.hit.spks{n};
-end
-pullIndex = Spikes.PSTH.hit.pl;
-pull1 = pullIndex(:,1);
-pull2 = pullIndex(:,2);
-pull3 = pullIndex(:,3);
-tmin = 0;
-tmax = size(SqSpikes,2)-1;
-
-% Trial IDs, spiketimes, and neuron_ids are a flatten matrix of the 3d
-% array. Trial IDs and spike times should have zero indexing
-trial_ids = [];
-spiketimes = [];
-neuron_ids = [];
-for ntrials = 1:size(SqSpikes,1)
-    spkTemp = squeeze(SqSpikes(ntrials,:,:))';
-    [r,c,v] = find(spkTemp==1);
-    trial_ids = [trial_ids;(ntrials-1)*ones(size(r))];
-    spiketimes = [spiketimes;c];
-    neuron_ids = [neuron_ids;r];
-end
-neuron_ids = neuron_ids-1; % zero indexing
-spiketimes = spiketimes-1; % zero indexing
-[fpath,name,exts] = fileparts(ds_filename);
-sessionName = [fpath,'\','spikes_to_Warp.mat'];
-save(sessionName,"tmin","tmax","pull1","pull2","pull3","trial_ids","spiketimes","neuron_ids","fpath");
-disp('Data Saved for warping')
+%% Prep data for warping
+prepWrap(Spikes,ds_filename)
 %% Plot out spikes aligned to the pull response
 % From the behaviour figure where we have the pull counts
 %% Plot trial sorted by earliest first pull
 % than by earliest second pull
+pullIndex = vertcat(IntanBehaviour.hitTrace.pullCount);
 [ft,firstPull] = sort(pullIndex(:,1));
 [sc,secondPull] = sort(pullIndex(:,2));
 [trialMask] = getAUTOResponse(IntanBehaviour,1); %expFlag = 1
@@ -242,14 +218,14 @@ color = [46,49 149]/255;
 for neuron = [3 4 23 24]
     subplot(3,2,count)
     xlim([-2.5, 0.5])
-    ylim([1 290])
+    ylim([1 100])
     xline(0,'k','reward')
-    spkTemp = squeeze(SqSpikes(:,:,neuron));
+    spkTemp = squeeze(warpedSpks.pull3A.warpSpikes(:,:,neuron));
     spkTemp(spkTemp==0) = NaN;
     for n = 1:size(trialMask,1)
         scatter(time,n*spkTemp(firstPull(n),:),0.5,'filled','MarkerFaceColor',[0,0,0]),hold on
     end
-    ylim([1 290])
+    ylim([1 100])
     xline(0,'k','reward')
     xlim([-2.5, 0.5])
     title(['Neuron ' num2str(neuron)])
@@ -284,87 +260,29 @@ for neuron = 1:30
 end
 %% Load in warped data and make psth based on warping models
 % 
+if ~exist('fpath','var')
 [fpath,fname] = fileparts(ds_filename);
+end
 load(fullfile(fpath,'warpedSpks'))
 % Plot out warped pulls
 warpedSpks = getAlignedSqpulls(Spikes,warpedSpks,IntanBehaviour);
+close all
 % Build spike rasters based on aligned data
+sessionName = [fpath,'/','warpedSpks.mat'];
+% save(sessionName,"IntanBehaviour","fpath","parameters","-v7.3");
+save(sessionName,"warpedSpks","Spikes","IntanBehaviour","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
+disp('Saved!')
 %% Get statistics
-% I want to plot out the peak z scored value at the time of pull for each
-% unit. To do this, we should calculate calculate the residuals of each
-% unit as a funciton of the pulls. That will tell us which neurons is
-% tuned to the response... I think
-% Parameters
-% Parameters
-bin_size = 20; % example bin size - adjust to your data/time resolution
-analysis_window = [-0.5, 0.5]; % analysis window in binned time indices (adjust as needed)
-all_pulls = warpedSpks.warpSpikes;
-% Get sizes from original data
-[num_trials, num_timebins, num_neurons, num_pulls] = size(all_pulls);
-
-% Calculate the number of bins after binning
-n_time_binned = floor(num_timebins / bin_size);
-binTime = linspace(warpedSpks.warpedTime(1,3),warpedSpks.warpedTime(end,3),n_time_binned);
-% Preallocate binned data array
-binned_all_pulls = zeros(n_time_binned, num_neurons, num_pulls);
-
-% Apply binning per neuron and pull
-for p = 1:num_pulls
-    for n = 1:num_neurons
-        data = squeeze(all_pulls(:, :, n, p)); % trials × time
-        binned_data = sum(getBin(data,bin_size))*(1000/bin_size);  % trials × binned_time
-        binned_all_pulls(:, n, p) = binned_data;
-    end
-end
-
-mean_baseline_neuron = squeeze(mean(binned_all_pulls(binTime<-2,:,:),[1,3]));
-%%
-% Preallocate mean response matrix: neurons × pulls
-mean_responses = zeros(num_neurons, num_pulls);
-wTime = warpedSpks.warpedTime;
-binnedSpk = [];
-% Calculate mean firing rate within analysis window per neuron/pull
-% We want to normalize by the mean baseline
-for pull = 1:num_pulls
-    win = find(wTime(:,pull)>=analysis_window(1) & wTime(:,pull)<=analysis_window(2));
-    data = squeeze(all_pulls(:, win, :, pull)); % trials × bins × neurons
-    % Here we calculate the binned z score response of the neurons
-    for neuron = 1:num_neurons
-        spkTemp = squeeze(data(:,:,neuron));
-        binnedSpk(:,:,neuron) = getBin(spkTemp,bin_size);
-    end
-    avg_window = sum(binnedSpk,1);    % average over time bin dimension -> trials × 1 × neurons
-    avg_window = squeeze(avg_window)*(1000/bin_size); % trials × neurons
-
-    mean_responses(:, pull) = mean(avg_window, 1); % mean over trials, result is 1 × neurons
-end
-%%
-%here we subtract the baseline response to calculate the residuals so we
-%now know how responsive the neuron was to the stimulus
-residuals = mean_responses-mean_baseline_neuron'; 
-modulationIndex = (mean_responses-mean_baseline_neuron')./(mean_responses+mean_baseline_neuron');
-selectivity_index = zeros(num_neurons, 1);
-best_pull = zeros(num_neurons, 1);
-
-for n = 1:num_neurons
-    responses = abs(residuals(n, :));
-    [R_best, idx_best] = max(responses);
-    R_other = mean(responses(setdiff(1:num_pulls, idx_best)));
-    responseTot(n,:) = responses;
-    selectivity_index(n) = (R_best - R_other) / (R_best + R_other);
-    best_pull(n) = idx_best;
-end
-
+warpedSpks = getWarpSpkStats(warpedSpks);
 %% Plot Modulation for each pull
-
 bin_edges = -1:0.1:1; % Adjust bin size if desired
 colors = [0 0 1; 0 0.5 0; 0.7 0 0]; % blue, green, red for pulls
 figure; hold on;
-
+num_pulls = size(warpedSpks.stats.modulationIndex,2);
 for p = 1:num_pulls
     subplot(1,3,p),
     % Bin and normalize
-    counts = histcounts(modulationIndex(:,p), bin_edges, 'Normalization', 'probability');
+    counts = histcounts(warpedSpks.stats.modulationIndex(:,p), bin_edges, 'Normalization', 'probability');
     bin_centers = bin_edges(1:end-1) + diff(bin_edges)/2;
     % Stairs plot
     stairs(bin_centers, counts, 'Color', colors(p,:), 'LineWidth', 2);
@@ -377,12 +295,12 @@ end
 
 
 %% temp(1:length(sel_for_pull),p) = sel_for_pull;
-temp = nan(length(selectivity_index),3);
+temp = nan(length(warpedSpks.stats.selectivityIndex),3);
 y = [];
 for p = 1:num_pulls
-    sel_for_pull = selectivity_index(best_pull == p); % Example: your selectivity indices for this pull
+    sel_for_pull = warpedSpks.stats.selectivityIndex(warpedSpks.stats.bestPull == p); % Example: your selectivity indices for this pull
     temp(1:length(sel_for_pull),p) = sel_for_pull;
-    y(p) = length(sel_for_pull)/length(selectivity_index);
+    y(p) = length(sel_for_pull)/length(warpedSpks.stats.selectivityIndex);
 end
 
 color = [46,49,179;46,149,49;179,49,46]/255;
@@ -452,22 +370,83 @@ ylabel('Probability');
 legend({'Pull 1', 'Pull 2', 'Pull 3'}, 'Location', 'Best');
 title('Normalized Pull Preference Index Distribution (Stairs Plot)');
 hold off;
+%% Neural Trajectory Segementation using GPFA
+% Note that we concatenate trial conditions as to apply the same models for
+% statistical comparison (ie. hit vs miss, hit vs FA, opto vs no opto)
+Spikes = makeSpikeGPFA(Spikes);
+Spikes.GPFA.HitMiss.dat = [Spikes.GPFA.hit.dat,Spikes.GPFA.miss.dat];
+for n = 1:length(IntanBehaviour.hitTrace)%+1:length(Spikes.GPFA.BaselineOpto.dat) %fix trials
+    Spikes.GPFA.HitMiss.dat(n).trialId = n;
+end
+Spikes.GPFA.MIHitFA.dat = [Spikes.GPFA.MIHit.dat,Spikes.GPFA.MIFA.dat];
+for n = length(IntanBehaviour.MIHitTrace)+1:length(Spikes.GPFA.MIHitFA.dat) %fix trials
+    Spikes.GPFA.MIHitFA.dat(n).trialId = n;
+end
+%%%
+addpath(genpath('C:\Users\khan332\Documents\GitHub\NeuralTraj'));
+addpath(genpath('mat_results'));
+if exist('mat_results','dir'),rmdir('mat_results','s'),end
+[Spikes.GPFA.resultHit,Spikes.GPFA.seqTrainHit] = gpfaAnalysis(Spikes.GPFA.hit.dat,1); %Run index
+[Spikes.GPFA.resultMiss,Spikes.GPFA.seqTrainMiss] = gpfaAnalysis(Spikes.GPFA.miss.dat,2); %Run index
+[Spikes.GPFA.resultMIHit,Spikes.GPFA.seqTrainMIHit] = gpfaAnalysis(Spikes.GPFA.MIHit.dat,3); %Run index
+[Spikes.GPFA.resultMIFA,Spikes.GPFA.seqTrainMIFA] = gpfaAnalysis(Spikes.GPFA.MIFA.dat,4); %Run index
+[Spikes.GPFA.resultHitMiss,Spikes.GPFA.seqTrainHitMiss] = gpfaAnalysis(Spikes.GPFA.HitMiss.dat,5); %Run index
+[Spikes.GPFA.resultMIHitFA,Spikes.GPFA.seqTrainMIHitFA] = gpfaAnalysis(Spikes.GPFA.MIHitFA.dat,6); %Run index
+close all
+sessionName = [fpath,'\','Spikes.mat'];
+save(sessionName,"Spikes","IntanBehaviour","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
+disp('Saved!')
 
-
+%% Neural Trajectory Analysis
+%IntanBehaviour.parameters = parameters;
+%neuralTrajAnalysis(Spikes,Waves1,IntanBehaviour1);
+[M1neuralDynamics,M1waveDynamics] = neuralTrajAnalysis2(Spikes,[],IntanBehaviour);
 %%
-function binned_data = getBin(data,bin_size)
-[n_trials, n_time] = size(data);
+time = linspace(-IntanBehaviour.parameters.windowBeforePull,IntanBehaviour.parameters.windowAfterPull,Spikes.GPFA.seqTrainHit(1).T);
+figure,
+for n = 1:length(Spikes.GPFA.seqTrainHit)
+    subplot(311),plot(time,Spikes.GPFA.seqTrainHit(n).xorth(1,:),'Color',[0 0 0 0.4]),hold on,box off,set(gca,'fontsize',18)
+    subplot(312),plot(time,Spikes.GPFA.seqTrainHit(n).xorth(2,:),'Color',[0 0 0 0.4]),hold on,box off,set(gca,'fontsize',18)
+    subplot(313),plot(time,Spikes.GPFA.seqTrainHit(n).xorth(3,:),'Color',[0 0 0 0.4]),hold on,box off,set(gca,'fontsize',18)
+end
+%%
+pullIndex = vertcat(IntanBehaviour.hitTrace.pullCount);
+x = squeeze(M1neuralDynamics.hit.X(1,:,:));
+y = squeeze(M1neuralDynamics.hit.X(2,:,:));
+z = squeeze(M1neuralDynamics.hit.X(3,:,:));
+figure,hold on
+for n = 1:286
+plot3(x(:,n),y(:,n),z(:,n),'color',[0 0 0 0.4])
+end
+%%
+colors = [12,188,187;183,13,180]/255;
+timeIndex = linspace(1,size(x,1),5001);
 
-% Trim time dimension to multiple of bin_size
-n_time_trim = floor(n_time / bin_size) * bin_size;
-data_trim = data(:, 1:n_time_trim);
-
-% Reshape to [n_trials, bin_size, n_time_trim/bin_size]
-data_reshaped = reshape(data_trim', bin_size, [], n_trials); 
-% Note the transpose is so time is first dimension for reshaping
-
-% Sum or average within bins (along first dimension)
-binned_data = squeeze(mean(data_reshaped, 1))';  
-% Output size: [n_trials, n_time_trim/bin_size]
+xp = mean(x,2);
+yp = mean(y,2);
+zp = mean(z,2);
+figure
+plot3(xp,yp,zp,'color',colors(2,:)),hold on
+pIm = floor(mean(pullIndex));
+pIm = [1 pIm 3499]; %add reward 
+for n = 1:length(pIm)
+    id = floor(timeIndex(pIm(n)));
+    scatter3(xp(id),yp(id),zp(id),20,'filled'),hold on
 end
 
+%%
+% figure,hold on
+% for n = 1:200
+%     plot(time,squeeze(M1neuralDynamics.hit.speed.speed(1,:,n)),'color',[0 0 0 0.8])
+% %     for p = 1:length(IntanBehaviour.hitTrace(n).pullCount)
+% %         xline((IntanBehaviour.hitTrace(n).pullCount(p)-3500)/1000,'r')
+% %     end
+% end
+colors = [12,188,187;183,13,180]/255;
+speedTotBaseline = smoothdata(squeeze(M1neuralDynamics.hit.speed.speed(1,2:end,:)),1,'gaussian',10);
+figure,hold on
+plot(time(2:end),mean(speedTotBaseline,2),'color',colors(2,:),'linewidth',2),hold on
+plot(time(2:end),mean(speedTotBaseline,2)+std(speedTotBaseline,[],2)/(sqrt(size(speedTotBaseline,2))),'color',colors(2,:),'linewidth',2)
+plot(time(2:end),mean(speedTotBaseline,2)-std(speedTotBaseline,[],2)/(sqrt(size(speedTotBaseline,2))),'color',colors(2,:),'linewidth',2)
+set(gca,'tickdir','out'),box off, axis square
+xlim([-3.5,1.5])
