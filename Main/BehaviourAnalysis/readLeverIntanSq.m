@@ -24,9 +24,15 @@ else
     disp('Experiment has no opto trials.');
 end
 
+if parameters.perturbEffort == 1
+    effortTrace = dig_in_data(4,:);
+    disp('Experiment has catch trials.');
+else
+    disp('Experiment has no catch trials.');
+end
 intanFs = parameters.IntanFs;
 
-resting_position = 550*5/1024;
+resting_position = 540*5/1024;
 flip = 1;
 nlengthBeforePull = round(parameters.windowBeforePull*parameters.Fs);
 nlength = round(parameters.windowAfterPull/parameters.ts + parameters.windowAfterPull/parameters.ts + 1);
@@ -51,6 +57,12 @@ if parameters.opto == 1
     IntanBehaviour.optoTrace = downsample(optoTrace,round(intanFs/parameters.Fs),1);
     optoIndex = find(diff(IntanBehaviour.optoTrace)==1)+1;
     IntanBehaviour.nOpto = size(optoIndex,2);
+end
+
+if parameters.perturbEffort == 1
+    IntanBehaviour.effortTrace = downsample(effortTrace,round(intanFs/parameters.Fs),1);
+    effortIndex = find(diff(IntanBehaviour.effortTrace)==1)+1;
+    IntanBehaviour.neffort = size(effortIndex,2);
 end
 
 IntanBehaviour.nHit = size(rewardIndex,2);
@@ -94,6 +106,26 @@ for i=1:IntanBehaviour.nHit
     if length(IntanBehaviour.hitTrace(i).pullCount)>Behaviour.SqNum
         IntanBehaviour.hitTrace(i).pullCount = IntanBehaviour.hitTrace(i).pullCount((end-Behaviour.SqNum+1):end);
     end
+
+    if parameters.perturbEffort == 1
+        IntanBehaviour.hitTrace(i).effortTrace = IntanBehaviour.effortTrace(rewardIndex(i)-parameters.windowBeforePull*parameters.Fs:rewardIndex(i)+parameters.windowAfterPull*parameters.Fs)';
+       
+        effortWin = find(IntanBehaviour.hitTrace(i).effortTrace==1);
+        % If there is no effort trial triggered
+        if ~isempty(effortWin)
+            % We can check for an effort flag if the pullcounts lie within an
+            % effort flag (cos this means the piston was happening under this
+            % hit trial)
+            if sum(effortWin(1)>=IntanBehaviour.hitTrace(i).pullCount(1) & effortWin(end)<=(IntanBehaviour.hitTrace(i).pullCount(end)+700))>0
+                IntanBehaviour.hitTrace(i).effortFlag = 1;
+            else
+                IntanBehaviour.hitTrace(i).effortFlag = 0;
+            end
+        else
+            IntanBehaviour.hitTrace(i).effortFlag = 0;
+        end
+    end
+
 end
 IntanBehaviour.SqNum = Behaviour.SqNum;
 %% Getting cue Hit traces
@@ -241,17 +273,26 @@ missIndex(idx) = [];
 IntanBehaviour.nMiss = size(missIndex,1);
 
 for i=1:IntanBehaviour.nMiss
-%     IntanBehaviour.hit(i) = [rewardIndex(i) lfpTime(rewardIndex(i)) rewardIndex(i) lfpTime(rewardIndex(i))];
+    %     IntanBehaviour.hit(i) = [rewardIndex(i) lfpTime(rewardIndex(i)) rewardIndex(i) lfpTime(rewardIndex(i))];
     IntanBehaviour.missTrace(i).trace = IntanBehaviour.leverTrace(missIndex(i)-parameters.windowBeforePull*parameters.Fs:missIndex(i)+parameters.windowAfterPull*parameters.Fs)';
     IntanBehaviour.missTrace(i).time = (0:1/parameters.Fs:(size(IntanBehaviour.missTrace(i).trace,1)-1)*1/parameters.Fs)' - parameters.windowBeforePull;
     IntanBehaviour.missTrace(i).LFPIndex = ([missIndex(i)-parameters.windowBeforePull*parameters.Fs:1:missIndex(i)+parameters.windowAfterPull*parameters.Fs])';
     IntanBehaviour.missTrace(i).LFPtime = IntanBehaviour.time(missIndex(i)-parameters.windowBeforePull*parameters.Fs:missIndex(i)+parameters.windowAfterPull*parameters.Fs)';
+    IntanBehaviour.missTrace(i).pullCount = IntanBehaviour.pullCount(IntanBehaviour.pullCount>=IntanBehaviour.missTrace(i).LFPIndex(1) & IntanBehaviour.pullCount<=IntanBehaviour.missTrace(i).LFPIndex(1)+rewardSt)-IntanBehaviour.missTrace(i).LFPIndex(1);
+    if ~isempty(IntanBehaviour.missTrace(i).pullCount)
+        if parameters.perturbEffort == 1
+            IntanBehaviour.missTrace(i).effortTrace = IntanBehaviour.effortTrace(missIndex(i)-parameters.windowBeforePull*parameters.Fs:missIndex(i)+parameters.windowAfterPull*parameters.Fs)';
+            effortIdx = IntanBehaviour.missTrace(i).LFPIndex(IntanBehaviour.missTrace(i).pullCount(1))-1;
+            IntanBehaviour.missTrace(i).effortFlag = find(effortIndex>=effortIdx & effortIndex<=(IntanBehaviour.missTrace(i).LFPIndex(end)));
+        end
+    end
 end
+
 
 %% Getting cue Hit traces with allignment at MI 
 meanMotionTrace = mean(horzcat(IntanBehaviour.hitTrace.trace),2);
-IntanBehaviour.meanRestingPositionCue = mean(meanMotionTrace(1:500));
-IntanBehaviour.MIcutoffHit = 0.5*(IntanBehaviour.threshold-IntanBehaviour.meanRestingPositionCue) + IntanBehaviour.meanRestingPositionCue;
+IntanBehaviour.meanRestingPositionCue = mean(meanMotionTrace(1:1000));
+IntanBehaviour.MIcutoffHit = 0.3*(IntanBehaviour.threshold-IntanBehaviour.meanRestingPositionCue) + IntanBehaviour.meanRestingPositionCue;
 
 badTrials = [];
 
@@ -263,7 +304,7 @@ for i=1:length(IntanBehaviour.hitTrace)
     fCross(fCross>rewardIndex) = [];
     % Calculate pull count sq
     pC = horzcat(Behaviour.hitTrace.pullCount);
-    pullSqNum = mode(pC(parameters.windowBeforePull*100));
+    pullSqNum = mode(pC(parameters.windowBeforePull*100,:));
     if isempty(fCross)
         badTrials = [badTrials,i];
         disp('Bad trial in Motion Allignment Detected');
@@ -334,6 +375,28 @@ for i=1:IntanBehaviour.nMiss
 end
 badTrials = arrayfun(@(x) isempty(x.trace), IntanBehaviour.MIFATrace);
 IntanBehaviour.MIFATrace(badTrials) = [];
+
+
+
+%%% Detect catch trials
+if parameters.perturbEffort == 1
+    rewardIndex = find(diff(IntanBehaviour.rewardTrace)==1)+1;
+    for i=1:IntanBehaviour.neffort
+        % So here we take the effort index which is the pull time prior to it -
+        % this is because we know that the effort trace goes up when the pull
+        % count increments by 1
+        pullst = find(IntanBehaviour.pullCount==effortIndex(i)); % grab nearest past pull it should basically be zero
+        IntanBehaviour.effortperturbTrace(i).trace = IntanBehaviour.leverTrace(effortIndex(i)-parameters.windowBeforeMI*parameters.Fs:effortIndex(i)+parameters.windowAfterMI*parameters.Fs)';
+        IntanBehaviour.effortperturbTrace(i).time = (0:1/parameters.Fs:(size(IntanBehaviour.effortperturbTrace(i).trace,1)-1)*1/parameters.Fs)' - parameters.windowBeforeMI;
+        IntanBehaviour.effortperturbTrace(i).LFPIndex = ([effortIndex(i)-parameters.windowBeforeMI*parameters.Fs:1:effortIndex(i)+parameters.windowAfterMI*parameters.Fs])';
+        IntanBehaviour.effortperturbTrace(i).LFPtime = IntanBehaviour.time(effortIndex(i)-parameters.windowBeforeMI*parameters.Fs:effortIndex(i)+parameters.windowAfterMI*parameters.Fs)';
+        IntanBehaviour.effortperturbTrace(i).pullCount = IntanBehaviour.pullCount(IntanBehaviour.pullCount>=IntanBehaviour.effortperturbTrace(i).LFPIndex(1) & IntanBehaviour.pullCount<=IntanBehaviour.effortperturbTrace(i).LFPIndex(1)+rewardSt)-IntanBehaviour.effortperturbTrace(i).LFPIndex(1);
+        IntanBehaviour.effortperturbTrace(i).effortTrace = IntanBehaviour.effortTrace(effortIndex(i)-parameters.windowBeforeMI*parameters.Fs:effortIndex(i)+parameters.windowAfterMI*parameters.Fs)';
+        % Check if reward was ever given out
+        IntanBehaviour.effortperturbTrace(i).rewardFlag = find(rewardIndex>=IntanBehaviour.effortperturbTrace(i).LFPIndex(1) & rewardIndex<=IntanBehaviour.effortperturbTrace(i).LFPIndex(end));
+    end
+end
+
 if plotOption == 1
     % Plotting Lever traces for Cue Hit 
     figure('Name','Average Lever Traces for Cue Hits and Misses');

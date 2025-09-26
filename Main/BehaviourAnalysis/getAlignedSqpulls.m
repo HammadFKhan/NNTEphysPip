@@ -1,5 +1,5 @@
 function warpedSpks = getAlignedSqpulls(Spikes,warpedSpks,IntanBehaviour)
-
+% Grab data for alignement and analysis
 %% Plot trial aligned by first pull
 % than by earliest second pull
 
@@ -75,11 +75,22 @@ for neuron = [3 4 23 24]
     title(['Neuron ' num2str(neuron)])
 end
 for neuron = [3 4 23 24]
+    [warpSpikes,warpTime] = getwarpedSpikes(warpedSpks.pull1A.Spks,warpedSpks.pull1A.pull1,IntanBehaviour);
     spkTemp = squeeze(warpSpikes(:,:,neuron));
     nexttile
     bin = 20;
     binnedSpk= getBin(spkTemp,bin);
-    plot(linspace(warpTime(1), warpTime(end),size(binnedSpk,2)),smoothdata(sum(binnedSpk)*(1000/bin),'gaussian',20))
+    plot(linspace(warpTime(1), warpTime(end),size(binnedSpk,2)),smoothdata(zscore(sum(binnedSpk)*(1000/bin),1),'gaussian',20)),hold on
+
+    [warpSpikes,warpTime] = getwarpedSpikes(warpedSpks.pull2A.Spks,warpedSpks.pull2A.pull1,IntanBehaviour);
+    spkTemp = squeeze(warpSpikes(:,:,neuron));
+    binnedSpk= getBin(spkTemp,bin);
+    plot(linspace(warpTime(1), warpTime(end),size(binnedSpk,2)),smoothdata(zscore(sum(binnedSpk)*(1000/bin),1),'gaussian',20)),hold on
+
+    [warpSpikes,warpTime] = getwarpedSpikes(warpedSpks.pull3A.Spks,warpedSpks.pull3A.pull1,IntanBehaviour);
+    spkTemp = squeeze(warpSpikes(:,:,neuron));
+    binnedSpk= getBin(spkTemp,bin);
+    plot(linspace(warpTime(1), warpTime(end),size(binnedSpk,2)),smoothdata(zscore(sum(binnedSpk)*(1000/bin),1),'gaussian',20)),hold on
     xlim([warpTime(1), warpTime(end)])
     xlabel('Time from pull (s)'),box off,set(gca,'tickdir','out')
 end
@@ -94,11 +105,12 @@ warpedSpks.pull1A.warpTime = warpTime;
 binnedSpk = [];
 
 bin = 20;
-for neuron = 1:Spikes.nSpikes
+for neuron = 1:warpedSpks.pull3A.Spks.n_neurons
 spkTemp = squeeze(warpSpikes(:,:,neuron));
 binnedSpk(neuron,:) = zscore(sum(getBin(spkTemp,bin))*(1000/bin),1);
 end
-for n = 1:Spikes.nSpikes
+fP = binnedSpk;
+for n = 1:warpedSpks.pull3A.Spks.n_neurons
     plot(linspace(warpTime(1), warpTime(end),length(binnedSpk)),smoothdata(binnedSpk(n,:),'gaussian',20),'color',color(1,:)),hold on %smoothdata(zscore(binnedSpk,0,2)','gaussian',1))
 end
     plot(linspace(warpTime(1), warpTime(end),length(binnedSpk)),smoothdata(mean(binnedSpk),'gaussian',20),'k'),hold on %smoothdata(zscore(binnedSpk,0,2)','gaussian',1))
@@ -113,11 +125,11 @@ warpedSpks.pull2A.warpSpikes = warpSpikes;
 warpedSpks.pull2A.warpTime = warpTime;
 
 bin = 20;
-for neuron = 1:Spikes.nSpikes
+for neuron = 1:warpedSpks.pull3A.Spks.n_neurons
 spkTemp = squeeze(warpSpikes(:,:,neuron));
 binnedSpk(neuron,:) = zscore(sum(getBin(spkTemp,bin))*(1000/bin),1);
 end
-for n = 1:Spikes.nSpikes
+for n = 1:warpedSpks.pull3A.Spks.n_neurons
     plot(linspace(warpTime(1), warpTime(end),length(binnedSpk)),smoothdata(binnedSpk(n,:),'gaussian',20),'color',color(2,:)),hold on %smoothdata(zscore(binnedSpk,0,2)','gaussian',1))
 end
     plot(linspace(warpTime(1), warpTime(end),length(binnedSpk)),smoothdata(mean(binnedSpk),'gaussian',20),'k'),hold on %smoothdata(zscore(binnedSpk,0,2)','gaussian',1))
@@ -132,11 +144,12 @@ warpedSpks.pull3A.warpSpikes = warpSpikes;
 warpedSpks.pull3A.warpTime = warpTime;
 
 bin = 20;
-for neuron = 1:Spikes.nSpikes
+for neuron = 1:warpedSpks.pull3A.Spks.n_neurons
 spkTemp = squeeze(warpSpikes(:,:,neuron));
 binnedSpk(neuron,:) = zscore(sum(getBin(spkTemp,bin))*(1000/bin),1);
 end
-for n = 1:Spikes.nSpikes
+rewardP = binnedSpk;
+for n = 1:warpedSpks.pull3A.Spks.n_neurons
     plot(linspace(warpTime(1), warpTime(end),length(binnedSpk)),smoothdata(binnedSpk(n,:),'gaussian',20),'color',color(3,:)),hold on %smoothdata(zscore(binnedSpk,0,2)','gaussian',1))
 end
     plot(linspace(warpTime(1), warpTime(end),length(binnedSpk)),smoothdata(mean(binnedSpk),'gaussian',20),'k'),hold on %smoothdata(zscore(binnedSpk,0,2)','gaussian',1))
@@ -147,20 +160,72 @@ ylim([-2.5 3.5])
 
 nexttile
 [warpSpikes,warpTime] = getwarpedSpikes(warpedSpks.pull23A.Spks,warpedSpks.pull23A.pull1,IntanBehaviour);
+warpedSpks.pull23A.warpSpikes = warpSpikes;
+warpedSpks.pull23A.warpTime = warpTime;
+
 bin = 20;
-for neuron = 1:Spikes.nSpikes
-spkTemp = squeeze(warpSpikes(:,:,neuron));
-binnedSpk(neuron,:) = zscore(sum(getBin(spkTemp,bin))*(1000/bin),1);
+for neuron = 1:warpedSpks.pull3A.Spks.n_neurons
+    spkTemp = squeeze(warpSpikes(:,:,neuron));
+    binnedSpk(neuron,:) = zscore(sum(getBin(spkTemp,bin))*(1000/bin),1);
 end
-for n = 1:Spikes.nSpikes
+stP = binnedSpk;
+
+for n = 1:warpedSpks.pull3A.Spks.n_neurons
     plot(linspace(warpTime(1), warpTime(end),length(binnedSpk)),smoothdata(binnedSpk(n,:),'gaussian',20),'color',[0.5 0.5 0.5 0.25]),hold on %smoothdata(zscore(binnedSpk,0,2)','gaussian',1))
 end
-    plot(linspace(warpTime(1), warpTime(end),length(binnedSpk)),smoothdata(mean(binnedSpk),'gaussian',20),'k'),hold on %smoothdata(zscore(binnedSpk,0,2)','gaussian',1))
+plot(linspace(warpTime(1), warpTime(end),length(binnedSpk)),smoothdata(mean(binnedSpk),'gaussian',20),'k'),hold on %smoothdata(zscore(binnedSpk,0,2)','gaussian',1))
 
 xlim([warpTime(1), warpTime(end)])
 xlabel('Time from pull (s)'),box off,set(gca,'tickdir','out'),axis square
 ylim([-2.5 3.5])
+%% Bring them together
+figure,
+for n = 1:warpedSpks.pull3A.Spks.n_neurons
+    subplot(131),plot(smoothdata(fP(n,1:150),'gaussian',20),'color',[0.5 0.5 0.5 0.25]),hold on
+    subplot(132),plot(smoothdata(stP(n,50:200),'gaussian',20),'color',[0.5 0.5 0.5 0.25]),hold on
+    subplot(133),plot(smoothdata(rewardP(n,125:200),'gaussian',20),'color',[0.5 0.5 0.5 0.25]),hold on
+end
+%%
+% Example with dummy data, replace fP, stP, rewardP as needed
+n_neurons = size(fP,1);  % or warpedSpks.pull3A.Spks.n_neurons
 
+% Create the figure with tight layout
+
+
+% Compute smoothed data for each segment (example indexing, adjust as needed)
+seg1 = smoothdata(fP(:,1:150),2,'gaussian',20);
+seg2 = smoothdata(stP(:,125:200),2,'gaussian',20);
+seg3 = smoothdata(rewardP(:,125:250),2,'gaussian',20);
+
+% Find global min and max for ylim
+minY = min([seg1(:); seg2(:); seg3(:)]);
+maxY = max([seg1(:); seg2(:); seg3(:)]);
+
+f = figure;
+f.Position = [680 558 960 420];
+t = tiledlayout(1,3,'TileSpacing','tight','Padding','compact');
+t.TileSpacing = 'loose'; 
+for i = 1:3
+    nexttile(i);
+    hold on
+    switch i
+        case 1, seg = seg1;
+        case 2, seg = seg2;
+        case 3, seg = seg3;
+    end
+    for n = 1:size(seg,1)
+        plot(seg(n,:), 'Color', [0.5 0.5 0.5 0.25], 'LineWidth', 1);
+    end
+    plot(mean(seg,1),'k', 'LineWidth', 2);
+    hold off
+    box off
+    set(gca,'YTick',[]);
+    axis tight
+    ylim([minY-1 maxY+1]) % <-- Sets the same limits for each subplot
+end
+
+
+%% Optional: add unified labels or markers manually if needed
 %% OUTPUT full warpedSpks and times
 warpSpikestot = zeros([size(warpSpikes),3]);
 warpSpikestot(:,:,:,1) = warpedSpks.pull1A.warpSpikes;

@@ -1,29 +1,40 @@
 function [neuralDynamics,waveDynamics] = neuralTrajAnalysis2(Spikes,Waves,Behaviour)
 %% Take orthoganal latent dimensions and do statistics across trials
+if isfield(Spikes.GPFA,'seqTrainHit')
 X = arrayfun(@(x) vertcat(x.xorth),Spikes.GPFA.seqTrainHit,'UniformOutput',false);
 X = horzcat(X{:});
 neuralTrajHit = reshape(X,size(X,1),Spikes.GPFA.seqTrainHit(1).T,[]);
+end
 
+if isfield(Spikes.GPFA,'seqTrainMiss')
 X = arrayfun(@(x) vertcat(x.xorth),Spikes.GPFA.seqTrainMiss,'UniformOutput',false);
 X = horzcat(X{:});
 neuralTrajMiss = reshape(X,size(X,1),Spikes.GPFA.seqTrainMiss(1).T,[]);
+end
 
+if isfield(Spikes.GPFA,'seqTrainMIHit')
 X = arrayfun(@(x) vertcat(x.xorth),Spikes.GPFA.seqTrainMIHit,'UniformOutput',false);
 X = horzcat(X{:});
 neuralTrajMIHit = reshape(X,size(X,1),Spikes.GPFA.seqTrainMIHit(1).T,[]);
+end
 
+if isfield(Spikes.GPFA,'seqTrainMIFA')
 X = arrayfun(@(x) vertcat(x.xorth),Spikes.GPFA.seqTrainMIFA,'UniformOutput',false);
 X = horzcat(X{:});
 neuralTrajMIFA = reshape(X,size(X,1),Spikes.GPFA.seqTrainMIFA(1).T,[]);
+end
 
+if isfield(Spikes.GPFA,'seqTrainHitMiss')
 X = arrayfun(@(x) vertcat(x.xorth),Spikes.GPFA.seqTrainHitMiss,'UniformOutput',false);
 X = horzcat(X{:});
 neuralTrajHitMiss = reshape(X,size(X,1),Spikes.GPFA.seqTrainHitMiss(1).T,[]);
+end
 
+if isfield(Spikes.GPFA,'seqTrainMIHitFA')
 X = arrayfun(@(x) vertcat(x.xorth),Spikes.GPFA.seqTrainMIHitFA,'UniformOutput',false);
 X = horzcat(X{:});
 neuralTrajMIHitFA = reshape(X,size(X,1),Spikes.GPFA.seqTrainMIHitFA(1).T,[]);
-
+end
 % X = arrayfun(@(x) vertcat(x.xorth),Spikes.GPFA.seqTrainBaselineOpto,'UniformOutput',false);
 % X = horzcat(X{:});
 % neuralTrajBaselineOpto = reshape(X,size(X,1),Spikes.GPFA.seqTrainBaselineOpto(1).T,[]);
@@ -31,9 +42,10 @@ neuralTrajMIHitFA = reshape(X,size(X,1),Spikes.GPFA.seqTrainMIHitFA(1).T,[]);
 %% Calculate average trajectories and divergence based on trial difference
 % local function call for meaning based on combined PCA of trial conditions
 dimNum = 15; %nu,ber of dimensions to take
+if exist('neuralTrajHitMiss','var')
 X = neuralTrajHitMiss;
-hittrials = 1:length(Behaviour.cueHitTrace);
-misstrials = length(Behaviour.cueHitTrace)+1:size(X,3);
+hittrials = 1:length(Behaviour.hitTrace);
+misstrials = length(Behaviour.hitTrace)+1:size(X,3);
 
 [neuralDynamics.hit.r,neuralDynamics.hit.s,neuralDynamics.hit.stab,neuralDynamics.hit.X] = getMeanTraj(X,hittrials,dimNum); %trajectory variable and predefined conditional trial indexes
 neuralDynamics.hit.speed = speedTraj(X,hittrials,6,Behaviour);
@@ -43,13 +55,16 @@ neuralDynamics.miss.speed = speedTraj(X,misstrials,6,Behaviour);
 
 % Calculate differences in trajectories r'c(t)/||r'c(t)||
 [neuralDynamics.neuralSimhitmiss,neuralDynamics.neuralDiffhitmiss,neuralDynamics.hit.rprime,neuralDynamics.miss.rprime] = neuralTrajDiff(neuralDynamics.hit.r',neuralDynamics.miss.r');
-
+end
 %% Do just for hits
+if exist('neuralTrajHit','var')
 X = neuralTrajHit;
-hittrials = 1:length(Behaviour.cueHitTrace);
+hittrials = 1:length(Behaviour.hitTrace);
 [neuralDynamics.hit.r,neuralDynamics.hitOnly.s,neuralDynamics.hitOnly.stab,neuralDynamics.hitOnly.X] = getMeanTraj(X,hittrials,dimNum); %trajectory variable and predefined conditional trial indexes
 neuralDynamics.hitOnly.speed = speedTraj(X,hittrials,6,Behaviour);
+end
 %% Now do analysis for MI hit vs FA
+if exist('neuralTrajMIHitFA','var')
 X = neuralTrajMIHitFA;
 MIHittrials = 1:length(Behaviour.MIHitTrace);
 MIFAtrials = length(Behaviour.MIHitTrace)+1:size(X,3);
@@ -63,6 +78,7 @@ neuralDynamics.MIFA.speed = speedTraj(X,MIFAtrials,6,Behaviour);
 
 % Calculate differences in trajectories r'c(t)/||r'c(t)||
 [neuralDynamics.neuralSimMI,neuralDynamics.neuralDiffMI,neuralDynamics.MIhit.rprime,neuralDynamics.MIFA.rprime] = neuralTrajDiff(neuralDynamics.MIhit.r',neuralDynamics.MIFA.r');
+end
 %%
 % % rhminit = abs(rh(1,:)-rm(1,:));
 % % rm = rm-rhminit;
