@@ -308,24 +308,28 @@ for i=1:length(IntanBehaviour.hitTrace)
     if isempty(fCross)
         badTrials = [badTrials,i];
         disp('Bad trial in Motion Allignment Detected');
-%         IntanBehaviour.MIHitTrace(i).MIIndex = IntanBehaviour.hitTrace(i).LFPIndex(fCross(end));
-%         IntanBehaviour.MIHitTrace(i).trace = IntanBehaviour.leverTrace(IntanBehaviour.MIHitTrace(i).MIIndex-parameters.windowBeforeMI*parameters.Fs:IntanBehaviour.MIHitTrace(i).MIIndex+parameters.windowAfterMI*parameters.Fs)';
-%         IntanBehaviour.MIHitTrace(i).time = (0:1/parameters.Fs:(size(IntanBehaviour.MIHitTrace(i).trace,1)-1)*1/parameters.Fs)' - parameters.windowBeforeMI;
-%         IntanBehaviour.MIHitTrace(i).LFPIndex = ([IntanBehaviour.MIHitTrace(i).MIIndex-parameters.windowBeforeMI*parameters.Fs:1:IntanBehaviour.MIHitTrace(i).MIIndex+parameters.windowAfterMI*parameters.Fs])';
-%         IntanBehaviour.MIHitTrace(i).LFPtime = IntanBehaviour.time(IntanBehaviour.MIHitTrace(i).MIIndex-parameters.windowBeforeMI*parameters.Fs:IntanBehaviour.MIHitTrace(i).MIIndex+parameters.windowAfterMI*parameters.Fs)';
+        %         IntanBehaviour.MIHitTrace(i).MIIndex = IntanBehaviour.hitTrace(i).LFPIndex(fCross(end));
+        %         IntanBehaviour.MIHitTrace(i).trace = IntanBehaviour.leverTrace(IntanBehaviour.MIHitTrace(i).MIIndex-parameters.windowBeforeMI*parameters.Fs:IntanBehaviour.MIHitTrace(i).MIIndex+parameters.windowAfterMI*parameters.Fs)';
+        %         IntanBehaviour.MIHitTrace(i).time = (0:1/parameters.Fs:(size(IntanBehaviour.MIHitTrace(i).trace,1)-1)*1/parameters.Fs)' - parameters.windowBeforeMI;
+        %         IntanBehaviour.MIHitTrace(i).LFPIndex = ([IntanBehaviour.MIHitTrace(i).MIIndex-parameters.windowBeforeMI*parameters.Fs:1:IntanBehaviour.MIHitTrace(i).MIIndex+parameters.windowAfterMI*parameters.Fs])';
+        %         IntanBehaviour.MIHitTrace(i).LFPtime = IntanBehaviour.time(IntanBehaviour.MIHitTrace(i).MIIndex-parameters.windowBeforeMI*parameters.Fs:IntanBehaviour.MIHitTrace(i).MIIndex+parameters.windowAfterMI*parameters.Fs)';
     else
-        try
-            if length(fCross)<pullSqNum
-                IntanBehaviour.MIHitTrace(i).MIIndex = IntanBehaviour.hitTrace(i).LFPIndex(fCross(1));
-            else
-                IntanBehaviour.MIHitTrace(i).MIIndex = IntanBehaviour.hitTrace(i).LFPIndex(fCross(end-pullSqNum+1));
-            end
-        catch
-            disp('hold up')
-        end
+%         try
+%             if length(fCross)<pullSqNum
+%                 IntanBehaviour.MIHitTrace(i).MIIndex = IntanBehaviour.hitTrace(i).LFPIndex(fCross(1));
+%             else
+%                 IntanBehaviour.MIHitTrace(i).MIIndex = IntanBehaviour.hitTrace(i).LFPIndex(fCross(end-pullSqNum+1));
+%             end
+%         catch
+%             disp('hold up')
+%         end
+
+        % NEW MI Index based on pullcount index
+        % Pull count before reward response since we know the Sq index
+        IntanBehaviour.MIHitTrace(i).MIIndex = IntanBehaviour.hitTrace(i).LFPIndex(IntanBehaviour.hitTrace(i).pullCount(1));
         %IntanBehaviour.MIHitTrace(i).cueIndex = IntanBehaviour.cueHitTrace(i).LFPIndex(parameters.windowBeforeCue*parameters.Fs+1);
         IntanBehaviour.MIHitTrace(i).rewardIndex = IntanBehaviour.hitTrace(i).LFPIndex(parameters.windowBeforePull*parameters.Fs+1);
-        IntanBehaviour.MIHitTrace(i).rewardTime = ((IntanBehaviour.MIHitTrace(i).rewardIndex-IntanBehaviour.MIHitTrace(i).MIIndex)/parameters.Fs)+parameters.delay; 
+        IntanBehaviour.MIHitTrace(i).rewardTime = ((IntanBehaviour.MIHitTrace(i).rewardIndex-IntanBehaviour.MIHitTrace(i).MIIndex)/parameters.Fs)+parameters.delay;
         %IntanBehaviour.MIHitTrace(i).reactionTime = (1/parameters.Fs)*(IntanBehaviour.MIHitTrace(i).MIIndex-IntanBehaviour.MIHitTrace(i).cueIndex);
         %IntanBehaviour.cueHitTrace(i).reactionTime = IntanBehaviour.MIHitTrace(i).reactionTime;
         %IntanBehaviour.cueHitTrace(i).rewardIndex = IntanBehaviour.MIHitTrace(i).rewardIndex;

@@ -14,8 +14,8 @@ time = linspace(0,5,1001);
 f = figure;
 f.Position = [680 458 660 520];
 subplot(2,2,1)
-for i=1:length(IntanBehaviour.MIHitTrace)
-    plot(time,smoothdata(IntanBehaviour.MIHitTrace(i).trace(1:5:end)),'Color',[0 0 0 0.2],'LineWidth',1.5);
+for i=1:length(IntanBehaviour.hitTrace)
+    plot(time,smoothdata(IntanBehaviour.hitTrace(i).trace(1:5:end)),'Color',[0 0 0 0.2],'LineWidth',1.5);
     hold on;
 end
 box off,set(gca,'tickdir','out')
@@ -44,7 +44,7 @@ end
 box off,set(gca,'tickdir','out')
 axis square,xlim([0 5])
 %% Calculate inter-pull interval
-IntanBehaviour = IntanBehaviourPooled(1).IntanBehaviour;
+IntanBehaviour = IntanBehaviourPooled(2).IntanBehaviour;
 pullIPI = vertcat(IntanBehaviour.hitTrace.pullCount);
 pullIPI = diff(pullIPI,1,2)/1000;
 figure;subplot(121), hold on;
@@ -260,7 +260,7 @@ for nSess = 1:length(IntanBehaviourPooled)
     leverTrace = smoothdata([horzcat(IntanBehaviour.MIHitTrace.trace),horzcat(IntanBehaviour.effortperturbTrace.trace)],'gaussian',5)+min(horzcat(IntanBehaviour.MIHitTrace.trace),[],'all');
     leverTrace = (diff(leverTrace+10));
     %figure,plot(leverTrace)
-    u = mean(leverTrace(:,1:length(IntanBehaviour.MIHitTrace)),2);
+    u = mean(leverTrace(:,1:length(IntanBehaviour.hitTrace)),2);
     leverTrace  = leverTrace(:,c);
     catchTrials(end) = [];
     %     leverSpeedCatch{nSess} = max(leverTrace(:,catchTrials));
@@ -271,18 +271,17 @@ for nSess = 1:length(IntanBehaviourPooled)
 %         leverSpeedCatch{nSess,n+2} = max(leverTrace(:,catchTrials+n))';
 %     end
     % But not here...
-    win = -2:2;
     for n = 1:length(catchTrials)
-        for trial = win
+        for trial = -1:1
             idx = catchTrials(n) + trial;
             if idx < 1 || idx > size(leverTrace, 2)
                 continue; % skip out of range indices
             end
             try
                 v = leverTrace(:, idx);  % Use same index logic as working loop
-                periCatchSpeed(n, trial + abs(min(win))+1) = max(v);
+                periCatchSpeed(n, trial + 2) = max(v);
                 CC = cov(v,u)/(std(v)*std(u));
-                periCatchTrajectory(n,trial+abs(min(win))+1) = CC(1,2);
+                periCatchTrajectory(n,trial+2) = CC(1,2);
             catch
                 disp('error computing periCatchSpeed...');
                 continue;
@@ -295,26 +294,26 @@ end
 %% Plot session average
 dat = vertcat(periCatchTrajectorySessions{:});
 figure;
-plot(win, abs(dat)', 'Color', [0.7 0.7 0.7], 'LineWidth', 1); % All catch trials, gray
+plot(-1:1, abs(dat)', 'Color', [0.7 0.7 0.7], 'LineWidth', 1); % All catch trials, gray
 hold on
-plot(win, nanmean(abs(dat),1), '-o', 'Color',[0.7 0.3 0.7], 'MarkerFaceColor',[0.7 0.3 0.7], 'LineWidth', 1.5); % Mean, thick black line
+plot(-1:1, nanmean(abs(dat),1), '-o', 'Color',[0.7 0.3 0.7], 'MarkerFaceColor',[0.7 0.3 0.7], 'LineWidth', 1.5); % Mean, thick black line
 set(gca, 'LineWidth', 1.5, 'TickDir', 'out', 'Box', 'off', 'FontSize', 12);
 xlabel('Trial from perturbation');
 ylabel('CC');
-xlim([-2.5 2.5]);
-ylim([0 0.65]);
+xlim([-2 2]);
+ylim([0 0.5]);
 axis square
 hold off
 %% 
 dat = vertcat(periCatchSpeedSessions{:});
 figure;
-plot(win, abs(dat)', 'Color', [0.7 0.7 0.7], 'LineWidth', 1); % All catch trials, gray
+plot(-1:1, abs(dat)', 'Color', [0.7 0.7 0.7], 'LineWidth', 1); % All catch trials, gray
 hold on
-plot(win, nanmean(abs(dat),1), '-o', 'Color',[0.7 0.3 0.7], 'MarkerFaceColor',[0.7 0.3 0.7], 'LineWidth', 1.5); % Mean, thick black line
+plot(-1:1, nanmean(abs(dat),1), '-o', 'Color',[0.7 0.3 0.7], 'MarkerFaceColor',[0.7 0.3 0.7], 'LineWidth', 1.5); % Mean, thick black line
 set(gca, 'LineWidth', 1.5, 'TickDir', 'out', 'Box', 'off', 'FontSize', 12);
 xlabel('Trial from perturbation');
 ylabel('Lever Speed');
-xlim([-2.5 2.5]);
+xlim([-2 2]);
 axis square
 %% plot raw relationship of lever speed
 dat = vertcat(leverSpeedCatch{:,1});

@@ -1,0 +1,69 @@
+%% Group prep spike data for affine warp model
+% Prep data for warping
+% Directory to load in spike data
+files = dir(fullfile('D:\SQLever\Ephys\ForceField\','*.mat'));
+for fileNum = 1:length(files)
+    fName = fullfile(files(fileNum).folder,files(fileNum).name);
+    disp(['Loading ' fName '...'])
+    load(fName)
+    % Check if 'Spikes' exists
+    if ~exist('Spikes', 'var')
+        warning('Variable ''Spikes'' not found in %s. Skipping file.', fName);
+        continue;
+    end
+    % Check if 'ds_filename' exists
+    if ~exist('ds_filename', 'var')
+        warning('Variable ''ds_filename'' not found in %s. Skipping file.', fName);
+        continue;
+    end
+    % If both variables exist, proceed
+    % Here we pass in ds_filename to save the warpSpks to the main raw data
+    % files. We can conviently route the python file to these directories
+    % for loading during batch analysis. Afterwards we will again call the
+    % files below to format the data and call the intan behavior, where the
+    % data can then be bulk saved to a seperate folder.
+    prepWrap(Spikes, ds_filename);
+end
+%% Bulk processing and formating for rslds modeling setup
+% After running affine warping we can then prep the data for rslds models.
+% We will also take this moment to optionally BATCH the data into a
+% seperate directory so we can easily store and sort the data for later
+% analysis
+files = dir(fullfile('Y:\Hammad\Ephys\SeqProject\ForceField\','*.mat'));
+for fileNum = 1:length(files)
+    fName = fullfile(files(fileNum).folder,files(fileNum).name);
+    disp(['Loading ' fName '...'])
+    load(fName)
+    if ~exist('fpath','var')
+        [fpath,fname] = fileparts(ds_filename);
+        error('No fpath detected!')
+    end
+    disp('Loading warped data...')
+    load(fullfile(fpath,'warpedSpks.mat'))
+    % Plot out warped pulls
+    warpedSpks = getAlignedSqpulls(Spikes,warpedSpks,IntanBehaviour,0);
+    close all
+    % Now lets move all of this data into a new folder insider the
+    % collected spikes directory for the rslds model to access which we can
+    % call warpedSpks_sessions.
+    targetDir = files(fileNum).folder;
+    % Make a new directory folder if it does not exist
+    newFolderName = 'warpedSpks_sessions';
+    fpath = fullfile(targetDir, newFolderName);
+    % We create a new fpath so that rslds can reach it
+
+    if ~exist(fpath, 'dir')
+        mkdir(fpath);
+        fprintf('Created new directory: %s\n', fpath);
+    else
+        fprintf('Directory already exists: %s\n', fpath);
+    end
+
+    sessionName = [fpath,'\',files(fileNum).name(1:end-4),'_warpedSpks.mat'];
+    % save(sessionName,"IntanBehaviour","fpath","parameters","-v7.3");
+    save(sessionName,"warpedSpks","Spikes","IntanBehaviour","ds_filename","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
+    disp('Saved!')
+    clear fpath fname sessionName warpedSpks Spikes IntanBehaviour ds_filename
+end
+
+

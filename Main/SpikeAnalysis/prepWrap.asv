@@ -26,9 +26,9 @@ end
 neuron_ids = neuron_ids-1; % zero indexing
 spiketimes = spiketimes-1; % zero indexing
 [fpath,name,exts] = fileparts(ds_filename);
-if exist('opdir','var') %Check if an alternative directory was chosen for saving
+if exist('opdir','var') %Check
     fpath = opdir;
 end
-sessionName = [fpath,'\','spikes_to_warp.mat'];
-save(sessionName,"tmin","tmax","pull1","pull2","pull3","trial_ids","spiketimes","neuron_ids","fpath","ds_filename");
+sessionName = [fpath,'\',name,'.mat'];
+save(sessionName,"tmin","tmax","pull1","pull2","pull3","trial_ids","spiketimes","neuron_ids","fpath");
 disp('Data Saved for warping')

@@ -33,7 +33,7 @@ data = matfile(ds_filename); % ds_filename comes from loadme.mat
 parameters.experiment = 'self'; % self - internally generated, cue - cue initiated
 parameters.opto = 0; % 1 - opto ON , 0 - opto OFF
 parameters.cool = 0; % No Cool 
-parameters.perturbEffort = 0; %perturb effort after first pull
+parameters.perturbEffort = 1; %perturb effort after first pull
 
 parameters.windowBeforePull = 3.5; % in seconds % technically window before reward
 parameters.windowAfterPull = 1.5; % in seconds
@@ -166,7 +166,7 @@ IntanBehaviour.reactionTime = 0;
 [fpath,name,exts] = fileparts(ds_filename);
 sessionName = [fpath,'/','Spikes.mat'];
 % save(sessionName,"IntanBehaviour","fpath","parameters","-v7.3");
-save(sessionName,"Spikes","IntanBehaviour","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
+save(sessionName,"Spikes","IntanBehaviour","fpath","ds_filename","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
 disp('Saved!')
 %% Prep data for warping
 prepWrap(Spikes,ds_filename)
