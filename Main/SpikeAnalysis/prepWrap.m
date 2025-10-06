@@ -1,5 +1,8 @@
 function prepWrap(Spikes,ds_filename,opdir)
 % Prep data for wrapping structure to load into python. 
+% New update as of 10/2/2025, we add an option of adding other trial
+% outcomes based on the parameters file
+% Prep hit trials
 SqSpikes = zeros(size(Spikes.PSTH.hit.spks{1},1),size(Spikes.PSTH.hit.spks{1},2),length(Spikes.PSTH.hit.spks));
 for n = 1:size(SqSpikes,3)
     SqSpikes(:,:,n) = Spikes.PSTH.hit.spks{n};

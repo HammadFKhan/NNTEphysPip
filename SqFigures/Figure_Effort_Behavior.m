@@ -44,7 +44,7 @@ end
 box off,set(gca,'tickdir','out')
 axis square,xlim([0 5])
 %% Calculate inter-pull interval
-IntanBehaviour = IntanBehaviourPooled(1).IntanBehaviour;
+% IntanBehaviour = IntanBehaviourPooled(1).IntanBehaviour;
 pullIPI = vertcat(IntanBehaviour.hitTrace.pullCount);
 pullIPI = diff(pullIPI,1,2)/1000;
 figure;subplot(121), hold on;

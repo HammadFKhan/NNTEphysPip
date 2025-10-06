@@ -225,11 +225,10 @@ if isfield(Behaviour,'effortperturbTrace')
                 end
                 trials{count}(i,:) = temp;
                 sqNum = Behaviour.SqNum;
-                pullTrial = Behaviour.effortperturbTrace(i).pullCount;
-                % Check pulls after effort trial starts
-                pullTrial(pullTrial<Behaviour.parameters.windowBeforeMI*Behaviour.parameters.Fs) = [];
-                for sQN = 1:length(pullTrial)
-                    pl = pullTrial(sQN);
+                pullTrial = IntanBehaviour.effortperturbTrace(i).pullCount;
+                pullTrial(pullTrial<IntanBehaviour.parameters.windowBeforeMI*IntanBehaviour.parameters.Fs) = [];
+                for sQN = 1:length(Behaviour.effortperturbTrace(i).pullCount)
+                    pl = Behaviour.effortperturbTrace(i).pullCount(sQN);
                     Spikes.PSTH.effortperturb.pl(i,sQN) = pl;
                     neurons{ii,sQN}(i,:) = temp((pl-500):(pl+500));
                     lever{sQN}(i,:) = leverTemp((pl-500):(pl+500));
@@ -243,7 +242,7 @@ if isfield(Behaviour,'effortperturbTrace')
    
     output = make_nice_mean_raster(trials,20,0);
     Spikes.PSTH.effortperturb.SqspkRates = [];
-    for n = 1:size(neurons,2)
+    for n = 1:sqNum
         Spikes.PSTH.effortperturb.SqspkRates(:,:,n) = make_nice_mean_raster(neurons(:,n)',20,0);
     end
     Spikes.PSTH.effortperturb.Sqlever = lever;

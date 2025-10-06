@@ -29,6 +29,10 @@ Spikes.PSTH.MIHit.spks(Spikes.badSpikes) = [];
 Spikes.PSTH.MIHit.spkRates(Spikes.badSpikes,:) = [];
 Spikes.PSTH.MIFA.spks(Spikes.badSpikes) = [];
 Spikes.PSTH.MIFA.spkRates(Spikes.badSpikes,:) = [];
+if isfield(Spikes.PSTH,'effortperturb')
+    Spikes.PSTH.effortperturb.spks(Spikes.badSpikes) = [];
+    Spikes.PSTH.effortperturb.spkRates(Spikes.badSpikes,:) = [];
+end
 
 %% Rejecting spikes that do not have FR > cutoffFR either pre or post stimulus 
 % (JUST FOR HIT TRIALS - Logic it will have both movement and cue responsive neurons)
@@ -52,7 +56,10 @@ Spikes.PSTH.MIHit.spks(Spikes.badSpikes2) = [];
 Spikes.PSTH.MIHit.spkRates(Spikes.badSpikes2,:) = [];
 Spikes.PSTH.MIFA.spks(Spikes.badSpikes2) = [];
 Spikes.PSTH.MIFA.spkRates(Spikes.badSpikes2,:) = [];
-
+if isfield(Spikes.PSTH,'effortperturb')
+    Spikes.PSTH.effortperturb.spks(Spikes.badSpikes2) = [];
+    Spikes.PSTH.effortperturb.spkRates(Spikes.badSpikes2,:) = [];
+end
 %% Sorting good spikes according to depth
 [~,sortspikeDepth] = sort(cell2mat(arrayfun(@(s) s.channelDepth, Spikes.Clusters,'UniformOutput',false))');
 Spikes.Clusters = Spikes.Clusters(sortspikeDepth);

@@ -21,7 +21,7 @@ for fileNum = 1:length(files)
     % files. We can conviently route the python file to these directories
     % for loading during batch analysis. Afterwards we will again call the
     % files below to format the data and call the intan behavior, where the
-    % data can then be bulk saved to a seperate folder. 
+    % data can then be bulk saved to a seperate folder.
     prepWrap(Spikes, ds_filename);
 end
 %% Bulk processing and formating for rslds modeling setup
@@ -38,24 +38,82 @@ for fileNum = 1:length(files)
         [fpath,fname] = fileparts(ds_filename);
         error('No fpath detected!')
     end
+    disp('Loading warped data...')
     load(fullfile(fpath,'warpedSpks.mat'))
     % Plot out warped pulls
-    warpedSpks = getAlignedSqpulls(Spikes,warpedSpks,IntanBehaviour);
+    warpedSpks = getAlignedSqpulls(Spikes,warpedSpks,IntanBehaviour,0);
     close all
     % Now lets move all of this data into a new folder insider the
     % collected spikes directory for the rslds model to access which we can
-    % call warpedSpks_sessions. 
+    % call warpedSpks_sessions.
     targetDir = files(fileNum).folder;
-    % Make a new directory folder if it does not exist 
-    if ~dir(targetDir,'warpedSpks_sessions')
-        newDir = makedir('warpedSpks_sessions')
-    end
+    % Make a new directory folder if it does not exist
+    newFolderName = 'warpedSpks_sessions';
+    fpath = fullfile(targetDir, newFolderName);
     % We create a new fpath so that rslds can reach it
-    fpath = newDir;
-    sessionName = [fpath,'\','warpedSpks.mat'];
+
+    if ~exist(fpath, 'dir')
+        mkdir(fpath);
+        fprintf('Created new directory: %s\n', fpath);
+    else
+        fprintf('Directory already exists: %s\n', fpath);
+    end
+
+    sessionName = [fpath,'\',files(fileNum).name(1:end-4),'_warpedSpks.mat'];
     % save(sessionName,"IntanBehaviour","fpath","parameters","-v7.3");
     save(sessionName,"warpedSpks","Spikes","IntanBehaviour","ds_filename","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
     disp('Saved!')
+    clear fpath fname sessionName warpedSpks Spikes IntanBehaviour ds_filename
+end
+%% rslds prep only (no warping)
+% Prep data for rslds without warping, useful when we want to include other
+% trials types with varying pulls. For trials that are miss or FA with a
+% non matching sq pull (for sample doesn't match 3 pulls), we fill the
+% space with nan values to handle later down the road.
+% For the state space analysis we don't care about how the data is arranged
+% which is nice for computing the data. The issue comes with analyzing data
+% down the road. Luckly we do a bulk of the analysis on the first pull,
+% which makes a lot of sense. 
+
+% We need something like this to match the rslds model which will be done
+% on seperate dimensions.
+% Holy smokes we can just index the trial types along the fourth dimensions
+% since the time dim and neurons are the same. The only issue is the trials
+% tho.... So we can instead transform the warpSpikes as a cell array with
+% each cell entry being the trial type which we can affix with a label. 
+
+hitSpikes = zeros(size(Spikes.PSTH.hit.spks{1},1),size(Spikes.PSTH.hit.spks{1},2),length(Spikes.PSTH.hit.spks));
+for neuron = 1:length(Spikes.PSTH.hit.spks)
+    hitSpikes(:,:,neuron) = Spikes.PSTH.hit.spks{neuron};
 end
 
+MIHitSpikes = zeros(size(Spikes.PSTH.MIHit.spks{1},1),size(Spikes.PSTH.MIHit.spks{1},2),length(Spikes.PSTH.MIHit.spks));
+for neuron = 1:length(Spikes.PSTH.MIHit.spks)
+    MIHitSpikes(:,:,neuron) = Spikes.PSTH.MIHit.spks{neuron};
+end
 
+effortperturbSpikes = zeros(size(Spikes.PSTH.effortperturb.spks{1},1),size(Spikes.PSTH.effortperturb.spks{1},2),length(Spikes.PSTH.effortperturb.spks));
+for neuron = 1:length(Spikes.PSTH.effortperturb.spks)
+    effortperturbSpikes(:,:,neuron) = Spikes.PSTH.effortperturb.spks{neuron};
+end
+
+rsldsSpikes.taskSpikes{1} = hitSpikes;% <- organized as trialsxtimexneuron
+rsldsSpikes.taskSpikes{2} = MIHitSpikes;
+rsldsSpikes.taskSpikes{3} = effortperturbSpikes;
+
+
+trialTimetot(:,1) = -IntanBehaviour.parameters.windowBeforePull*IntanBehaviour.parameters.Fs:IntanBehaviour.parameters.windowAfterPull*IntanBehaviour.parameters.Fs;
+trialTimetot(:,2) = -IntanBehaviour.parameters.windowBeforeMI*IntanBehaviour.parameters.Fs:IntanBehaviour.parameters.windowAfterMI*IntanBehaviour.parameters.Fs;
+trialTimetot(:,3) = -IntanBehaviour.parameters.windowBeforeMI*IntanBehaviour.parameters.Fs:IntanBehaviour.parameters.windowAfterMI*IntanBehaviour.parameters.Fs;
+
+rsldsSpikes.taskTime = trialTimetot/1000; %ms to seconds
+rsldsSpikes.taskLabel = [{'reward-align hit'},{'mov-align hit'},{'mov-align effort'}];
+pullIndex = Spikes.PSTH.hit.pl;
+rsldsSpikes.hit.pull1 = pullIndex(:,1);
+rsldsSpikes.hit.pull2 = pullIndex(:,2);
+rsldsSpikes.hit.pull3 = pullIndex(:,3);
+ 
+
+sessionName = [fpath,'\','spikes_to_warp.mat'];
+save(sessionName,"tmin","tmax","pull1","pull2","pull3","trial_ids","spiketimes","neuron_ids","fpath","ds_filename");
+disp('Data Saved for warping')
