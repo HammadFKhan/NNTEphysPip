@@ -117,11 +117,13 @@ pullIndex = Spikes.PSTH.hit.pl;
 rsldsSpikes.hit.pull1 = pullIndex(:,1);
 rsldsSpikes.hit.pull2 = pullIndex(:,2);
 rsldsSpikes.hit.pull3 = pullIndex(:,3);
+rsldsSpikes.hit.leverTraces = horzcat(IntanBehaviour.hitTrace.trace);
 
 pullIndex = Spikes.PSTH.MIHit.pl;
 rsldsSpikes.MIHit.pull1 = pullIndex(:,1);
 rsldsSpikes.MIHit.pull2 = pullIndex(:,2);
 rsldsSpikes.MIHit.pull3 = pullIndex(:,3);
+rsldsSpikes.MIHit.leverTraces = horzcat(IntanBehaviour.MIHitTrace.trace);
 
 pullIndex = Spikes.PSTH.effortperturb.pl;
 rsldsSpikes.effortperturb.pull1 = pullIndex(:,1);
@@ -132,6 +134,17 @@ pullIndex = [Spikes.PSTH.MIHit.pl;Spikes.PSTH.effortperturb.pl];
 rsldsSpikes.hiteffortperturb.pull1 = pullIndex(c,1);
 rsldsSpikes.hiteffortperturb.pull2 = pullIndex(c,2);
 rsldsSpikes.hiteffortperturb.pull3 = pullIndex(c,3);
+
+% Create labels so we know what trials are what exactly 
+assert(length(allTrials)==size(pullIndex,1))
+% For brevity I assign 0 or 1 for noneffort trials (1 if no extra effort
+% was needed). We also made a label just in case we forget
+rsldsSpikes.hiteffortperturb.isnoeffort = allTrials(2,:);
+rsldsSpikes.hiteffortperturb.isnoeffortlabel = repmat({'hit'},size(pullIndex,1),1);
+rsldsSpikes.hiteffortperturb.isnoeffortlabel(allTrials(2,:)==0) = {'effort'}; 
+% Add the Intan Behavior traces to make life easy
+leverTrace = [horzcat(IntanBehaviour.MIHitTrace.trace),horzcat(IntanBehaviour.effortperturbTrace.trace)];
+rsldsSpikes.hiteffortperturb.leverTraces = leverTrace(:,c);
 
 % Now lets move all of this data into a new folder insider the
 % collected spikes directory for the rslds model to access which we can

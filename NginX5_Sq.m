@@ -396,7 +396,11 @@ close all
 sessionName = [fpath,'\','Spikes.mat'];
 save(sessionName,"Spikes","IntanBehaviour","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
 disp('Saved!')
-
+%%
+[neuralDynamics] = getGPFASq(warpedSpks.pull3A.warpSpikes  ,IntanBehaviour);
+%%
+figure
+plot(squeeze(neuralDynamics.hitOnly.X(1,:,:)),'color',[0.0 0.0 0.0 0.1])
 %% Neural Trajectory Analysis
 %IntanBehaviour.parameters = parameters;
 %neuralTrajAnalysis(Spikes,Waves1,IntanBehaviour1);

@@ -97,9 +97,14 @@ for neuron = 1:length(Spikes.PSTH.effortperturb.spks)
     effortperturbSpikes(:,:,neuron) = Spikes.PSTH.effortperturb.spks{neuron};
 end
 
+[c,allTrials] = sort_hit_effort(IntanBehaviour); % Chronological built the outcome of spikes
+hiteffortperturbSpikes = cat(1,MIHitSpikes,effortperturbSpikes); % Combine trial types
+hiteffortperturbSpikes = hiteffortperturbSpikes(c,:,:);
+
 rsldsSpikes.taskSpikes{1} = hitSpikes;% <- organized as trialsxtimexneuron
 rsldsSpikes.taskSpikes{2} = MIHitSpikes;
 rsldsSpikes.taskSpikes{3} = effortperturbSpikes;
+rsldsSpikes.taskSpikes{4} = hiteffortperturbSpikes;
 
 
 trialTimetot(:,1) = -IntanBehaviour.parameters.windowBeforePull*IntanBehaviour.parameters.Fs:IntanBehaviour.parameters.windowAfterPull*IntanBehaviour.parameters.Fs;
@@ -107,13 +112,93 @@ trialTimetot(:,2) = -IntanBehaviour.parameters.windowBeforeMI*IntanBehaviour.par
 trialTimetot(:,3) = -IntanBehaviour.parameters.windowBeforeMI*IntanBehaviour.parameters.Fs:IntanBehaviour.parameters.windowAfterMI*IntanBehaviour.parameters.Fs;
 
 rsldsSpikes.taskTime = trialTimetot/1000; %ms to seconds
-rsldsSpikes.taskLabel = [{'reward-align hit'},{'mov-align hit'},{'mov-align effort'}];
+rsldsSpikes.taskLabel = [{'reward-align hit'},{'mov-align hit'},{'mov-align effort'},{'mov-align hit-effort sorted'}];
 pullIndex = Spikes.PSTH.hit.pl;
 rsldsSpikes.hit.pull1 = pullIndex(:,1);
 rsldsSpikes.hit.pull2 = pullIndex(:,2);
 rsldsSpikes.hit.pull3 = pullIndex(:,3);
- 
+rsldsSpikes.hit.leverTraces = horzcat(IntanBehaviour.hitTrace.trace);
 
-sessionName = [fpath,'\','spikes_to_warp.mat'];
-save(sessionName,"tmin","tmax","pull1","pull2","pull3","trial_ids","spiketimes","neuron_ids","fpath","ds_filename");
-disp('Data Saved for warping')
+pullIndex = Spikes.PSTH.MIHit.pl;
+rsldsSpikes.MIHit.pull1 = pullIndex(:,1);
+rsldsSpikes.MIHit.pull2 = pullIndex(:,2);
+rsldsSpikes.MIHit.pull3 = pullIndex(:,3);
+rsldsSpikes.MIHit.leverTraces = horzcat(IntanBehaviour.MIHit.trace);
+
+pullIndex = Spikes.PSTH.effortperturb.pl;
+rsldsSpikes.effortperturb.pull1 = pullIndex(:,1);
+rsldsSpikes.effortperturb.pull2 = pullIndex(:,2);
+rsldsSpikes.effortperturb.pull3 = pullIndex(:,3);
+
+pullIndex = [Spikes.PSTH.MIHit.pl;Spikes.PSTH.effortperturb.pl];
+rsldsSpikes.hiteffortperturb.pull1 = pullIndex(c,1);
+rsldsSpikes.hiteffortperturb.pull2 = pullIndex(c,2);
+rsldsSpikes.hiteffortperturb.pull3 = pullIndex(c,3);
+
+% Create labels so we know what trials are what exactly 
+assert(length(allTrials)==size(pullIndex,1))
+% For brevity I assign 0 or 1 for noneffort trials (1 if no extra effort
+% was needed). We also made a label just in case we forget
+rsldsSpikes.hiteffortperturb.isnoeffort = allTrials(2,:);
+rsldsSpikes.hiteffortperturb.isnoeffortlabel = repmat({'hit'},size(pullIndex,1),1);
+rsldsSpikes.hiteffortperturb.isnoeffortlabel(allTrials(2,:)==0) = {'effort'}; 
+% Add the Intan Behavior traces to make life easy
+leverTrace = [horzcat(IntanBehaviour.MIHit.trace),horzcat(IntanBehaviour.effortperturbTrace.trace)];
+rsldsSpikes.hiteffortperturb.leverTraces = leverTrace(c,:);
+
+% Now lets move all of this data into a new folder insider the
+% collected spikes directory for the rslds model to access which we can
+% call warpedSpks_sessions.
+targetDir = files(fileNum).folder;
+% Make a new directory folder if it does not exist
+newFolderName = 'rsldsSpks_sessions';
+fpath = fullfile(targetDir, newFolderName);
+% We create a new fpath so that rslds can reach it
+
+if ~exist(fpath, 'dir')
+    mkdir(fpath);
+    fprintf('Created new directory: %s\n', fpath);
+else
+    fprintf('Directory already exists: %s\n', fpath);
+end
+
+sessionName = [fpath,'\',files(fileNum).name(1:end-4),'_rsldsSpks.mat'];
+% save(sessionName,"rsldsSpikes","Spikes","IntanBehaviour","ds_filename","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
+disp('Saved!')
+
+
+%%% LOCAL FUNCTIONS
+function [c,allTrials] = sort_hit_effort(IntanBehaviour)
+% sort and concatenate hit and effort trials in order
+effortPullTime = nan(1,length(IntanBehaviour.effortperturbTrace));
+hitTrialPullTime = nan(1,length(IntanBehaviour.MIHitTrace));
+for n = 1:length(IntanBehaviour.hitTrace)
+    trueTime = IntanBehaviour.MIHitTrace(n).LFPIndex;
+    firstPull = IntanBehaviour.MIHitTrace(n).pullCount(1);
+    hitTrialPullTime(n) = trueTime(firstPull);
+end
+for n = 1:length(IntanBehaviour.effortperturbTrace)
+    trueTime = IntanBehaviour.effortperturbTrace(n).LFPIndex;
+    firstPull = IntanBehaviour.effortperturbTrace(n).pullCount(1);
+    effortPullTime(n) = trueTime(firstPull);
+end
+
+% Find the index for shared trials (ie. when a breakout trial was marked
+% out)
+% It also is required because of some bugs we have....
+BO_trials = intersect(hitTrialPullTime,effortPullTime);
+if ~isempty(BO_trials)
+    for BO = 1:length(BO_trials)
+        trialID = find(hitTrialPullTime==BO_trials(BO));
+        IntanBehaviour.hitTrace(trialID).effortFlag = 1;
+    end
+    %assert(length(BO_trials)==length(vertcat(IntanBehaviour.effortperturbTrace.rewardFlag)))
+end
+
+allTrials = [hitTrialPullTime,effortPullTime];
+allTrials(2,:) = [ones(1,length(hitTrialPullTime)),zeros(1,length(effortPullTime))];
+allTrials(3,:) = [1:length(hitTrialPullTime),1:length(effortPullTime)];
+[~,c] = sort(allTrials(1,:)); %Sort chronologically
+
+allTrials = allTrials(:,c);
+end
