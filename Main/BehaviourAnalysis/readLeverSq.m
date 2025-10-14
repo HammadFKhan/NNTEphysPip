@@ -67,7 +67,7 @@ if cue==1
     Behaviour.nCueHit = Behaviour.nHit;
     Behaviour.nCueMiss = Behaviour.nCue-Behaviour.nCueHit;
 end   
-if size(B,2)>6  %% Grab licks as well
+if size(B,2)>6  %% Grab licks as well and check for perturbation
     lickD = 1;
     Behaviour.licks = B(2:end,6);
 else 

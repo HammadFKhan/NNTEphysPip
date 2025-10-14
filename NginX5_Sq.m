@@ -11,13 +11,12 @@ activeElectrodes = 1:64;
 chanMapFile = 'UCLA_chanmap_fixed.mat'; %UCLA Sharp
 %chanMapFile = 'UCLA_chanmap_64F2.mat';
 ds_filename = intanPreprocessing2(chanMapFile,intandsFlag,activeElectrodes); %IntanDs flag  %% double check file type
-%% Combine intan data if needed
-fpath = kilosortbinCombine();
-%% Run Kilosort3 
+%%
+%%% Run Kilosort3 
 % load only neccessary variables from memory mapped file
 data = matfile(ds_filename);
 fpath = data.fpath;
-% Kilosort264FTestcode
+%Kilosort264FTestcode
 Kilosort264SharpTestcode
 savepath = fullfile(fpath,['loadme','.mat']);
 save(savepath,'ds_filename');
@@ -41,6 +40,7 @@ parameters.windowBeforeCue = 1.5; % in seconds
 parameters.windowAfterCue = 1.5; % in seconds
 parameters.windowBeforeMI = 1.5; % in seconds 
 parameters.windowAfterMI = 3.5; % in seconds 
+parameters.effortPerturbation = 0
 parameters.delay = 0.5; %reward delay
 parameters.Fs = 1000; % Eventual downsampled data
 parameters.ts = 1/parameters.Fs;
@@ -48,7 +48,7 @@ parameters.IntanFs = data.targetedFs;
 parameters.rows = 64;
 parameters.cols = 1;
 
-[Behaviour] = readLeverSq(parameters);
+[Behaviour] = readLeverSq(parameters,lfpTime,fname);
 [IntanBehaviour] = readLeverIntan(parameters,data.amplifierTime,data.analogChannels(1,:),data.digitalChannels,Behaviour,1);
 
 % Calculate ITI time for trials and reward/no reward sequence

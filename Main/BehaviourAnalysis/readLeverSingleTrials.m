@@ -49,6 +49,9 @@ nlengthCue = round(parameters.windowBeforeCue/parameters.ts + parameters.windowA
 
 B = readmatrix(fullfile(enpath,enfile));
 Behaviour.leverTrace = (B(2:end,1) - resting_position)*flip;
+%% Apply the correction function
+corrected_times = correct_timer_overflow(B(2:end,2));
+%%
 Behaviour.time = (B(2:end,2) - B(2,2))/1e6; % time in seconds
 Behaviour.pullCount = B(2:end,3);
 Behaviour.nHit = B(end,4);
@@ -122,7 +125,7 @@ if cue == 1
     a = zeros(Behaviour.nHit,1);
     
     for i=1:Behaviour.nHit
-        a(i) = max(find(cueTime<hitTime(i))); % No need to check for reaction time. If there is a hit, there is a cue
+        a(i) = find(cueTime<hitTime(124)); % No need to check for reaction time. If there is a hit, there is a cue
         cueHitIndex(i) = cueIndex(a(i));
         cueHitTime(i) = cueTime(a(i));
         cueHitPullIndex(i) = hitIndex(i);
@@ -314,4 +317,18 @@ if cue == 1
             end
         end
     end
+end
+end
+function corrected_times = correct_timer_overflow(times)
+overflow_id = find(diff(times)<1);
+corrected_times = times;
+if ~isempty(overflow_id)
+    for n = 1:length(overflow_id)
+        if n ~= length(overflow_id)
+            corrected_times((overflow_id(n)+1):overflow_id(n+1)) = corrected_times((overflow_id(n)+1):overflow_id(n+1))+corrected_times(overflow_id(n));
+        else
+            corrected_times((overflow_id(n)+1):overflow_id(end)) = corrected_times((overflow_id(n)+1):overflow_id(end))+corrected_times(overflow_id(n));
+        end
+    end
+end
 end

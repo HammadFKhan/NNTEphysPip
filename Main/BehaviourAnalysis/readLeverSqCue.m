@@ -13,7 +13,8 @@ parameters.rows = 64;
 parameters.cols = 1;
 BehaviourSq = struct();
 BehaviourSingle = struct();
-fname = "Y:\Hammad\Ephys\SeqProject\Behavior\COM32025_05_11_03.01.PM.csv";
+%fname = "Y:\Hammad\Ephys\SeqProject\Behavior\COM32025_05_11_03.01.PM.csv";
+fname = "Y:\Hammad\Ephys\SeqProject\Behavior\RbpM1Sq_Cue2025_06_06_03.42.PM.csv";
 [BehaviourSq] = readLeverSqTrials(parameters,[],fname);
 [BehaviourSingle] = readLeverSingleTrials(parameters,[],fname);
 %%
