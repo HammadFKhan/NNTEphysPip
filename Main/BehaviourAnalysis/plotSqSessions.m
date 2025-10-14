@@ -6,7 +6,7 @@ files = files(idx);
 seqData = struct();
 
 
-parameters.experiment = 'cue'; % self - internally generated, cue - cue initiated
+parameters.experiment = 'self'; % self - internally generated, cue - cue initiated
 parameters.opto = 0; % 1 - opto ON , 0 - opto OFF
 parameters.cool = 0; % No Cool 
 parameters.windowBeforePull = 3.5; % in seconds
@@ -21,7 +21,7 @@ parameters.rows = 64;
 parameters.cols = 1;
 parameters.delay = 0.0; %reward delay
 
-for fileNum = 1:length(files)
+for fileNum = 29
     disp(['File number: ' num2str(fileNum)])
     fname = fullfile(files(fileNum).folder,files(fileNum).name);
     [seqData.session(fileNum).Behaviour] = readLeverSq(parameters,[],fname);
@@ -40,7 +40,7 @@ for fileNum = 1:length(files)
     % Horizontally concatenate and transpose as you did
     allPulls = horzcat(validPulls{:})';
     seqData.session(fileNum).pullCounts = allPulls;
-    [seqData.session(fileNum).cleanedpullCounts, hasTimeout] = cleanTimeoutSequences(seqData.session(fileNum).pullCounts,seqData.session(fileNum).Behaviour,0);
+    [seqData.session(fileNum).cleanedpullCounts, hasTimeout] = cleanTimeoutSequences(seqData.session(fileNum).Behaviour,0);
 end
 %%
 data = seqData.session(29).cleanedpullCounts;
@@ -74,6 +74,8 @@ set(gca, 'YGrid', 'on', 'GridLineStyle', ':', 'GridAlpha', 0.2);
 
 box off;
 hold off;
+%%
+[trialMask] = getAUTOResponse(Behaviour);
 %%
 data = seqData.session(29).Behaviour.hitTrace;
 hitTraceSq = arrayfun(@(x) x.rawtrace,data,'UniformOutput',false);

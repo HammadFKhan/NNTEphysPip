@@ -70,7 +70,17 @@ end
 if size(B,2)>6  %% Grab licks as well and check for perturbation
     lickD = 1;
     Behaviour.licks = B(2:end,6);
-else 
+    if isfield(parameters,'perturbEffort')
+        if parameters.perturbEffort == 1
+            Behaviour.effortTrace = B(2:end,7);
+            perturbTrial = 1;
+        else
+            perturbTrial = 0;
+        end
+    else
+        perturbTrial = 0;
+    end
+else
     disp('No lick sensor detected...')
     lickD = 0;
 end
@@ -206,6 +216,9 @@ for i=1:Behaviour.nHit
     else
         Behaviour.hitTrace(i).licks = NaN;
     end
+    if perturbTrial %returns 1 if effort was initiated in this trial
+        Behaviour.hitTrace(i).effort = sum(Behaviour.effortTrace(Behaviour.hitTrace(i).i1:Behaviour.hitTrace(i).i2))>0;
+    end
     if expFlag == 1
         [Behaviour.hitTrace(i).trace,Behaviour.hitTrace(i).time] = resample(Behaviour.hitTrace(i).rawtrace,Behaviour.hitTrace(i).rawtime,parameters.Fs,'spline');
         if (size(Behaviour.hitTrace(i).trace,1)<nlength)
@@ -221,7 +234,8 @@ for i=1:Behaviour.nHit
         Behaviour.hitTrace(i).LFPIndex = ([Behaviour.hit(i,3)-nlengthBeforePull:1:nlengthBeforePull+Behaviour.hit(i,3)])';
     end
 end
-
+SqNum = horzcat(Behaviour.hitTrace(1:end-1).pullCount);
+Behaviour.SqNum = mode(SqNum(parameters.windowBeforePull*parameters.Fs-parameters.delay*parameters.Fs,:));
 st_miss1 = max(find(Behaviour.time < Behaviour.miss(1,2)-parameters.windowBeforePull));
 if isempty(st_miss1)
     disp('First miss rejected');
@@ -247,6 +261,9 @@ for i=1:Behaviour.nMiss
     Behaviour.missTrace(i).t1 = Behaviour.time(Behaviour.missTrace(i).i1);
     Behaviour.missTrace(i).t0 = Behaviour.miss(i,2);
     Behaviour.missTrace(i).t2 = Behaviour.time(Behaviour.missTrace(i).i2);
+    if perturbTrial %returns 1 if effort was initiated in this trial
+        Behaviour.missTrace(i).effort = sum(Behaviour.effortTrace(Behaviour.missTrace(i).i1:Behaviour.missTrace(i).i2))>0;
+    end
     if expFlag == 1
         [Behaviour.missTrace(i).trace,Behaviour.missTrace(i).time] = resample(Behaviour.missTrace(i).rawtrace,Behaviour.missTrace(i).rawtime,parameters.Fs,'spline');
         if (size(Behaviour.missTrace(i).trace,1)<nlength)
@@ -391,6 +408,9 @@ for i=1:size(Behaviour.hit,1)
         Behaviour.MIHitTrace(i).pullCount = Behaviour.pullCount(Behaviour.MIHitTrace(i).MIIndex-parameters.windowBeforeMI*parameters.Fs:Behaviour.MIHitTrace(i).MIIndex+parameters.windowAfterMI*parameters.Fs);
         if lickD
             Behaviour.MIHitTrace(i).licks = Behaviour.licks(Behaviour.MIHitTrace(i).MIIndex-parameters.windowBeforeMI*parameters.Fs:Behaviour.MIHitTrace(i).MIIndex+parameters.windowAfterMI*parameters.Fs);
+        end
+        if perturbTrial
+            Behaviour.MIHitTrace(i).effort = sum(Behaviour.effortTrace(Behaviour.MIHitTrace(i).MIIndex-parameters.windowBeforeMI*parameters.Fs:Behaviour.MIHitTrace(i).MIIndex+parameters.windowAfterMI*parameters.Fs))>0;
         end
     end
     catch ME

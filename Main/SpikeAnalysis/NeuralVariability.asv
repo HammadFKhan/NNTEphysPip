@@ -100,13 +100,9 @@ figure(1)
 subplot(122),violinplot(temp,[],'ShowData',true,'ShowWhiskers',false,'ShowBox',false,'MarkerSize',5,'ViolinColor',colors);
 set(gca,'tickdir','out','fontsize',16),box off,ylim([1 3])
 %% Do stats on baseline
-ranksum(Stats.Hit.FFdrop,Stats.FakHit.FFdrop)
-ranksum(Stats.Miss.FFdrop,Stats.FakMiss.FFdrop)
 ranksum(Stats.FA.FFdrop,Stats.FakFA.FFdrop)
-
-ranksum(Stats.Hit.FFdrop,Stats.Miss.FFdrop)
-ranksum(Stats.Miss.FFdrop,Stats.FA.FFdrop)
-ranksum(Stats.FA.FFdrop,Stats.Hit.FFdrop)
+ranksum(Stats.FA.FFdrop,Stats.FakFA.FFdrop)
+ranksum(Stats.FA.FFdrop,Stats.FakFA.FFdrop)
 %% Plot Fak
 dat1 = Stats.FakHit.FFdrop;
 dat2 = Stats.FakMiss.FFdrop;

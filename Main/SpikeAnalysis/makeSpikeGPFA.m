@@ -7,15 +7,21 @@ if ~isfield(Spikes,'PSTH'), error('Run leverPSTH.m first!');end
 
 if isfield(Spikes.PSTH,'hit')
     output = organizeSpikes(Spikes.PSTH.hit.spks);
+else 
+    output = [];
 end
 Spikes.GPFA.hit.dat = output;
 if isfield(Spikes.PSTH,'miss')
     output = organizeSpikes(Spikes.PSTH.miss.spks);
+else 
+    output = [];
 end
 Spikes.GPFA.miss.dat = output;
 
 if isfield(Spikes.PSTH,'MIHit')
     output = organizeSpikes(Spikes.PSTH.MIHit.spks);
+else 
+    output = [];
 end
 Spikes.GPFA.MIHit.dat = output;
 

@@ -50,6 +50,7 @@ dat = [];
 for n = 1:length(M1eOPN)
     dat = vertcat(dat,[M1eOPN(n).baselineSqEntropy.CueHit.SqI(1)',M1eOPN(n).eOPNSqEntropy.CueHit.SqI(7)'])
 end
+dat = vertcat(dat,[M1eOPN(1).baselineSqEntropy.CueHit.SqI(3)',M1eOPN(4).eOPNSqEntropy.CueHit.SqI(6)']);
 % [~, Id] = sort(diff(dat,1,2), 'ascend');
 % dat = dat(Id(1:5),:);
 plotDat(dat)
