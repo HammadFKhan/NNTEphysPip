@@ -382,6 +382,10 @@ Spikes.GPFA.MIHitFA.dat = [Spikes.GPFA.MIHit.dat,Spikes.GPFA.MIFA.dat];
 for n = length(IntanBehaviour.MIHitTrace)+1:length(Spikes.GPFA.MIHitFA.dat) %fix trials
     Spikes.GPFA.MIHitFA.dat(n).trialId = n;
 end
+Spikes.GPFA.HitEffort.dat = [Spikes.GPFA.MIHit.dat,Spikes.GPFA.effortperturb.dat];
+for n = 1:length(IntanBehaviour.MIHitTrace)%+1:length(Spikes.GPFA.BaselineOpto.dat) %fix trials
+    Spikes.GPFA.HitEffort.dat(n).trialId = n;
+end
 %%%
 addpath(genpath('C:\Users\khan332\Documents\GitHub\NeuralTraj'));
 addpath(genpath('mat_results'));
@@ -389,18 +393,20 @@ if exist('mat_results','dir'),rmdir('mat_results','s'),end
 [Spikes.GPFA.resultHit,Spikes.GPFA.seqTrainHit] = gpfaAnalysis(Spikes.GPFA.hit.dat,1); %Run index
 [Spikes.GPFA.resultMiss,Spikes.GPFA.seqTrainMiss] = gpfaAnalysis(Spikes.GPFA.miss.dat,2); %Run index
 [Spikes.GPFA.resultMIHit,Spikes.GPFA.seqTrainMIHit] = gpfaAnalysis(Spikes.GPFA.MIHit.dat,3); %Run index
-[Spikes.GPFA.resultMIFA,Spikes.GPFA.seqTrainMIFA] = gpfaAnalysis(Spikes.GPFA.MIFA.dat,4); %Run index
+% [Spikes.GPFA.resultMIFA,Spikes.GPFA.seqTrainMIFA] = gpfaAnalysis(Spikes.GPFA.MIFA.dat,4); %Run index
 [Spikes.GPFA.resultHitMiss,Spikes.GPFA.seqTrainHitMiss] = gpfaAnalysis(Spikes.GPFA.HitMiss.dat,5); %Run index
-[Spikes.GPFA.resultMIHitFA,Spikes.GPFA.seqTrainMIHitFA] = gpfaAnalysis(Spikes.GPFA.MIHitFA.dat,6); %Run index
+% [Spikes.GPFA.resultMIHitFA,Spikes.GPFA.seqTrainMIHitFA] = gpfaAnalysis(Spikes.GPFA.MIHitFA.dat,6); %Run index
+[Spikes.GPFA.resultHitEffort,Spikes.GPFA.seqTrainHitEffort] = gpfaAnalysis(Spikes.GPFA.HitEffort.dat,7); %Run index
 close all
-sessionName = [fpath,'\','Spikes.mat'];
-save(sessionName,"Spikes","IntanBehaviour","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
-disp('Saved!')
-%%
-[neuralDynamics] = getGPFASq(warpedSpks.pull3A.warpSpikes  ,IntanBehaviour);
+% sessionName = [fpath,'\','Spikes.mat'];
+% save(sessionName,"Spikes","IntanBehaviour","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
+% disp('Saved!')
+%% For warping data only
+[neuralDynamics] = getGPFASq(warpedSpks.pull1A.warpSpikes  ,IntanBehaviour);
 %%
 figure
-plot(squeeze(neuralDynamics.hitOnly.X(1,:,:)),'color',[0.0 0.0 0.0 0.1])
+plot(squeeze(neuralDynamics.hitOnly.X(2,:,:)),'color',[0.0 0.0 0.0 0.1]),hold on
+plot(squeeze(mean(neuralDynamics.hitOnly.X(2,:,:),3)),'linewidth',2)
 %% Neural Trajectory Analysis
 %IntanBehaviour.parameters = parameters;
 %neuralTrajAnalysis(Spikes,Waves1,IntanBehaviour1);
@@ -415,13 +421,312 @@ for n = 1:length(Spikes.GPFA.seqTrainHit)
 end
 %%
 pullIndex = vertcat(IntanBehaviour.hitTrace.pullCount);
-x = squeeze(M1neuralDynamics.hit.X(1,:,:));
-y = squeeze(M1neuralDynamics.hit.X(2,:,:));
-z = squeeze(M1neuralDynamics.hit.X(3,:,:));
+% Grab dimension of the data
+x = squeeze(M1neuralDynamics.hiteffort.X(1,:,:));
+y = squeeze(M1neuralDynamics.hiteffort.X(2,:,:));
+z = squeeze(M1neuralDynamics.hiteffort.X(3,:,:));
+% Now we can walk along time for all the trajectory points together
 figure,hold on
-for n = 1:286
+for n = 1:250
 plot3(x(:,n),y(:,n),z(:,n),'color',[0 0 0 0.4])
+plot3(x(1,n), y(1,n), z(1,n), 'o', 'MarkerFaceColor', [0.5 0.5 0.9], 'MarkerEdgeColor', 'k');
 end
+%%
+x = squeeze(M1neuralDynamics.effort.X(1,:,:));
+y = squeeze(M1neuralDynamics.effort.X(2,:,:));
+z = squeeze(M1neuralDynamics.effort.X(3,:,:));
+figure,hold on
+for n = 1:80
+plot3(x(:,n),y(:,n),z(:,n),'color',[0 0 0 0.4])
+plot3(x(1,n), y(1,n), z(1,n), 'o', 'MarkerFaceColor', [0.9 0.5 0.5], 'MarkerEdgeColor', 'k');
+end
+%%
+figure;
+subplot(121),plot(squeeze(M1neuralDynamics.effort.X(2,:,:)))
+subplot(122),plot(squeeze(M1neuralDynamics.hiteffort.X(2,:,:)))
+%%
+% Assuming x, y, z are [time x trials] matrices as per your code
+x = horzcat(squeeze(M1neuralDynamics.hiteffort.X(1,:,:)),squeeze(M1neuralDynamics.effort.X(1,:,:)));
+y = horzcat(squeeze(M1neuralDynamics.hiteffort.X(2,:,:)),squeeze(M1neuralDynamics.effort.X(2,:,:)));
+z = horzcat(squeeze(M1neuralDynamics.hiteffort.X(3,:,:)),squeeze(M1neuralDynamics.effort.X(3,:,:)));
+timeEnd = 250;
+nTrials = size(x, 2);
+
+v = VideoWriter('D:\SQLever\neural_trajectories5.avi'); % Name your output file
+v.FrameRate = 20; % Set the frame rate
+open(v);
+
+figure('Color', 'w');
+hold on
+axis tight
+view(30,45)
+xlabel('X')
+ylabel('Y')
+zlabel('Z')
+hitTrials = size(M1neuralDynamics.hiteffort.X,3);
+for t = 1:timeEnd
+    clf; % Clear the figure each frame
+    hold on
+    % Plot each trajectory up to time t
+
+    plot3(x(1:t,:), y(1:t,:), z(1:t,:), 'Color', [0 0 0 0.4]);
+    % Plot a dot for the current time point
+    plot3(x(t,1:hitTrials), y(t,1:hitTrials), z(t,1:hitTrials), 'o', 'MarkerFaceColor', [0.5 0.5 1], 'MarkerEdgeColor', 'k');
+    plot3(x(t,hitTrials+1:end), y(t,hitTrials+1:end), z(t,hitTrials+1:end), 'o', 'MarkerFaceColor', [1 0.5 0.5], 'MarkerEdgeColor', 'k');
+
+    title(['Neural trajectories up to time = ', num2str(t)]);
+    axis([min(x(:)), max(x(:)), min(y(:)), max(y(:)), min(z(:)), max(z(:))]);
+    view(30, 45);
+    grid on
+    drawnow
+    % Capture the frame and write to video
+    frame = getframe(gcf);
+    writeVideo(v, frame);
+end
+
+close(v);
+%% Get time dependant initial conditions
+
+[c,allTrials] = sort_hit_effort(IntanBehaviour);
+x = horzcat(squeeze(M1neuralDynamics.hiteffort.X(1,:,:)),squeeze(M1neuralDynamics.effort.X(1,:,:)));
+y = horzcat(squeeze(M1neuralDynamics.hiteffort.X(2,:,:)),squeeze(M1neuralDynamics.effort.X(2,:,:)));
+z = horzcat(squeeze(M1neuralDynamics.hiteffort.X(3,:,:)),squeeze(M1neuralDynamics.effort.X(3,:,:)));
+% sort trials
+x = x(:,c);
+y = y(:,c);
+z = z(:,c);
+timeEnd = 250;
+nTrials = size(x, 2);
+
+v = VideoWriter('D:\SQLever\neural_conditions3.avi'); % Name your output file
+v.FrameRate = 20; % Set the frame rate
+open(v);
+initial_azimuth = 30;
+elevation = 45;
+
+figure('Color', 'w');
+hold on
+axis tight
+view(initial_azimuth,elevation)
+xlabel('X')
+ylabel('Y')
+zlabel('Z')
+hitTrials = size(M1neuralDynamics.hiteffort.X,3);
+for t = 50
+    clf; % Clear the figure each frame
+    hold on
+    % Plot each trajectory up to time t
+    for trial = 1:size(x,2)
+        plot3(x(t,1:trial), y(t,1:trial), z(t,1:trial), 'Color', [0 0 0 0.4]);
+        % Plot a dot for the current time point based on effort
+        if allTrials(2,trial)==1
+            plot3(x(t,trial), y(t,trial), z(t,trial), 'o', 'MarkerFaceColor', [0.5 0.5 1], 'MarkerEdgeColor', 'k');
+        else
+            plot3(x(t,trial), y(t,trial), z(t,trial), 'o', 'MarkerFaceColor', [1 0.5 0.5], 'MarkerEdgeColor', 'k');
+        end
+
+        title(['Initial conditions on trial = ', num2str(trial)]);
+        axis([min(x(:)), max(x(:)), min(y(:)), max(y(:)), min(z(:)), max(z(:))]);
+        % Calculate current azimuth angle for rotation
+        current_azimuth = mod(initial_azimuth + 0.5*trial, 360);
+        view(current_azimuth, elevation);
+        grid on
+        drawnow
+        % Capture the frame and write to video
+        frame = getframe(gcf);
+        writeVideo(v, frame);
+    end
+end
+
+close(v);
+%% Plot initial condition data
+t = 50;
+[c,allTrials] = sort_hit_effort(IntanBehaviour);
+x = horzcat(squeeze(M1neuralDynamics.hiteffort.X(1,:,:)),squeeze(M1neuralDynamics.effort.X(1,:,:)));
+y = horzcat(squeeze(M1neuralDynamics.hiteffort.X(2,:,:)),squeeze(M1neuralDynamics.effort.X(2,:,:)));
+z = horzcat(squeeze(M1neuralDynamics.hiteffort.X(3,:,:)),squeeze(M1neuralDynamics.effort.X(3,:,:)));
+figure,hold on
+for trial = 1:size(x,2)
+        % Plot a dot for the current time point based on effort
+        if allTrials(2,trial)==1
+            plot3(x(t,trial), y(t,trial), z(t,trial), 'o', 'MarkerFaceColor', [0.5 0.5 1], 'MarkerEdgeColor', 'k');
+        else
+            plot3(x(t,trial), y(t,trial), z(t,trial), 'o', 'MarkerFaceColor', [1 0.5 0.5], 'MarkerEdgeColor', 'k');
+        end
+end
+view(30,30)
+xlabel('PC1');
+ylabel('PC2');
+zlabel('PC3');
+grid on
+axis square
+%% Perform K-means clustering
+% Load your data (replace `initCond` with actual variable if different)
+% initCond = ... % n x 3 matrix
+[c,allTrials] = sort_hit_effort(IntanBehaviour);
+x = horzcat(squeeze(M1neuralDynamics.hiteffort.X(1,:,:)),squeeze(M1neuralDynamics.effort.X(1,:,:)));
+y = horzcat(squeeze(M1neuralDynamics.hiteffort.X(2,:,:)),squeeze(M1neuralDynamics.effort.X(2,:,:)));
+z = horzcat(squeeze(M1neuralDynamics.hiteffort.X(3,:,:)),squeeze(M1neuralDynamics.effort.X(3,:,:)));
+% sort trials
+x = x(45,c);
+y = y(45,c);
+z = z(45,c);
+initCond = [x',y',z'];
+% Choose the number of clusters, e.g., 2 or 3 (can be tuned or assessed later)
+numClusters = 3;
+[idx, C] = kmeans(initCond, numClusters, 'Replicates', 10);
+%%
+% Assume idx is your cluster assignment vector (values 1~3 for three clusters)
+cluster_colors = [1 0.3 0.3;    % red
+                  0.8 .3 0.8;    % blue
+                  0.0 0.45 1];   % purple
+
+figure;
+hold on
+for k = 1:3
+    scatter3(initCond(idx==k,1), ...
+             initCond(idx==k,2), ...
+             initCond(idx==k,3), ...
+             50, cluster_colors(k,:), 'filled');
+end
+
+% Overlay cluster centers (assuming C is centers array)
+scatter3(C(:,1), C(:,2), C(:,3), 100, 'k', 'x', 'LineWidth', 2);
+xlabel('PC1');
+ylabel('PC2');
+zlabel('PC3');
+grid on
+hold off
+view(30,30)
+axis square
+%%
+% Calculate pairwise Euclidean distances between cluster centers
+centerDist = pdist(C);
+figure;
+imagesc(distMat);
+colormap(slanCM('Blues',128)) % or use 'hot', 'parula', etc. for a different style
+colorbar;
+caxis([0 2])
+axis square
+set(gca, 'XTick', 1:k, 'YTick', 1:k, 'FontSize', 12)
+xlabel('Cluster')
+ylabel('Cluster')
+title('Pairwise Distance Matrix')
+
+%% Calculate Mahalanobis distance of clusters
+n = size(initCond, 1);
+mahalDists = zeros(n, numClusters);
+for k = 1:numClusters
+    mu = C(k, :);
+    sigma = cov(initCond(idx==k, :));      % Covariance of cluster k
+    for i = 1:n
+        mahalDists(i, k) = sqrt((initCond(i,:) - mu) / sigma * (initCond(i,:) - mu)'); % Mahalanobis distance formula
+    end
+end
+% Visualize or output as needed
+[sortedDist, trialOrder] = sort(mahalDists(:,1), 'descend');
+mahalDists = mahalDists(trialOrder, :); % Now rows are ordered by their dist to Cluster 1
+nTrials = size(mahalDists,1);
+
+
+
+figure,hold on
+plotNiceBars(mahalDists)
+ylim([0 ceil(max(mahalDists,[],'all'))])
+xlabel('Cluster');
+ylabel('Mahalanobis Distance from Center');
+title('Within-cluster Mahalanobis Distances');
+normDist = (sortedDist - min(sortedDist)) / (max(sortedDist) - min(sortedDist));
+cmap = parula(nTrials); % or any other colormap
+trialColors = cmap(round(normDist * (size(cmap,1)-1))+1, :);
+colormap(slanCM('RdBu'))
+c = colorbar;
+c.Label.String = 'Sorted Mahalanobis Distance';
+c.Label.FontSize = 8;
+% Optionally set ticks to match the real value range:
+c.Ticks = [0 0.5 1];
+c.TickLabels = {num2str(min(sortedDist)), num2str(mean(sortedDist)), num2str(max(sortedDist))};
+axis square
+%% Silohette calculation
+n = size(initCond,1);
+pairwiseMahal = zeros(n,n);
+
+% Use overall covariance for simplicity
+Sigma = cov(initCond);
+
+for i = 1:n
+    for j = 1:n
+        diff = initCond(i,:) - initCond(j,:);
+        pairwiseMahal(i,j) = sqrt(diff / Sigma * diff');
+    end
+end
+silo = zeros(n,1);
+
+for i = 1:n
+    myCluster = idx(i);
+    sameInds = find(idx == myCluster & (1:n)' ~= i);
+    otherClusters = setdiff(unique(idx), myCluster);
+    
+    % a(i): mean Mahalanobis distance to same cluster
+    a_i = mean(pairwiseMahal(i, sameInds));
+    
+    % b(i): minimum mean Mahalanobis distance to other clusters
+    b_i = inf;
+    for k = otherClusters'
+        kInds = find(idx == k);
+        b_ik = mean(pairwiseMahal(i, kInds));
+        if b_ik < b_i
+            b_i = b_ik;
+        end
+    end
+    
+    silo(i) = (b_i - a_i) / max(a_i, b_i);
+end
+
+% Plot it
+figure;
+h = histogram(silo, 'Normalization', 'probability', 'FaceColor', [0.5 0.8 1], 'EdgeColor','none');
+set(gca, ...
+    'TickDir', 'out', ...
+    'Box', 'off', ...
+    'FontSize', 14, ...
+    'LineWidth', 1.5);
+axis square;
+xlabel('Silhouette Value', 'FontSize', 16);
+ylabel('Probability', 'FontSize', 16);
+title('Silhouette', 'FontSize', 16, 'FontWeight', 'normal');
+% Set consistent limits for clarity
+xlim([-0.5, 0.75]); % Adjust as needed for your data
+ylim([0, max(h.Values)*1.1]);
+% Compute and plot mean
+m = median(silo);
+yl = ylim;
+hold on;
+xline(m, '--k', ['Median = ' num2str(m, '%.2f')], ...
+    'LineWidth', 2, ...
+    'LabelOrientation', 'horizontal', ...
+    'LabelHorizontalAlignment', 'center', ...
+    'LabelVerticalAlignment', 'top', ...
+    'FontSize', 8, ...
+    'Color', [0.3 0.3 0.3]);
+hold off;
+
+
+s = silhouette(initCond,idx);
+figure;
+h = histogram(s, 'Normalization', 'probability', 'FaceColor', [0.5 0.8 1], 'EdgeColor','none');
+set(gca, ...
+    'TickDir', 'out', ...
+    'Box', 'off', ...
+    'FontSize', 14, ...
+    'LineWidth', 1.5);
+axis square;
+xlabel('Silhouette Value', 'FontSize', 16);
+ylabel('Probability', 'FontSize', 16);
+title('Silhouette', 'FontSize', 16, 'FontWeight', 'normal');
+% Set consistent limits for clarity
+xlim([-0.2, 1]); % Adjust as needed for your data
+ylim([0, max(h.Values)*1.1]);
 %%
 colors = [12,188,187;183,13,180]/255;
 timeIndex = linspace(1,size(x,1),5001);
@@ -447,10 +752,127 @@ end
 % %     end
 % end
 colors = [12,188,187;183,13,180]/255;
-speedTotBaseline = smoothdata(squeeze(M1neuralDynamics.hit.speed.speed(1,2:end,:)),1,'gaussian',10);
+speedTotBaseline = smoothdata(squeeze(M1neuralDynamics.effort.speed.speed(1,2:end,:)),1,'gaussian',10);
 figure,hold on
 plot(time(2:end),mean(speedTotBaseline,2),'color',colors(2,:),'linewidth',2),hold on
 plot(time(2:end),mean(speedTotBaseline,2)+std(speedTotBaseline,[],2)/(sqrt(size(speedTotBaseline,2))),'color',colors(2,:),'linewidth',2)
 plot(time(2:end),mean(speedTotBaseline,2)-std(speedTotBaseline,[],2)/(sqrt(size(speedTotBaseline,2))),'color',colors(2,:),'linewidth',2)
 set(gca,'tickdir','out'),box off, axis square
 xlim([-3.5,1.5])
+%%
+%%% LOCAL FUNCTIONS
+function [c,allTrials] = sort_hit_effort(IntanBehaviour)
+% sort and concatenate hit and effort trials in order
+effortPullTime = nan(1,length(IntanBehaviour.effortperturbTrace));
+hitTrialPullTime = nan(1,length(IntanBehaviour.MIHitTrace));
+for n = 1:length(IntanBehaviour.hitTrace)
+    trueTime = IntanBehaviour.MIHitTrace(n).LFPIndex;
+    firstPull = IntanBehaviour.MIHitTrace(n).pullCount(1);
+    hitTrialPullTime(n) = trueTime(firstPull);
+end
+for n = 1:length(IntanBehaviour.effortperturbTrace)
+    trueTime = IntanBehaviour.effortperturbTrace(n).LFPIndex;
+    firstPull = IntanBehaviour.effortperturbTrace(n).pullCount(1);
+    effortPullTime(n) = trueTime(firstPull);
+end
+
+% Find the index for shared trials (ie. when a breakout trial was marked
+% out)
+% It also is required because of some bugs we have....
+BO_trials = intersect(hitTrialPullTime,effortPullTime);
+if ~isempty(BO_trials)
+    for BO = 1:length(BO_trials)
+        trialID = find(hitTrialPullTime==BO_trials(BO));
+        IntanBehaviour.hitTrace(trialID).effortFlag = 1;
+    end
+    %assert(length(BO_trials)==length(vertcat(IntanBehaviour.effortperturbTrace.rewardFlag)))
+end
+
+allTrials = [hitTrialPullTime,effortPullTime];
+allTrials(2,:) = [ones(1,length(hitTrialPullTime)),zeros(1,length(effortPullTime))];
+allTrials(3,:) = [1:length(hitTrialPullTime),1:length(effortPullTime)];
+[~,c] = sort(allTrials(1,:)); %Sort chronologically
+
+allTrials = allTrials(:,c);
+end
+
+%%
+function plotNiceBars(totData)
+means = nanmean(totData);          % Bar heights
+sems = nanstd(totData) ./ sqrt(size(totData,1));   % Error bar (standard error)
+b = bar(means, 'FaceColor', [0.8 0.8 0.8], 'EdgeColor', 'k'); % Gray bars with black edge
+
+% Overlay error bars
+errorbar(1:size(totData,2), means, sems, 'k', 'LineStyle', 'none', 'LineWidth', 1);
+
+% Overlay individual jittered points
+xjitter = randn(size(totData))*0.01; % Controls point jitter
+for i = 1:size(totData,2)
+    scatter(i + xjitter(:,min(i,2)), totData(:,i), 18, 'o', ...
+        'MarkerEdgeColor', [0.25 0.25 0.25], ...
+        'MarkerFaceAlpha', 0.4, 'MarkerEdgeAlpha', 0.4);
+end
+
+nTrials = size(totData,1);
+cm = slanCM('RdBu',nTrials); % Or use your favorite colormap
+% Draw paired lines between columns 1 and 2
+for j = 1:size(totData,1)
+    if size(totData,2) >= 3  % If there are at least 3 columns
+        xvals = [1 + xjitter(j,1), 2 + xjitter(j,2), 3 + xjitter(j,3)];
+        yvals = [totData(j,1),    totData(j,2),    totData(j,3)];
+        plot(xvals, yvals, '-', 'Color', cm(j,:), 'LineWidth', 1);
+    else % Connect just columns 1 and 2
+        xvals = [1 + xjitter(j,1), 2 + xjitter(j,2)];
+        yvals = [totData(j,1),    totData(j,2)];
+        plot(xvals, yvals, '-', 'Color', [0.5 0.5 0.5 0.6], 'LineWidth', 1);
+    end
+end
+
+% Style similar to image
+set(gca, 'XTick', 1:size(totData,2), 'XTickLabel', {'Second Pull', 'Third Pull', 'Polymer', 'Late'}, ...
+    'TickDir', 'out', 'Box', 'off', 'FontSize', 12);
+ylabel('IPI (s)');
+ylim([0 2]);
+
+hold off;
+
+%%% RUN STATS
+[p, tbl, stats] = anova1(totData, [], 'off'); % columns as groups
+results = multcompare(stats, 'Display', 'off'); % Pairwise comparisons
+
+disp(['ANOVA p-value: ', num2str(p)]);
+alpha = 0.05; % significance level
+sigPairs = results(results(:,6) < alpha, :); % rows where p < 0.05
+hold on;
+ylims = ylim;
+
+% vertical height offset for significance lines above bars
+baseY = max(means + sems) * 1.05;  
+offsetStep = max(means + sems) * 0.05; 
+if all(results(:,6) >= 0.05) % No significant pairwise differences
+    % Extract F statistic from ANOVA table
+    Fstat = cell2mat(tbl(2,5)); % Assumes standard anova1 output tbl
+    p_anova = p;
+    % Place text on plot upper corner
+    xPos = size(totData,2)/2;
+    yPos = max(means + sems) * 2.4;
+    text(xPos, yPos, sprintf('ANOVA F=%.2f, p=%.3f', Fstat, p_anova), ...
+        'HorizontalAlignment', 'left', 'FontSize', 10);
+    % Add pairwise stars or p-values as before (your existing code)
+end
+
+for i = 1:size(sigPairs,1)
+    x1 = sigPairs(i,1);
+    x2 = sigPairs(i,2);
+    y = baseY + (i-1)*offsetStep;
+    
+    % Draw line connecting bars
+    plot([x1 x1 x2 x2], [y y+offsetStep y+offsetStep y], 'k-', 'LineWidth', 1);
+    
+    % Add star above the line
+    text(mean([x1 x2]), y + offsetStep*0.1, '*', 'HorizontalAlignment', 'center', ...
+        'FontSize', 16, 'FontWeight', 'bold');
+end
+hold off;
+end
+
