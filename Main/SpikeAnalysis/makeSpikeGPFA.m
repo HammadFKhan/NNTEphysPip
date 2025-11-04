@@ -29,6 +29,11 @@ if isfield(Spikes.PSTH,'MIFA')
     output = organizeSpikes(Spikes.PSTH.MIFA.spks);
 end
 Spikes.GPFA.MIFA.dat = output;
+
+if isfield(Spikes.PSTH,'effortperturb')
+    output = organizeSpikes(Spikes.PSTH.effortperturb.spks);
+end
+Spikes.GPFA.effortperturb.dat = output;
 %% ------------functions---------
     function output = organizeSpikes(spk)
         output = struct();
