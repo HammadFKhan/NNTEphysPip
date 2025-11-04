@@ -338,6 +338,7 @@ for i=1:length(IntanBehaviour.hitTrace)
         IntanBehaviour.MIHitTrace(i).LFPIndex = ([IntanBehaviour.MIHitTrace(i).MIIndex-parameters.windowBeforeMI*parameters.Fs:1:IntanBehaviour.MIHitTrace(i).MIIndex+parameters.windowAfterMI*parameters.Fs])';
         IntanBehaviour.MIHitTrace(i).LFPtime = IntanBehaviour.time(IntanBehaviour.MIHitTrace(i).MIIndex-parameters.windowBeforeMI*parameters.Fs:IntanBehaviour.MIHitTrace(i).MIIndex+parameters.windowAfterMI*parameters.Fs)';
         IntanBehaviour.MIHitTrace(i).pullCount = IntanBehaviour.pullCount(IntanBehaviour.pullCount>=IntanBehaviour.MIHitTrace(i).LFPIndex(1) & IntanBehaviour.pullCount<IntanBehaviour.MIHitTrace(i).LFPIndex(end))-IntanBehaviour.MIHitTrace(i).LFPIndex(1);
+        IntanBehaviour.MIHitTrace(i).pullCount(IntanBehaviour.MIHitTrace(i).pullCount<parameters.windowBeforeMI*parameters.Fs) = [];
     end
 end
 
@@ -398,6 +399,7 @@ if parameters.perturbEffort == 1
         IntanBehaviour.effortperturbTrace(i).effortTrace = IntanBehaviour.effortTrace(effortIndex(i)-parameters.windowBeforeMI*parameters.Fs:effortIndex(i)+parameters.windowAfterMI*parameters.Fs)';
         % Check if reward was ever given out
         IntanBehaviour.effortperturbTrace(i).rewardFlag = find(rewardIndex>=IntanBehaviour.effortperturbTrace(i).LFPIndex(1) & rewardIndex<=IntanBehaviour.effortperturbTrace(i).LFPIndex(end));
+%         IntanBehaviour.effortperturbTrace(i).pullCount(IntanBehaviour.effortperturbTrace(i).pullCount<parameters.windowBeforeMI*parameters.Fs) = [];
     end
 end
 
