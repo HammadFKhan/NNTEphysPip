@@ -1,0 +1,176 @@
+%% Load in avi data and calculate motion energy
+
+motionEnergy = processVideoMotionEnergy();
+%%
+
+motionEnergyGUI()
+%%
+function motionEnergy = processVideoMotionEnergy()
+% PROCESSVIDEOMOTIONENERGY - Load large .avi video in chunks and compute motion energy
+% Motion energy = absolute difference between consecutive frames (as images)
+% Uses incremental disk writing to avoid memory overflow
+%
+% Output:
+%   motionEnergy - matfile object pointing to saved motion energy data
+
+%% Step 1: User selects video file
+[filename, filepath] = uigetfile('*.avi', 'Select AVI Video File');
+
+if isequal(filename, 0)
+    disp('User canceled file selection');
+    return;
+end
+
+fullFilePath = fullfile(filepath, filename);
+fprintf('Selected file: %s\n', fullFilePath);
+
+%% Step 2: Initialize video reader
+vidObj = VideoReader(fullFilePath);
+
+% Get video properties
+totalFrames = vidObj.NumFrames;
+frameHeight = vidObj.Height;
+frameWidth = vidObj.Width;
+frameRate = vidObj.FrameRate;
+
+fprintf('Video properties:\n');
+fprintf('  Total frames: %d\n', totalFrames);
+fprintf('  Resolution: %d x %d\n', frameWidth, frameHeight);
+fprintf('  Frame rate: %.2f fps\n', frameRate);
+fprintf('  Approximate duration: %.2f seconds\n', totalFrames/frameRate);
+
+%% Step 3: Setup output directory structure
+baseDir = 'X:\Hammad\Ephys\LeverTask\Data_for_Figures\Rebuttel\OrofacialData';
+[~, videoName, ~] = fileparts(filename);
+
+% Create video-specific folder
+outputDir = fullfile(baseDir, videoName);
+if ~exist(outputDir, 'dir')
+    mkdir(outputDir);
+    fprintf('Created directory: %s\n', outputDir);
+else
+    fprintf('Using existing directory: %s\n', outputDir);
+end
+
+% Create output file path
+saveName = fullfile(outputDir, sprintf('%s_motionEnergy.mat', videoName));
+
+%% Step 4: Create output file and initialize with proper dimensions
+% Create matfile object with write access
+% Initialize the motion energy array in the file
+motionEnergyTemp = zeros(frameHeight, frameWidth, totalFrames - 1, 'uint8');
+save(saveName, 'motionEnergyTemp', 'frameRate', 'totalFrames', '-v7.3');
+clear motionEnergyTemp; % Free memory immediately
+
+% Now create matfile object for incremental writing
+matObj = matfile(saveName, 'Writable', true);
+
+fprintf('Created output file: %s\n', saveName);
+
+%% Step 5: Set chunk size (adjust based on available memory)
+chunkSize = 1000; % Process 500 frames at a time
+numChunks = ceil(totalFrames / chunkSize);
+
+%% Step 6: Process video in chunks
+fprintf('\nProcessing video in %d chunks...\n', numChunks);
+
+previousFrame = []; % Store last frame from previous chunk for continuity
+meIdx = 1; % Motion energy frame index
+
+for chunkIdx = 1:numChunks
+    % Calculate frame range for this chunk
+    startFrame = (chunkIdx - 1) * chunkSize + 1;
+    endFrame = min(chunkIdx * chunkSize, totalFrames);
+    numFramesInChunk = endFrame - startFrame + 1;
+
+    fprintf('Processing chunk %d/%d (frames %d-%d)...\n', ...
+        chunkIdx, numChunks, startFrame, endFrame);
+
+    % Read chunk of frames
+    vidObj.CurrentTime = (startFrame - 1) / frameRate;
+    frames = zeros(frameHeight, frameWidth, numFramesInChunk, 'uint8');
+
+    for i = 1:numFramesInChunk
+        if hasFrame(vidObj)
+            frame = readFrame(vidObj);
+            % Convert to grayscale if RGB
+            if size(frame, 3) == 3
+                frame = rgb2gray(frame);
+            end
+            frames(:, :, i) = frame;
+        end
+    end
+
+    %% Step 7: Compute motion energy for this chunk
+    % Calculate how many motion energy frames we'll generate
+    if chunkIdx > 1
+        numMEFrames = numFramesInChunk; % Including boundary frame
+    else
+        numMEFrames = numFramesInChunk - 1; % First chunk has one less
+    end
+
+    % Preallocate temporary buffer for this chunk's motion energy
+    meChunk = zeros(frameHeight, frameWidth, numMEFrames, 'uint8');
+    chunkMEIdx = 1;
+
+    % Handle boundary with previous chunk
+    if chunkIdx > 1
+        % Compute motion energy between last frame of previous chunk and first of current
+        diffFrame = abs(int16(frames(:,:,1)) - int16(previousFrame));
+        meChunk(:, :, chunkMEIdx) = uint8(diffFrame);
+        chunkMEIdx = chunkMEIdx + 1;
+        startIdx = 2;
+    else
+        startIdx = 2;
+    end
+
+    % Compute motion energy within chunk
+    for i = startIdx:numFramesInChunk
+        frame1 = frames(:, :, i-1);
+        frame2 = frames(:, :, i);
+
+        % Motion energy = absolute difference between frames
+        diffFrame = abs(int16(frame2) - int16(frame1));
+        meChunk(:, :, chunkMEIdx) = uint8(diffFrame);
+        chunkMEIdx = chunkMEIdx + 1;
+    end
+
+    %% Step 8: Write chunk to disk
+    % Write this chunk's motion energy to the matfile
+    endMEIdx = meIdx + numMEFrames - 1;
+    matObj.motionEnergyTemp(:, :, meIdx:endMEIdx) = meChunk;
+
+    fprintf('  Written frames %d-%d to disk\n', meIdx, endMEIdx);
+
+    % Update index for next chunk
+    meIdx = endMEIdx + 1;
+
+    % Store last frame for next chunk boundary
+    previousFrame = frames(:, :, end);
+
+    % Clear chunk data to free memory
+    clear frames meChunk;
+
+    % Progress update
+    fprintf('  Completed %.1f%%\n', (chunkIdx/numChunks)*100);
+end
+
+fprintf('\nProcessing complete!\n');
+fprintf('Motion energy dimensions: %d x %d x %d\n', ...
+    frameHeight, frameWidth, totalFrames - 1);
+fprintf('Results saved to: %s\n', saveName);
+
+%% Step 9: Rename variable in file for cleaner output
+% Load, rename, and resave
+load(saveName, 'motionEnergyTemp');
+motionEnergy = motionEnergyTemp;
+clear motionEnergyTemp;
+save(saveName, 'motionEnergy', 'frameRate', 'totalFrames', '-v7.3');
+
+fprintf('Finalized motion energy array in file\n');
+
+end
+
+
+
+
