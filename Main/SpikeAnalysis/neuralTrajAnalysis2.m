@@ -35,6 +35,12 @@ X = arrayfun(@(x) vertcat(x.xorth),Spikes.GPFA.seqTrainMIHitFA,'UniformOutput',f
 X = horzcat(X{:});
 neuralTrajMIHitFA = reshape(X,size(X,1),Spikes.GPFA.seqTrainMIHitFA(1).T,[]);
 end
+
+if isfield(Spikes.GPFA,'seqTrainHitEffort')
+X = arrayfun(@(x) vertcat(x.xorth),Spikes.GPFA.seqTrainHitEffort,'UniformOutput',false);
+X = horzcat(X{:});
+neuralTrajHitEffort = reshape(X,size(X,1),Spikes.GPFA.seqTrainHitEffort(1).T,[]);
+end
 % X = arrayfun(@(x) vertcat(x.xorth),Spikes.GPFA.seqTrainBaselineOpto,'UniformOutput',false);
 % X = horzcat(X{:});
 % neuralTrajBaselineOpto = reshape(X,size(X,1),Spikes.GPFA.seqTrainBaselineOpto(1).T,[]);
@@ -62,6 +68,19 @@ X = neuralTrajHit;
 hittrials = 1:length(Behaviour.hitTrace);
 [neuralDynamics.hit.r,neuralDynamics.hitOnly.s,neuralDynamics.hitOnly.stab,neuralDynamics.hitOnly.X] = getMeanTraj(X,hittrials,dimNum); %trajectory variable and predefined conditional trial indexes
 neuralDynamics.hitOnly.speed = speedTraj(X,hittrials,6,Behaviour);
+end
+%% Do for effort and hit
+if exist('neuralTrajHitEffort','var')
+X = neuralTrajHitEffort;
+hittrials = 1:length(Behaviour.hitTrace);
+efforttrials = length(Behaviour.hitTrace)+1:size(X,3);
+
+[neuralDynamics.hiteffort.r,neuralDynamics.hiteffort.s,neuralDynamics.hiteffort.stab,neuralDynamics.hiteffort.X] = getMeanTraj(X,hittrials,dimNum); %trajectory variable and predefined conditional trial indexes
+
+[neuralDynamics.effort.r,neuralDynamics.effort.s,neuralDynamics.effort.stab,neuralDynamics.effort.X] = getMeanTraj(X,efforttrials,dimNum); %trajectory variable and predefined conditional trial indexes
+
+neuralDynamics.hiteffort.speed = speedTraj(X,hittrials,6,Behaviour);
+neuralDynamics.effort.speed = speedTraj(X,efforttrials,6,Behaviour);
 end
 %% Now do analysis for MI hit vs FA
 if exist('neuralTrajMIHitFA','var')
