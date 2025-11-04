@@ -244,7 +244,11 @@ if isfield(Behaviour,'effortperturbTrace')
     output = make_nice_mean_raster(trials,20,0);
     Spikes.PSTH.effortperturb.SqspkRates = [];
     for n = 1:size(neurons,2)
-        Spikes.PSTH.effortperturb.SqspkRates(:,:,n) = make_nice_mean_raster(neurons(:,n)',20,0);
+        if size(neurons{1,n},1)>1 % Edge case if there is only one trial 
+            Spikes.PSTH.effortperturb.SqspkRates(:,:,n) = make_nice_mean_raster(neurons(:,n)',20,0);
+        else
+            Spikes.PSTH.effortperturb.SqspkRates(:,:,n) = vertcat(neurons{:,n});
+        end
     end
     Spikes.PSTH.effortperturb.Sqlever = lever;
     Spikes.PSTH.effortperturb.spks = trials;
