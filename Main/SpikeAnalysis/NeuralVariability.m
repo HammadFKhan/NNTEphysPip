@@ -2,8 +2,10 @@
 %fpath = 'F:\LeverTask\Ephys\Analysis\spksPooled';
 %fpath = 'F:\LeverTask\Ephys\Analysis\spksPooledwFA';
 %fpath = 'F:\LeverTask\Ephys\Analysis\M2Spikes';
-fpath = 'Y:\Hammad\Ephys\LeverTask\Data_for_Figures\M2SpikeData';
-file = dir(fullfile(fpath,'*.mat'));
+%fpath = 'Y:\Hammad\Ephys\LeverTask\Data_for_Figures\M2SpikeData';
+%fpath = 'D:\M2SpikeData';
+fpath = 'D:\M1_GSP';
+fileTot = dir(fullfile(fpath,'*.mat'));
 
 %%%
 M1Data = struct();
@@ -12,8 +14,8 @@ M2Datamiss = struct();
 M2DataMIFA = struct();
 count1 = 1;count2 = 1;count3 = 1;
 
-for fileNum = 1:length(file)
-    load(fullfile(file(fileNum).folder,file(fileNum).name))
+for fileNum = 1:length(fileTot)
+    load(fullfile(fileTot(fileNum).folder,fileTot(fileNum).name))
     for n = 1:length(Spikes.PSTH.hit.spks)
         M2Datahit(count1).spikes = logical(Spikes.PSTH.hit.spks{n});
         count1 = count1+1;
@@ -83,11 +85,12 @@ temp = nan(max([length(dat1) length(dat2) length(dat3)]),3);
 temp(1:length(dat1),1) = dat1;
 temp(1:length(dat2),2) = dat2;
 temp(1:length(dat3),3) = dat3;
-figure(1)
+f = figure(1);
 clf
-subplot(121),violinplot(temp,[],'ShowData',true,'ShowWhiskers',false,'ShowBox',false,'MarkerSize',5,'ViolinColor',colors);
-set(gca,'tickdir','out','fontsize',16),box off,ylim([-1.5 1.5])
-
+violinplot(temp,[],'ShowData',true,'ShowWhiskers',false,'ShowBox',false,'MarkerSize',5,'ViolinColor',colors);
+set(gca,'tickdir','out','fontsize',16),box off,ylim([-0.75 0.75])
+f.Position = [2268 280 400 420]
+%%
 dat1 = Stats.Hit.FFstim;
 dat2 = Stats.Miss.FFstim;
 dat3 = Stats.FA.FFstim;
@@ -117,7 +120,7 @@ temp(1:length(dat2),2) = dat2;
 temp(1:length(dat3),3) = dat3;
 figure
 subplot(121),violinplot(temp,[],'ShowData',true,'ShowWhiskers',false,'ShowBox',false,'MarkerSize',5,'ViolinColor' ,colors)
-set(gca,'tickdir','out','fontsize',16),box off,ylim([-1 1.5])
+set(gca,'tickdir','out','fontsize',16),box off,ylim([-1 1])
 
 dat1 = Stats.FakHit.FFstim;
 dat2 = Stats.FakMiss.FFstim;
@@ -222,6 +225,6 @@ Var = horzcat(Var{:});
 MM = arrayfun(@(x) horzcat(x.mn), Results.scatterData, 'UniformOutput', false);
 MM = horzcat(MM{:});
 Stats.FF = Var./MM;
-Stats.FFdrop = nanmean(Stats.FF(:,1:34),2)-nanmean(Stats.FF(:,35:70),2);
+Stats.FFdrop = (nanmean(Stats.FF(:,1:34),2)-nanmean(Stats.FF(:,35:70),2))./nanmean(Stats.FF(:,1:34),2);
 Stats.FFstim = nanmean(Stats.FF(:,35:70),2);
 end
