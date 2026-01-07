@@ -1,10 +1,5 @@
 function [Behaviour] = readLeverSq(parameters,lfpTime,fname)
 
-if ~exist('parameters.experiment','var')
-    parameters.experiment = 'self';
-    disp('No experiment argument passed. Experiment type set to self initiated');
-end
-
 if strcmp(parameters.experiment,'cue')
     cue = 1;
     disp('Experiment type set to cue initiated. . . ')
@@ -61,7 +56,7 @@ Behaviour.B = B(2:end,:);
 
 %% Getting hit and miss timings
 hitIndex = find(diff(B(:,3)) == 1); % If we have reward delays we look at index 5 instead of 3 to align to movement
-if  ~exist('parameters.delay','var')
+if exist('parameters.delay','var')
     hitIndex = hitIndex-parameters.delay*100;
 end
 hitTime = Behaviour.time(hitIndex);
@@ -97,6 +92,11 @@ end
 if cue == 1
     cueIndex = find(Behaviour.B(:,end) == 1);
     cueTime = Behaviour.time(cueIndex);
+    if cueTime(1)==0
+        cueTime(1) = [];
+        Behaviour.nCue = length(cueTime);
+        cueIndex(1) = [];
+    end
     if expFlag == 1
         cueLFPIndex = zeros(Behaviour.nCue,1);
         cueLFPTime = zeros(Behaviour.nCue,1);
@@ -287,6 +287,10 @@ if cue == 1
             disp('Last cue hit rejected')
             Behaviour.nCueMiss = Behaviour.nCueMiss-1;
             Behaviour.cueMiss(end,:) = [];
+        end
+        if size(Behaviour.cueMiss,1)~=Behaviour.nCueMiss
+            fprintf('Cue misses adjusted\n')
+            Behaviour.nCueMiss = size(Behaviour.cueMiss,1);
         end
         for i=1:Behaviour.nCueMiss
             Behaviour.cueMissTrace(i).i1 = max(find(Behaviour.time < Behaviour.cueMiss(i,2)-parameters.windowBeforeCue));
