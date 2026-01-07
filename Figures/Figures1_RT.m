@@ -58,7 +58,7 @@ end
 %%
 
 %%
-load('Y:\Om\LeverTaskBehavior\PooledRT.mat')
+load('Y:\Hammad\Ephys\LeverTask\Data_for_Figures\LeverTaskBehavior\PooledRT.mat')
 figure,customBarplot(RTmice),hold on
 scatter(1*ones(23,1),RTmice(:,1),'filled','k')
 scatter(2*ones(23,1),RTmice(:,2),'filled','k')
