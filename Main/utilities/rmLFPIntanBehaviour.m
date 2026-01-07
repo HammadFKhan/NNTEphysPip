@@ -17,3 +17,13 @@ IntanBehaviour.MIFATrace = rmfield(IntanBehaviour.MIFATrace, 'rawLFP');
 IntanBehaviour.MIFATrace = rmfield(IntanBehaviour.MIFATrace, 'xf');
 IntanBehaviour.MIFATrace = rmfield(IntanBehaviour.MIFATrace, 'xgp');
 IntanBehaviour.MIFATrace = rmfield(IntanBehaviour.MIFATrace, 'wt');
+
+IntanBehaviour.missTrace = rmfield(IntanBehaviour.missTrace, 'rawLFP');
+IntanBehaviour.missTrace = rmfield(IntanBehaviour.missTrace, 'xf');
+IntanBehaviour.missTrace = rmfield(IntanBehaviour.missTrace, 'xgp');
+IntanBehaviour.missTrace = rmfield(IntanBehaviour.missTrace, 'wt');
+
+IntanBehaviour.hitTrace = rmfield(IntanBehaviour.hitTrace, 'rawLFP');
+IntanBehaviour.hitTrace = rmfield(IntanBehaviour.hitTrace, 'xf');
+IntanBehaviour.hitTrace = rmfield(IntanBehaviour.hitTrace, 'xgp');
+IntanBehaviour.hitTrace = rmfield(IntanBehaviour.hitTrace, 'wt');
