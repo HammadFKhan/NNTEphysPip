@@ -1,4 +1,4 @@
-% clear; clc; 
+ clear; clc; 
 % close all;
 addpath(genpath('Main'));
 % addpath(genpath('chronux'));
@@ -7,18 +7,17 @@ addpath(genpath('npy-matlab'));
 addpath(genpath('spikes-master'));
 % IntanConcatenate legacy version
 intandsFlag = 1; %make LFPs
-activeElectrodes = 1:64;
-chanMapFile = 'UCLA_chanmap_fixed.mat'; %UCLA Sharp
-%chanMapFile = 'UCLA_chanmap_64F2.mat';
+activeElectrodes = 32:96;
+% chanMapFile = 'UCLA_chanmap_fixed.mat'; %UCLA Sharp
+chanMapFile = 'UCLA_chanmap_64F2.mat';
+% chanMapFile = 'UCLA_chanmap_64M.mat';
 ds_filename = intanPreprocessing2(chanMapFile,intandsFlag,activeElectrodes); %IntanDs flag  %% double check file type
-%% Combine intan data if needed
-fpath = kilosortbinCombine();
-%% Run Kilosort3 
+%%% Run Kilosort3 
 % load only neccessary variables from memory mapped file
 data = matfile(ds_filename);
 fpath = data.fpath;
-% Kilosort264FTestcode
-Kilosort264SharpTestcode
+Kilosort264FTestcode
+% Kilosort264MTestcode
 savepath = fullfile(fpath,['loadme','.mat']);
 save(savepath,'ds_filename');
 clearvars -except ds_filename
