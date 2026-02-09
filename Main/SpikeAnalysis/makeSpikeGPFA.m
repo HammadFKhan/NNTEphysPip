@@ -20,20 +20,29 @@ Spikes.GPFA.miss.dat = output;
 
 if isfield(Spikes.PSTH,'MIHit')
     output = organizeSpikes(Spikes.PSTH.MIHit.spks);
+    Spikes.GPFA.MIHit.dat = output;
 else 
     output = [];
+    Spikes.GPFA.MIHit.dat = output;
 end
-Spikes.GPFA.MIHit.dat = output;
-
 if isfield(Spikes.PSTH,'MIFA')
     output = organizeSpikes(Spikes.PSTH.MIFA.spks);
+    Spikes.GPFA.MIFA.dat = output;
 end
-Spikes.GPFA.MIFA.dat = output;
+
 
 if isfield(Spikes.PSTH,'effortperturb')
     output = organizeSpikes(Spikes.PSTH.effortperturb.spks);
+    Spikes.GPFA.effortperturb.dat = output;
 end
-Spikes.GPFA.effortperturb.dat = output;
+
+
+if isfield(Spikes.BiPOLES,'hit')
+    output = organizeSpikes(Spikes.BiPOLES.hit.spks);
+    Spikes.GPFA.hit.dat = output;
+    warning("Hit spikes overwritten by BiPOLES")
+end
+
 %% ------------functions---------
     function output = organizeSpikes(spk)
         output = struct();
