@@ -65,7 +65,7 @@ end
 %% Do just for hits
 if exist('neuralTrajHit','var')
 X = neuralTrajHit;
-hittrials = 1:length(Behaviour.hitTrace);
+hittrials = 1:length(Behaviour.cueHitTrace);
 [neuralDynamics.hit.r,neuralDynamics.hitOnly.s,neuralDynamics.hitOnly.stab,neuralDynamics.hitOnly.X] = getMeanTraj(X,hittrials,dimNum); %trajectory variable and predefined conditional trial indexes
 neuralDynamics.hitOnly.speed = speedTraj(X,hittrials,6,Behaviour);
 end
