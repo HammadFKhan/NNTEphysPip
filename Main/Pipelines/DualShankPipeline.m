@@ -63,9 +63,20 @@ parameters.ts = 1/parameters.Fs;
 parameters.IntanFs = data.targetedFs;
 parameters.rows = 64;
 parameters.cols = 1;
-
-[Behaviour] = readLever(parameters,data.amplifierTime);
-[IntanBehaviour] = readLeverIntan(parameters,data.amplifierTime,data.analogChannels(1,:),data.digitalChannels,Behaviour,1);
+if ~exist('fname','var')
+    [enfile,enpath] = uigetfile('Y:\Hammad\Ephys\LeverTask\LeverTaskRebuttal\*.csv');
+    if isequal(enfile,0)
+        disp('User selected Cancel');
+    else
+        disp(['User selected ', fullfile(enpath,enfile)]);
+    end
+else
+    [enpath,enfile,ext] = fileparts(fname);
+    disp(['User selected ', fullfile(enpath,enfile)]);
+    enfile = [enfile,ext];
+end
+[Behaviour] = readLever(enpath,enfile,parameters,data.amplifierTime,0);
+[IntanBehaviour] = readLeverIntan(parameters,data.amplifierTime,data.analogChannels(2,:),data.digitalChannels,Behaviour,1);
 % Calculate ITI time for trials and reward/no reward sequence
 temp1 = arrayfun(@(x) x.LFPtime(1), IntanBehaviour.cueHitTrace);
 temp1 = vertcat(temp1,ones(1,IntanBehaviour.nCueHit)); %  write 1 for reward given
@@ -147,6 +158,7 @@ sessionName = [fpath,'/','LFP.mat'];
 % save(sessionName,"IntanBehaviour","fpath","parameters","-v7.3");
 save(sessionName,"IntanBehaviour","parameters","LFP","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
 %% Spikes analysis
+saveasCCA = 1;
 % For spike analysis we can built the function call to call the neccessary
 % function twice for each probe. It will make like a lot easier. 
 if exist('parameters','var')
@@ -161,7 +173,13 @@ if exist('parameters','var')
 end
 chanMap =  'chanMap64Sharp';
 M1Spikes = getSpikeStruct(ds_filename2, chanMap,IntanBehaviour);
-
+spath = 'Y:\Hammad\Ephys\LeverTask\Data_for_Figures\M1M2DualShank\CCA';
+[path,name,ext] = fileparts(fpath);
+sessionName = [spath,'\',name(1:end-14)];
+if saveasCCA
+    save(sessionName,"M2Spikes","M1Spikes","IntanBehaviour","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
+    disp('Saved CCA data!')
+end
 %% Trajectory Analysis of two regions (ONGOING)
 neuralTrajAnalysis(M1Spikes,[],IntanBehaviour);
 
