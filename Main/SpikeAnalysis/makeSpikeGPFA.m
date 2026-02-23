@@ -37,11 +37,11 @@ if isfield(Spikes.PSTH,'effortperturb')
 end
 
 
-if isfield(Spikes.BiPOLES,'hit')
-    output = organizeSpikes(Spikes.BiPOLES.hit.spks);
-    Spikes.GPFA.hit.dat = output;
-    warning("Hit spikes overwritten by BiPOLES")
-end
+% if isfield(Spikes.BiPOLES,'hit')
+%     output = organizeSpikes(Spikes.BiPOLES.hit.spks);
+%     Spikes.GPFA.hit.dat = output;
+%     warning("Hit spikes overwritten by BiPOLES")
+% end
 
 %% ------------functions---------
     function output = organizeSpikes(spk)
