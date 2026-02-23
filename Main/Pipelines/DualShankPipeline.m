@@ -11,24 +11,26 @@ addpath(genpath('Main'));
 addpath(genpath('npy-matlab'));
 addpath(genpath('spikes-master'));
 intandsFlag = 1; %make LFPs
-%activeElectrodes = 1:64;
-activeElectrodes = 33:96;
+activeElectrodes = 1:64;
+% activeElectrodes = 33:96;
 %chanMapFile = 'UCLA_chanmap_fixed.mat'; %UCLA Sharp
 chanMapFile = 'UCLA_chanmap_64F2.mat';
 if ~exist('pathname','var')
     pathname = uigetdir(pwd,'Input Directory');
 end
 ds_filename1 = intanPreprocessingDualShanks(pathname,chanMapFile,intandsFlag,activeElectrodes);
-%activeElectrodes = 65:128;
-activeElectrodes = 97:160;
+activeElectrodes = 65:128;
+% activeElectrodes = 97:160;
 
-chanMapFile = 'UCLA_chanmap_fixed.mat'; %UCLA Sharp
+%chanMapFile = 'UCLA_chanmap_fixed.mat'; %UCLA Sharp
+chanMapFile = 'UCLA_chanmap_64M.mat';
 %chanMapFile = 'UCLA_chanmap_64F2.mat';
 ds_filename2 = intanPreprocessingDualShanks(pathname,chanMapFile,intandsFlag,activeElectrodes);
 fpath = pathname;
 savepath = fullfile(fpath,['loadme','.mat']);
 save(savepath,'ds_filename1','ds_filename2','fpath');
 clearvars -except ds_filename1 ds_filename2
+
 %%% Run Kilosort3 
 % load only neccessary variables from memory mapped file
 % Analysis of dual shank
@@ -39,7 +41,8 @@ Kilosort264FTestcode
 %Analysis of sharp shank
 data = matfile(ds_filename2);
 fpath = data.fpath;
-Kilosort264SharpTestcode
+% Kilosort264SharpTestcode
+Kilosort264MTestcode
 %% New load me
 [fname,fpath] = uigetfile();
 savepath = fullfile(fpath,['loadme','.mat']);
