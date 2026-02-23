@@ -14,7 +14,7 @@ function motionEnergy = processVideoMotionEnergy()
 %   motionEnergy - matfile object pointing to saved motion energy data
 
 %% Step 1: User selects video file
-[filename, filepath] = uigetfile('*.avi', 'Select AVI Video File');
+[filename, filepath] = uigetfile('*.mp4', 'Select AVI Video File');
 
 if isequal(filename, 0)
     disp('User canceled file selection');
@@ -40,7 +40,7 @@ fprintf('  Frame rate: %.2f fps\n', frameRate);
 fprintf('  Approximate duration: %.2f seconds\n', totalFrames/frameRate);
 
 %% Step 3: Setup output directory structure
-baseDir = 'X:\Hammad\Ephys\LeverTask\Data_for_Figures\Rebuttel\OrofacialData';
+baseDir = 'Y:\Hammad\Ephys\LeverTask\Data_for_Figures\Rebuttel\OrofacialData';
 [~, videoName, ~] = fileparts(filename);
 
 % Create video-specific folder

@@ -223,8 +223,16 @@ end
 % Plot boxplots or bar as before
 figure,hold on; plotNiceBars(R2'*4,bodyParts)
 ylabel('R^2'); title('GLM Encoding: Body Part & Lever');
-%% Correlation map of movement
-
+%% Output of encoding variables
+spath = 'Y:\Hammad\Ephys\LeverTask\Data_for_Figures\Rebuttel\OrofacialData\encodingVariables';
+% Strip off the last folder name
+[parentPath, ~, ~] = fileparts(fpath);
+% Get the last folder name of the remaining path
+[~, targetName, ~] = fileparts(parentPath);
+disp(targetName);
+sessionName = [spath,'\',[targetName, 'M1Spikes.mat']];
+% save(sessionName,"IntanBehaviour","fpath","parameters","-v7.3");
+save(sessionName,"R2","bodyParts","spkmat","fpath","bodyPartData","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
 %%
 function plotNiceBars(totData,bodyParts)
 means = nanmean(totData);          % Bar heights

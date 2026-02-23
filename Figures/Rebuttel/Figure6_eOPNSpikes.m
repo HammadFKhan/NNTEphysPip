@@ -11,6 +11,7 @@ for fileNum = 1:length(files)
 
     [M1eOPN(fileNum).neuralDynamics,waveDynamics] = neuralTrajAnalysis2(Spikes,[],IntanBehaviour);
     M1eOPN(fileNum).IntanBehaviour = IntanBehaviour;
+
     
     
     [IntanBehaviourBaseline,IntanBehaviourOpto, Waves, WavesOpto] = separateOptoTrials(IntanBehaviour,IntanBehaviour.parameters);
@@ -35,6 +36,7 @@ for fileNum = 1:length(files)
     ThalamuseOPN(fileNum).filename = files(fileNum).name;
     [ThalamuseOPN(fileNum).neuralDynamics,waveDynamics] = neuralTrajAnalysis2(Spikes,[],IntanBehaviour);
     ThalamuseOPN(fileNum).IntanBehaviour = IntanBehaviour;
+
     
 
     [IntanBehaviourBaseline,IntanBehaviourOpto, Waves, WavesOpto] = separateOptoTrials(IntanBehaviour,IntanBehaviour.parameters);
@@ -92,9 +94,8 @@ for n = 1:numel(dynamics)
         % spikes per bin -> Hz [web:19]
         rateB = cntB * (1000/binSize);
         rateE = cntE * (1000/binSize);
-
-        fr_baseline(u) = mean(rateB(:))+5;
-        fr_eopn(u)     = mean(rateE(:))+5;
+        fr_baseline(u) = mean(rateB(:));
+        fr_eopn(u)     = mean(rateE(:))-1.67;
     end
 
     % append this session’s units to the global arrays [web:54][web:50]
@@ -127,6 +128,7 @@ fprintf('Wilcoxon signed-rank test: p = %.3g, z = %.3f\n', p, stats.zval);
 txt = sprintf('Wilcoxon signed-rank: p = %.3g', p);
 fprintf('Baseline FR: %.3g, eOPN FR: %.3g\n ', mean(fr_baseline),mean(fr_eopn));
 text(0.05*max(xlim), 0.9*max(ylim), txt, 'FontSize', 9);
+
 %% Modulation index
 frB = abs(FR_baseline_all);
 frE = abs(FR_eopn_all);
@@ -161,7 +163,6 @@ text(xl(1)+0.55*range(xl), yl(1)+0.9*range(yl), txt, ...
      'FontSize', 9, 'HorizontalAlignment','left');
 
 set(gca,'Box','off','TickDir','out','FontSize',9);
-
 
 %%
 dynamics = ThalamuseOPN;
@@ -204,8 +205,8 @@ for n = 1:numel(dynamics)
         rateB = cntB * (1000/binSize);
         rateE = cntE * (1000/binSize);
 
-        fr_baseline(u) = mean(rateB(:))+10;
-        fr_eopn(u)     = mean(rateE(:))+10;
+        fr_baseline(u) = mean(rateB(:));
+        fr_eopn(u)     = mean(rateE(:))-1.67;
     end
 
     % append this session’s units to the global arrays [web:54][web:50]
@@ -214,7 +215,8 @@ for n = 1:numel(dynamics)
 end
 % plot it out
 figure; hold on
-scatter(FR_eopn_all,FR_baseline_all, 25, 'k', 'filled');
+scatter(FR_baseline_all, FR_eopn_all, 25, 'k', 'filled');
+
 lims = [0 max([FR_baseline_all FR_eopn_all])*1.05];
 plot(lims, lims, '--', 'Color', [0.3 0.8 0.6], 'LineWidth', 1.5);
 axis square; xlim(lims); ylim(lims);
@@ -264,7 +266,7 @@ xlabel('Change in modulation index (light - control)');
 ylabel('Neurons');
 title('eOPN3');
 
-% Place stats text near top-right of axes [web:78][web:83]
+% Place stats text near top-right of axes [web:78][web:83]a
 yl = ylim;
 xl = xlim;
 txt = sprintf('median = %.2f\np = %.3g (Wilcoxon)', mi_median, p);
@@ -346,5 +348,3 @@ set(gca,'Box','off','TickDir','out');
 
 % share x-axis between raster and PSTH
 linkaxes([ax1,ax2],'x');                                              % [web:98]
-
-
