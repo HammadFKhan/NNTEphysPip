@@ -1,4 +1,9 @@
-function [Behaviour] = readLeverSq(parameters,lfpTime,fname)
+function [Behaviour] = readLever(enpath,enfile,parameters,lfpTime,plotOption)
+
+% if ~exist('parameters.experiment','var')
+%     parameters.experiment = 'self';
+%     disp('No experiment argument passed. Experiment type set to self initiated');
+% end
 
 if strcmp(parameters.experiment,'cue')
     cue = 1;
@@ -9,40 +14,23 @@ else
 end
 
 if exist("lfpTime",'var')
-    if ~isempty(lfpTime)
-        expFlag = 1;
-        disp('Intan time data passed. Function set to experiment.');
-    else
-        expFlag = 0;
-        disp('Intan time data not passed. Function set to training.');
-    end
+    expFlag = 1;
+    disp('Intan time data passed. Function set to experiment.');
 else
     expFlag = 0;
     disp('Intan time data not passed. Function set to training.');
 end
 %% Reading file from arduino 
-if ~exist('fname','var')
-    [enfile,enpath] = uigetfile('Y:\Hammad\Ephys\SeqProject\*.csv');
-    if isequal(enfile,0)
-        disp('User selected Cancel');
-    else
-        disp(['User selected ', fullfile(enpath,enfile)]);
-    end
-else
-    [enpath,enfile,ext] = fileparts(fname);
-    disp(['User selected ', fullfile(enpath,enfile)]);
-    enfile = [enfile,ext];
-end
 
-resting_position = 550;
+
+resting_position = 284;
 flip = 1;
 nlengthBeforePull = round(parameters.windowBeforePull/parameters.ts);
 nlength = round(parameters.windowBeforePull/parameters.ts + parameters.windowAfterPull/parameters.ts + 1);
 nlengthBeforeCue = round(parameters.windowBeforeCue/parameters.ts);
 nlengthCue = round(parameters.windowBeforeCue/parameters.ts + parameters.windowAfterCue/parameters.ts + 1);
 
-
-B = readmatrix([enpath,'/',enfile]);
+B = readmatrix([enpath,'\',enfile]);
 Behaviour.leverTrace = (B(2:end,1) - resting_position)*flip;
 Behaviour.time = (B(2:end,2) - B(2,2))/1e6; % time in seconds
 Behaviour.nHit = B(end,3);
@@ -54,14 +42,14 @@ if cue==1
 end   
 Behaviour.B = B(2:end,:);
 
+%% Checking if the Arduino timer resets if the session runs for too long
+a = sign(diff(Behaviour.time));
+b = find(a==-1);
+Behaviour.time(b+1:end) = Behaviour.time(b+1:end)+Behaviour.time(b);
 %% Getting hit and miss timings
-hitIndex = find(diff(B(:,3)) == 1); % If we have reward delays we look at index 5 instead of 3 to align to movement
-if exist('parameters.delay','var')
-    hitIndex = hitIndex-parameters.delay*100;
-end
+hitIndex = find(diff(B(:,3)) == 1) + 1;
 hitTime = Behaviour.time(hitIndex);
 if expFlag == 1
-    lfpTime = downsample(lfpTime,round(parameters.IntanFs/parameters.Fs),1); % time in seconds based on initial downsampl
     hitLFPIndex = zeros(Behaviour.nHit,1);
     hitLFPTime = zeros(Behaviour.nHit,1);
     for i=1:Behaviour.nHit
@@ -74,8 +62,7 @@ else
 end
 
 
-
-missIndex = find(diff(B(:,4)) == 1);
+missIndex = find(diff(B(:,4)) == 1) + 1;
 missTime = Behaviour.time(missIndex);
 if expFlag == 1
     missLFPIndex = zeros(Behaviour.nMiss,1);
@@ -92,11 +79,6 @@ end
 if cue == 1
     cueIndex = find(Behaviour.B(:,end) == 1);
     cueTime = Behaviour.time(cueIndex);
-    if cueTime(1)==0
-        cueTime(1) = [];
-        Behaviour.nCue = length(cueTime);
-        cueIndex(1) = [];
-    end
     if expFlag == 1
         cueLFPIndex = zeros(Behaviour.nCue,1);
         cueLFPTime = zeros(Behaviour.nCue,1);
@@ -158,6 +140,8 @@ if isempty(st_hit1)
     disp('First hit rejected');
     Behaviour.nHit = Behaviour.nHit-1;
     Behaviour.hit(1,:) = [];
+%     Behaviour.hit(1,:) = [];
+%     Behaviour.nHit = Behaviour.nHit-1;
 end 
 sp_hitend =  max(find(Behaviour.time < Behaviour.hit(end,2)+parameters.windowAfterPull));
 if isempty(sp_hitend) 
@@ -167,11 +151,9 @@ if isempty(sp_hitend)
 end
 
 for i=1:Behaviour.nHit
-    target = Behaviour.hit(i,2) - parameters.windowBeforePull;
-    [~,  Behaviour.hitTrace(i).i1] = min(abs(Behaviour.time - target));
+    Behaviour.hitTrace(i).i1 = max(find(Behaviour.time < Behaviour.hit(i,2)-parameters.windowBeforePull));
     Behaviour.hitTrace(i).i0 = Behaviour.hit(i,1);
-    target = Behaviour.hit(i,2) + parameters.windowAfterPull;
-    [~,  Behaviour.hitTrace(i).i2] = min(abs(Behaviour.time - target));
+    Behaviour.hitTrace(i).i2 = max(find(Behaviour.time < Behaviour.hit(i,2)+parameters.windowAfterPull));
     Behaviour.hitTrace(i).rawtrace = Behaviour.leverTrace(Behaviour.hitTrace(i).i1:Behaviour.hitTrace(i).i2);
     Behaviour.hitTrace(i).rawtime = Behaviour.time(Behaviour.hitTrace(i).i1:Behaviour.hitTrace(i).i2) - Behaviour.time(Behaviour.hitTrace(i).i1);
     Behaviour.hitTrace(i).time1 = Behaviour.time(Behaviour.hitTrace(i).i1:Behaviour.hitTrace(i).i2);
@@ -195,11 +177,23 @@ for i=1:Behaviour.nHit
 end
 
 st_miss1 = max(find(Behaviour.time < Behaviour.miss(1,2)-parameters.windowBeforePull));
-if isempty(st_miss1)
+
+while isempty(st_miss1)
     disp('First miss rejected');
     Behaviour.nMiss = Behaviour.nMiss-1;
     Behaviour.miss(1,:) = [];
-end 
+    Behaviour.nMiss = Behaviour.nMiss-1;
+    Behaviour.miss(1,:) = [];
+    st_miss1 = max(find(Behaviour.time < Behaviour.miss(1,2)-parameters.windowBeforePull));
+end
+% 
+% if isempty(st_miss1)
+%     disp('First miss rejected');
+%     Behaviour.nMiss = Behaviour.nMiss-1;
+%     Behaviour.miss(1,:) = [];
+%     Behaviour.nMiss = Behaviour.nMiss-1;
+%     Behaviour.miss(1,:) = [];
+% end 
 sp_missend =  max(find(Behaviour.time < Behaviour.miss(end,2)+parameters.windowAfterPull));
 if isempty(sp_missend)
     disp('Last miss rejected')
@@ -208,11 +202,9 @@ if isempty(sp_missend)
 end
 
 for i=1:Behaviour.nMiss
-    target = Behaviour.miss(i,2) - parameters.windowBeforePull;
-    [~,  Behaviour.missTrace(i).i1] = min(abs(Behaviour.time - target));
+    Behaviour.missTrace(i).i1 = max(find(Behaviour.time < Behaviour.miss(i,2)-parameters.windowBeforePull));
     Behaviour.missTrace(i).i0 = Behaviour.miss(i,1);
-    target = Behaviour.miss(i,2) + parameters.windowAfterPull;
-    [~,  Behaviour.missTrace(i).i2] = min(abs(Behaviour.time - target));
+    Behaviour.missTrace(i).i2 = max(find(Behaviour.time < Behaviour.miss(i,2)+parameters.windowAfterPull));
     Behaviour.missTrace(i).rawtrace = Behaviour.leverTrace(Behaviour.missTrace(i).i1:Behaviour.missTrace(i).i2);
     Behaviour.missTrace(i).rawtime = Behaviour.time(Behaviour.missTrace(i).i1:Behaviour.missTrace(i).i2) - Behaviour.time(Behaviour.missTrace(i).i1);
     Behaviour.missTrace(i).time1 = Behaviour.time(Behaviour.missTrace(i).i1:Behaviour.missTrace(i).i2);
@@ -241,6 +233,8 @@ if cue == 1
         disp('First cue hit rejected');
         Behaviour.nCueHit = Behaviour.nCueHit-1;
         Behaviour.cueHit(1,:) = [];
+%         Behaviour.nCueHit = Behaviour.nCueHit-1;
+%         Behaviour.cueHit(1,:) = [];
     end 
     sp_cuehitend =  max(find(Behaviour.time < Behaviour.cueHit(end,2)+parameters.windowAfterCue));
     if isempty(sp_cuehitend)
@@ -252,6 +246,9 @@ if cue == 1
         Behaviour.cueHitTrace(i).i1 = max(find(Behaviour.time < Behaviour.cueHit(i,2)-parameters.windowBeforeCue));
         Behaviour.cueHitTrace(i).i0 = Behaviour.cueHit(i,1);
         Behaviour.cueHitTrace(i).i2 = max(find(Behaviour.time < Behaviour.cueHit(i,2)+parameters.windowAfterCue));
+        if isempty(Behaviour.cueHitTrace(i).i1)
+            continue;
+        end
         Behaviour.cueHitTrace(i).rawtrace = Behaviour.leverTrace(Behaviour.cueHitTrace(i).i1:Behaviour.cueHitTrace(i).i2);
         Behaviour.cueHitTrace(i).rawtime = Behaviour.time(Behaviour.cueHitTrace(i).i1:Behaviour.cueHitTrace(i).i2) - Behaviour.time(Behaviour.cueHitTrace(i).i1);
         Behaviour.cueHitTrace(i).time1 = Behaviour.time(Behaviour.cueHitTrace(i).i1:Behaviour.cueHitTrace(i).i2);
@@ -288,10 +285,6 @@ if cue == 1
             Behaviour.nCueMiss = Behaviour.nCueMiss-1;
             Behaviour.cueMiss(end,:) = [];
         end
-        if size(Behaviour.cueMiss,1)~=Behaviour.nCueMiss
-            fprintf('Cue misses adjusted\n')
-            Behaviour.nCueMiss = size(Behaviour.cueMiss,1);
-        end
         for i=1:Behaviour.nCueMiss
             Behaviour.cueMissTrace(i).i1 = max(find(Behaviour.time < Behaviour.cueMiss(i,2)-parameters.windowBeforeCue));
             Behaviour.cueMissTrace(i).i0 = Behaviour.cueMiss(i,1);
@@ -319,3 +312,59 @@ if cue == 1
         end
     end
 end
+
+
+% figure('Name','Lever Trace');plot(Behaviour.time,Behaviour.leverTrace,'LineWidth',1.5);ylim([-5 50]);xlabel('Time (in s)');ylabel('Lever Position in mV');yline(23);
+% xline(squeeze(Behaviour.hit(:,2)),'-.b',cellstr(num2str((1:1:Behaviour.nHit)')),'LabelVerticalAlignment','top');
+% xline(squeeze(Behaviour.miss(:,2)),'-.r',cellstr(num2str((1:1:Behaviour.nMiss)')),'LabelVerticalAlignment','bottom'); xlim([410 470]); box off;
+
+if plotOption == 1
+    if cue == 1
+        % Plotting Lever traces for Cue Hits and Cue miss 
+        figure('Name','Average Lever Traces for Cue Hits and Cue Misses');
+        subplot(2,1,1)
+        for i=1:Behaviour.nCueHit
+            plot(Behaviour.cueHitTrace(i).time-parameters.windowBeforeCue,Behaviour.cueHitTrace(i).trace,'Color',[0 0 0 0.2],'LineWidth',1.5);
+            hold on;
+        end
+        plot(Behaviour.cueHitTrace(1).time-parameters.windowBeforeCue,mean(horzcat(Behaviour.cueHitTrace(1:end).trace),2),'Color',[1 0 0 1],'LineWidth',2);
+        yline(10,'--.b','Threshold','LabelHorizontalAlignment','left'); 
+        xline(0,'--r','Cue','LabelVerticalAlignment','top');
+        xline(mean(Behaviour.reactionTime,'all'),'--m','Avg. Reaction Time','LabelVerticalAlignment','top');
+        ylabel('Lever deflection (in mV)');xlabel('Time (in s)');title('Average Lever Traces for Cue Hits');box off;
+        
+        subplot(2,1,2)
+        for i=1:Behaviour.nCueMiss
+            plot(Behaviour.cueMissTrace(i).time-parameters.windowBeforeCue,Behaviour.cueMissTrace(i).trace,'Color',[0 0 0 0.2],'LineWidth',1.5);
+            hold on;
+        end
+        plot(Behaviour.cueMissTrace(1).time-parameters.windowBeforeCue,mean(horzcat(Behaviour.cueMissTrace(1:end).trace),2),'Color',[1 0 0 1],'LineWidth',2);
+        yline(10,'--.b','Threshold','LabelHorizontalAlignment','left'); 
+        xline(0,'--r','Cue','LabelVerticalAlignment','top');
+        ylabel('Lever deflection (in mV)');xlabel('Time (in s)');title('Average Lever Traces for Cue Misses');box off;
+    end
+    
+    % Plotting Lever traces for Hits (alligned with reward)
+    figure('Name','Average Lever Traces for Hits and False Alarms');
+    subplot(2,1,1);
+    for i=1:Behaviour.nHit
+        plot(Behaviour.hitTrace(i).time-parameters.windowBeforePull,Behaviour.hitTrace(i).trace,'Color',[0 0 0 0.2],'LineWidth',1.5);
+        hold on;
+    end
+    plot(Behaviour.hitTrace(1).time-parameters.windowBeforePull,mean(horzcat(Behaviour.hitTrace(1:end).trace),2),'Color',[1 0 0 1],'LineWidth',2);
+    yline(10,'--.b','Threshold','LabelHorizontalAlignment','left'); 
+    xline(0,'--r','Reward','LabelVerticalAlignment','top');
+    % xline(mean(Behaviour.reactionTime,'all'),'--m','Avg. Reaction Time','LabelVerticalAlignment','top');
+    ylabel('Lever deflection (in mV)');xlabel('Time (in s)');title('Average Lever Traces for Hits');box off;
+    subplot(2,1,2);
+    for i=1:Behaviour.nMiss
+        plot(Behaviour.missTrace(i).time-parameters.windowBeforePull,Behaviour.missTrace(i).trace,'Color',[0 0 0 0.2],'LineWidth',1.5);
+        hold on;
+    end
+    plot(Behaviour.missTrace(1).time-parameters.windowBeforePull,mean(horzcat(Behaviour.missTrace(1:end).trace),2),'Color',[1 0 0 1],'LineWidth',2);
+    yline(10,'--.b','Threshold','LabelHorizontalAlignment','left'); 
+    xline(0,'--r','Reward','LabelVerticalAlignment','top');
+    % xline(mean(Behaviour.reactionTime,'all'),'--m','Avg. Reaction Time','LabelVerticalAlignment','top');
+    ylabel('Lever deflection (in mV)');xlabel('Time (in s)');title('Average Lever Traces for False Alarms');box off;
+end
+
