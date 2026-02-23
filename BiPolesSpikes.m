@@ -70,9 +70,9 @@ Spikes.SpikeSamples = SpikeSamples;
 Spikes = clusterSort(Spikes); 
 Spikes = ISI(Spikes,0.01,data.Fs,0); %Spikes, Interval, Fs
 % Calculate Depth profile
-%load chanMap64F2
+load chanMap64F2
 %load chanMap64Sharp
-load chanMap64M
+% load chanMap64M
 [spikeAmps, spikeDepths, templateDepths, tempAmps, tempsUnW, templateDuration, waveforms, max_site] =...
     spikeTemplatePosition(data.fpath,ycoords,[]); % 'invert'
 for i = 1:length(tempAmps)
