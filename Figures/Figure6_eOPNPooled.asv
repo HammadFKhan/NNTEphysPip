@@ -25,7 +25,7 @@ end
 % is the metric we want to track over this experiment. That's not to say we
 % should check the other conditions. We do; but it is a supplemental
 % finding.
-
+addpath(genpath('Main'));
 % Plot speed over time, highlighting different states
 if ~exist('M1eOPN','var')
     load('D:\eOPNData\combined');
@@ -68,8 +68,8 @@ plot(time(2:end),mean(speedTotBaseline,2)-std(speedTotBaseline,[],2)/(sqrt(size(
 hold on;
 
 plot(time(2:end),mean(speedToteOPN,2),'color',colors(2,:),'linewidth',2),hold on
-plot(time(2:end),mean(speedToteOPN,2)+std(speedToteOPN,[],2)/(sqrt(size(speedToteOPN,2))/2),'color',colors(2,:),'linewidth',2)
-plot(time(2:end),mean(speedToteOPN,2)-std(speedToteOPN,[],2)/sqrt(size(speedToteOPN,2)),'color',colors(2,:),'linewidth',2)
+plot(time(2:end),mean(speedToteOPN,2)+std(speedToteOPN,[],2)/(sqrt(size(speedToteOPN,2))/5),'color',colors(2,:),'linewidth',2)
+plot(time(2:end),mean(speedToteOPN,2)-std(speedToteOPN,[],2)/(sqrt(size(speedToteOPN,2))/5),'color',colors(2,:),'linewidth',2)
 hold on;
 box off,set(gca,'tickdir','out','fontsize',14),axis square,xlim([-500 1500]),ylim([0.000 0.2])
 xline(0, '--r', 'Cue');
