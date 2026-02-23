@@ -1,6 +1,6 @@
 %% Load sessions 
 M2BiPOLES = struct();
-files = dir(fullfile('D:\M2BiPOLES\excitationM2R\','*.mat')); % M2 recording
+files = dir(fullfile('Y:\Hammad\Ephys\LeverTask\Data_for_Figures\M2BiPOLES\excitationM2R\','*.mat')); % M2 recording
 % files = dir(fullfile('D:\M2BiPOLES\excitationM1R\','*.mat')); % M1 Recording
 for fileNum = 1:length(files)
     disp(['File number: ' num2str(fileNum)])
@@ -95,7 +95,7 @@ ylabel('Normalized trajectory speed');
 set(gca,'Box','off','TickDir','out','FontName','Helvetica','FontSize',10);
 
 %% 2) SESSION-AVERAGED REACTION TIMES (BASELINE vs OPTO) + PAIRED T-TEST
-
+dynamics = M2BiPOLES;
 nSess      = numel(dynamics);
 rt_no_sess = nan(nSess,1);
 rt_op_sess = nan(nSess,1);
