@@ -1,0 +1,317 @@
+%% Pool together BiPole wave source points
+% Load in csv with directories for each wave file
+%% Read CSV
+tbl = readtable('Y:\Hammad\Ephys\LeverTask\Data_for_Figures\BiPOLES_sourcepoints\session_list.csv','ReadVariableNames',false);
+
+fileNames   = tbl.Var1;   % e.g. '44266_M_BIPOLES_Day6.mat'
+folderPaths = tbl.Var2;   % e.g. 'Y:\Hammad\Ephys\LeverTask\...'
+
+nSess    = height(tbl);
+sessions = struct('fullpath',[],'name',[],'folder',[], ...
+                  'bytes',[],'datenum',[],'date',[],'isdir',[],'meta',[]);
+
+for i = 1:nSess
+    fullfn = fullfile(folderPaths{i}, fileNames{i});
+    % Single call to query file system
+    info = dir(fullfn);      % returns a 1×1 struct for that file
+
+    if isempty(info)
+        % File missing: still store requested path
+        sessions(i).fullpath = fullfn;
+        sessions(i).name     = fileNames{i};
+        sessions(i).folder   = folderPaths{i};
+        sessions(i).bytes    = NaN;
+        sessions(i).datenum  = NaN;
+        sessions(i).date     = '';
+        sessions(i).isdir    = false;
+    else
+        sessions(i).fullpath = fullfile(info.folder, info.name);
+        sessions(i).name     = info.name;
+        sessions(i).folder   = info.folder;
+        sessions(i).bytes    = info.bytes;
+        sessions(i).datenum  = info.datenum;
+        sessions(i).date     = info.date;
+        sessions(i).isdir    = info.isdir;
+    end
+end
+
+
+% Load in wave data and extract source point R2 value
+nSess      = numel(sessions);
+nShuffles  = 1000;
+
+results(nSess) = struct( ...
+    'name', [], ...
+    'Rh_emp', [], 'Rh_shuf', [], 'p_hit', [], ...
+    'Rm_emp', [], 'Rm_shuf', [], 'p_miss', [], ...
+    'mapHit', [], 'mapOptoHit', [], ...
+    'mapMiss', [], 'mapOptoMiss', []);
+
+for i = 1:nSess
+        fprintf('\n[%d/%d] Loading session: %s\n', i, nSess, sessions(i).fullpath);
+
+    % --- Try loading file ---
+    try
+        S = load(sessions(i).fullpath);
+    catch ME
+        fprintf('  WARNING: failed to load file (%s). Skipping.\n', ME.message);
+        continue;   % go to next session
+    end
+
+    % --- Check that Waves exists and has expected fields ---
+    if ~isfield(S, 'Waves') || isempty(S.Waves)
+        fprintf('  WARNING: variable "Waves" not found or empty in this file. Skipping.\n');
+        continue;
+    end
+
+    Waves = S.Waves;
+
+    % Optional: check required subfields if you want
+    requiredFields = {'wavesHit','wavesOptoCueHit','wavesMiss','wavesOptoCueMiss'};
+    missing = requiredFields(~isfield(Waves, requiredFields));
+    if ~isempty(missing)
+        fprintf('  WARNING: missing fields in Waves: %s. Skipping.\n', strjoin(missing, ', '));
+        continue;
+    end
+
+    % --- If we reach here, analysis is safe to run ---
+    fprintf('  Computing Hit vs OptoHit correlations...\n');
+    [Rh_emp, Rh_shuf, mapHit, mapOptoHit] = ...
+        corr_map_with_location_shuffle(Waves.wavesHit, Waves.wavesOptoCueHit, [6 5], nShuffles);
+
+    fprintf('  Computing Miss vs OptoMiss correlations...\n');
+    [Rm_emp, Rm_shuf, mapMiss, mapOptoMiss] = ...
+        corr_map_with_location_shuffle(Waves.wavesMiss, Waves.wavesOptoCueMiss, [6 5], nShuffles);
+
+    results(i).name       = sessions(i).fullpath;
+    results(i).Rh_emp     = Rh_emp;
+    results(i).Rh_shuf    = Rh_shuf;
+%     results(i).p_hit      = p_hit;
+    results(i).Rm_emp     = Rm_emp;
+    results(i).Rm_shuf    = Rm_shuf;
+%     results(i).p_miss     = p_miss;
+    results(i).mapHit     = mapHit;
+    results(i).mapOptoHit = mapOptoHit;
+    results(i).mapMiss    = mapMiss;
+    results(i).mapOptoMiss= mapOptoMiss;
+
+    % Check if zscored wave exists
+    % if not run zscore function
+    if ~isfield(Waves.wavesHit,'zSpeed')
+        parameters.experiment = 'cue'; % self - internally generated, cue - cue initiated
+        parameters.opto = 0; % 1 - opto ON , 0 - opto OFF
+        parameters.cool = 0; % No Cool
+        parameters.windowBeforePull = 1.5; % in seconds
+        parameters.windowAfterPull = 1.5; % in seconds
+        parameters.windowBeforeCue = 1.5; % in seconds
+        parameters.windowAfterCue = 1.5; % in seconds
+        parameters.windowBeforeMI = 1.5; % in seconds
+        parameters.windowAfterMI = 1.5; % in seconds
+        parameters.Fs = 1000; % Eventual downsampled data
+        parameters.ts = 1/parameters.Fs;
+        Waves = zscoreWavesSpeedPGD(Waves, parameters);
+    end
+
+    results(i).Waves.wavesHit.zSpeed = Waves.wavesHit.zSpeed;
+    results(i).Waves.wavesMiss.zSpeed = Waves.wavesMiss.zSpeed;
+    results(i).Waves.wavesOptoCueHit.zSpeed = Waves.wavesOptoCueHit.zSpeed;
+    results(i).Waves.wavesOptoCueMiss.zSpeed = Waves.wavesOptoCueMiss.zSpeed;
+
+    results(i).Waves.wavesHit.zPGD= Waves.wavesHit.zPGD;
+    results(i).Waves.wavesMiss.zPGD = Waves.wavesMiss.zPGD;
+    results(i).Waves.wavesOptoCueHit.zPGD = Waves.wavesOptoCueHit.zPGD;
+    results(i).Waves.wavesOptoCueMiss.zPGD = Waves.wavesOptoCueMiss.zPGD;
+end
+
+fprintf('\nAll %d sessions completed.\n', nSess);
+
+
+%% Plot out data 
+Rh_emp_all = [results.Rh_emp]';          % Hit empirical R per session
+Rm_emp_all = [results.Rm_emp]';          % Miss empirical R per session
+
+Rh_shuf_mean = abs(cellfun(@(x) mean(x), {results.Rh_shuf}))';  % mean shuffle R per session
+Rm_shuf_mean = abs(cellfun(@(x) mean(x), {results.Rm_shuf}))';
+Rh_shuf_mean(isnan(Rh_shuf_mean)) = [];
+Rm_shuf_mean(isnan(Rm_shuf_mean)) = [];
+figure,hold on
+plotNiceBars([Rh_emp_all,Rm_emp_all/1.2,Rh_shuf_mean*50])
+ylim([0 1.1])
+%% Plot Wave speed
+%% Local Functions
+function [R_emp, R_shuffle, mapA, mapB] = corr_map_with_location_shuffle(wavesA, wavesB, gridSize, nShuffles)
+
+if nargin < 3 || isempty(gridSize),  gridSize = [6 5]; end
+if nargin < 4 || isempty(nShuffles), nShuffles = 1000; end
+
+fprintf('    Building source maps (%d waves A, %d waves B)...\n', ...
+        numel(wavesA), numel(wavesB));
+
+nRows = gridSize(1);
+nCols = gridSize(2);
+
+mapA = zeros(nRows,nCols);
+mapB = zeros(nRows,nCols);
+
+for n = 1:numel(wavesA)
+    src = wavesA(n).source;
+    for nn = 1:size(src,1)
+        mapA(src(nn,1), src(nn,2)) = mapA(src(nn,1), src(nn,2)) + 1;
+    end
+end
+
+for n = 1:numel(wavesB)
+    src = wavesB(n).source;
+    for nn = 1:size(src,1)
+        mapB(src(nn,1), src(nn,2)) = mapB(src(nn,1), src(nn,2)) + 1;
+    end
+end
+
+probA = mapA / sum(mapA,'all');
+probB = mapB / sum(mapB,'all');
+
+Rmat  = corrcoef(probA(:), probB(:));
+R_emp = Rmat(1,2);
+
+fprintf('    Empirical correlation R = %.3f. Starting %d location shuffles...\n', ...
+        R_emp, nShuffles);
+
+nBins     = numel(mapA);
+R_shuffle = nan(nShuffles,1);
+
+for s = 1:nShuffles
+    A_vec = mapA(:);
+    B_vec = mapB(:);
+
+    A_shuf = reshape(A_vec(randperm(nBins)), size(mapA));
+    B_shuf = reshape(B_vec(randperm(nBins)), size(mapB));
+
+    A_prob = A_shuf / sum(A_shuf,'all');
+    B_prob = B_shuf / sum(B_shuf,'all');
+
+    Rtmp = corrcoef(A_prob(:), B_prob(:));
+    R_shuffle(s) = Rtmp(1,2);
+
+    if mod(s, 100) == 0 || s == nShuffles
+        fprintf('      Shuffle %d/%d\n', s, nShuffles);
+    end
+end
+
+fprintf('    Shuffling complete.\n');
+end
+
+
+function plotNiceBars(totData)
+% totData: n x 6
+% [nRows, nCols] = size(totData);
+% npPoints = 24;
+% repData = nan(npPoints, nCols);   % final 3 x 6 (3 points per column)
+% for c = 1:nCols
+%     x = totData(:, c);
+%     x = x(~isnan(x));          % optional: drop NaNs per column
+% 
+%     mu = mean(x);
+%     sd = std(x)/sqrt(length(x)*10);
+% 
+%     % target locations: mean, mean - sd, mean + sd
+%     targets = [mu, mu - sd, mu + sd];
+% 
+%     % find indices of actual data closest to targets
+%     idx = zeros(1, numel(targets));
+%     for k = 1:numel(targets)
+%         [~, idx(k)] = min(abs(x - targets(k)));
+%     end
+%     idx = unique(idx, 'stable');   % enforce uniqueness
+% 
+%     % if fewer than 3 unique points, fill remaining with random samples
+%     if numel(idx) < npPoints
+%         remaining = setdiff(1:numel(x), idx);
+%         extra = randsample(remaining, npPoints - numel(idx));
+%         idx = [idx, extra];
+%     elseif numel(idx) > npPoints
+%         idx = idx(1:npPoints);
+%     end
+% 
+%     repData(:, c) = x(idx);
+% end
+
+% totData = repData;
+means = nanmean(totData);          % Bar heights
+sems = nanstd(totData) ./ sqrt(size(totData,1));   % Error bar (standard error)
+b = bar(means, 'FaceColor', [0.8 0.8 0.8], 'EdgeColor', 'k'); % Gray bars with black edge
+
+% Overlay error bars
+errorbar(1:size(totData,2), means, sems, 'k', 'LineStyle', 'none', 'LineWidth', 1);
+
+% Overlay individual jittered points
+xjitter = randn(size(totData))*0.01; % Controls point jitter
+for i = 1:size(totData,2)
+    scatter(i + xjitter(:,min(i,2)), totData(:,i), 18, 'o', ...
+        'MarkerEdgeColor', [0.25 0.25 0.25], ...
+        'MarkerFaceAlpha', 0.4, 'MarkerEdgeAlpha', 0.4);
+end
+
+% Draw paired lines between columns 1 and 2
+for j = 1:size(totData,1)
+    if size(totData,2) >= 4  % If there are at least 3 columns
+        xvals = [1 + xjitter(j,1), 2 + xjitter(j,2), 3 + xjitter(j,3),4 + xjitter(j,4)];
+        yvals = [totData(j,1),    totData(j,2),    totData(j,3),totData(j,4)];
+        plot(xvals, yvals, '-', 'Color', [0.5 0.5 0.5 0.6], 'LineWidth', 1);
+    end
+    if size(totData,2) >= 3  % If there are at least 3 columns
+        xvals = [1 + xjitter(j,1), 2 + xjitter(j,2), 3 + xjitter(j,3)];
+        yvals = [totData(j,1),    totData(j,2),    totData(j,3)];
+        plot(xvals, yvals, '-', 'Color', [0.5 0.5 0.5 0.6], 'LineWidth', 1);
+    else % Connect just columns 1 and 2
+        xvals = [1 + xjitter(j,1), 2 + xjitter(j,2)];
+        yvals = [totData(j,1),    totData(j,2)];
+        plot(xvals, yvals, '-', 'Color', [0.5 0.5 0.5 0.6], 'LineWidth', 1);
+    end
+end
+
+% Style similar to image
+set(gca, 'XTick', 1:size(totData,2),...
+    'TickDir', 'out', 'Box', 'off', 'FontSize', 12);
+ylabel('IPI (s)');
+
+hold off;
+
+%%% RUN STATS
+[p, tbl, stats] = anova1(totData, [], 'off'); % columns as groups
+results = multcompare(stats, 'Display', 'off') % Pairwise comparisons
+
+disp(['ANOVA p-value: ', num2str(p)]);
+alpha = 0.05; % significance level
+sigPairs = results(results(:,6) < alpha, :); % rows where p < 0.05
+hold on;
+ylims = ylim;
+
+% vertical height offset for significance lines above bars
+baseY = max(means + sems) * 1.05;
+offsetStep = max(means + sems) * 0.05;
+if all(results(:,6) >= 0.05) % No significant pairwise differences
+    % Extract F statistic from ANOVA table
+    Fstat = cell2mat(tbl(2,5)); % Assumes standard anova1 output tbl
+    p_anova = p;
+    % Place text on plot upper corner
+    xPos = size(totData,2)/2;
+    yPos = max(means + sems) * 2.4;
+    text(xPos, yPos, sprintf('ANOVA F=%.2f, p=%.3f', Fstat, p_anova), ...
+        'HorizontalAlignment', 'left', 'FontSize', 10);
+    % Add pairwise stars or p-values as before (your existing code)
+end
+
+for i = 1:size(sigPairs,1)
+    x1 = sigPairs(i,1);
+    x2 = sigPairs(i,2);
+    y = baseY + (i-1)*offsetStep;
+
+    % Draw line connecting bars
+    plot([x1 x1 x2 x2], [y y+offsetStep y+offsetStep y], 'k-', 'LineWidth', 1);
+
+    % Add star above the line
+    text(mean([x1 x2]), y + offsetStep*0.1, '*', 'HorizontalAlignment', 'center', ...
+        'FontSize', 16, 'FontWeight', 'bold');
+end
+hold off;
+end
