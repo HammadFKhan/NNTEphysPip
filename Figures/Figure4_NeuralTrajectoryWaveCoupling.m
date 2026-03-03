@@ -148,7 +148,7 @@ xlabel('Time (s)'),xlim([-0.5 1.5])
 % Assuming stimulus_start = 75 and stimulus_end = 85
 stimulus_start = 70;
 stimulus_end = 81;
-
+nShuff = 1000;  % number of shuffles
 pre_corrtot = [];
 during_corrtot = [];
 post_corrtot = [];
@@ -175,14 +175,78 @@ for n = 1:size(y,1)
     during_corrtot.waveSpeed(n) = during_corr(1,2);
     post_corrtot.waveSpeed(n) = post_corr(1,2);
 end
+% Preallocate null distributions: [neuron x shuffle]
+pre_null.PGD      = zeros(size(y,1), nShuff);
+during_null.PGD   = zeros(size(y,1), nShuff);
+post_null.PGD     = zeros(size(y,1), nShuff);
+
+pre_null.waveSpeed    = zeros(size(y,1), nShuff);
+during_null.waveSpeed = zeros(size(y,1), nShuff);
+post_null.waveSpeed   = zeros(size(y,1), nShuff);
+
+T = size(y,2);  % total time points
+
+for s = 1:nShuff
+    % circularly shift wavePGD and waveSpeed by random lags
+    lagPGD   = randi(T);
+    lagSpeed = randi(T);
+
+    shPGD   = circshift(wavePGD,   [0 lagPGD]);
+    shSpeed = circshift(waveSpeed, [0 lagSpeed]);
+
+    for n = 1:size(y,1)
+        % PGD shuffled correlations
+        c_pre    = corrcoef(shPGD(1:stimulus_start), ...
+                            y(n,1:stimulus_start));
+        c_during = corrcoef(shPGD(stimulus_start:stimulus_end), ...
+                            y(n,stimulus_start:stimulus_end));
+        c_post   = corrcoef(shPGD(stimulus_end:end), ...
+                            y(n,stimulus_end:end));
+
+        pre_null.PGD(n,s)    = c_pre(1,2);
+        during_null.PGD(n,s) = c_during(1,2);
+        post_null.PGD(n,s)   = c_post(1,2);
+
+        % waveSpeed shuffled correlations
+        c_pre    = corrcoef(shSpeed(1:stimulus_start), ...
+                            y(n,1:stimulus_start));
+        c_during = corrcoef(shSpeed(stimulus_start:stimulus_end), ...
+                            y(n,stimulus_start:stimulus_end));
+        c_post   = corrcoef(shSpeed(stimulus_end:end), ...
+                            y(n,stimulus_end:end));
+
+        pre_null.waveSpeed(n,s)    = c_pre(1,2);
+        during_null.waveSpeed(n,s) = c_during(1,2);
+        post_null.waveSpeed(n,s)   = c_post(1,2);
+    end
+end
+
+% Example: compute p-values (one-sided, positive correlation)
+p_pre_PGD    = mean(mean(pre_null.PGD,2)    >= mean(pre_corrtot.PGD)',    1);
+p_during_PGD = mean(mean(during_null.PGD,2) >= mean(during_corrtot.PGD)', 1);
+p_post_PGD   = mean(abs(mean(post_null.PGD,2))   >= abs(mean(post_corrtot.PGD))',   1);
+
+p_pre_speed    = mean(mean(pre_null.waveSpeed,2)    >= pre_corrtot.waveSpeed',    1);
+p_during_speed = mean(mean(during_null.waveSpeed,2) >= during_corrtot.waveSpeed', 1);
+p_post_speed   = mean(mean(post_null.waveSpeed,2)   >= post_corrtot.waveSpeed',   1);
+
 % Plot it
 dat1 = [pre_corrtot.PGD',during_corrtot.PGD',post_corrtot.PGD'];
 figure(3),clf
-subplot(121),customBarplot(dat1);
+subplot(121),nicebarplots(dat1);
 box off,set(gca,'tickdir','out','fontsize',14),axis square,ylabel('PGD Trajectory Coupling'),ylim([-0.45 1])
 dat2 = [pre_corrtot.waveSpeed',during_corrtot.waveSpeed',post_corrtot.waveSpeed'];
 figure(3),subplot(122)
-customBarplot(dat2)
+nicebarplots(dat2)
+box off,set(gca,'tickdir','out','fontsize',14),axis square,ylabel('Speed Trajectory Coupling'),ylim([-0.25 .25])
+
+dat1 = [mean(pre_null.PGD,2),mean(during_null.PGD,2),mean(post_null.PGD,2)];
+figure(4),clf
+subplot(121),nicebarplots(dat1);
+box off,set(gca,'tickdir','out','fontsize',14),axis square,ylabel('PGD Trajectory Coupling'),ylim([-0.45 1])
+dat2 = [mean(pre_null.waveSpeed,2) ,mean(during_null.waveSpeed,2),mean(post_null.waveSpeed,2)];
+figure(4),subplot(122)
+nicebarplots(dat2)
 box off,set(gca,'tickdir','out','fontsize',14),axis square,ylabel('Speed Trajectory Coupling'),ylim([-0.25 .25])
 
 [~,~,stats] = anova1(dat1);
@@ -249,16 +313,56 @@ for n = 1:size(datCCA,1)
 end
 
 dat1 = [pre_corrtot.PGD',during_corrtot.PGD',post_corrtot.PGD'];
-figure(3),clf
-subplot(121),customBarplot(dat1);
+figure(3),clf,hold on
+subplot(121),nicebarplots(dat1);
 box off,set(gca,'tickdir','out','fontsize',14),axis square,ylabel('PGD Trajectory Coupling'),ylim([-0.75 .75])
 dat2 = [pre_corrtot.waveSpeed',during_corrtot.waveSpeed',post_corrtot.waveSpeed'];
-figure(3),subplot(122)
-customBarplot(dat2)
+figure(3),subplot(122),hold on
+nicebarplots(dat1)
 box off,set(gca,'tickdir','out','fontsize',14),axis square,ylabel('Speed Trajectory Coupling'),ylim([-.75 .75])
 
 [~,~,stats] = anova1(dat1);
 results1 = multcompare(stats);
 [~,~,stats] = anova1(dat2);
 results2 = multcompare(stats);
+end
+
+function nicebarplots(dat1)
+% dat1: [N x 3] (pre, cue, movement) e.g.
+% dat1 = [mean(pre_null.PGD,2), mean(during_null.PGD,2), mean(post_null.PGD,2)];
+
+meanVals = mean(dat1,1);             % 1x3
+semVals  = std(dat1,0,1)./sqrt(size(dat1,1));  % SEM
+
+x = 1:3;
+
+% bars
+barHandle = bar(x, meanVals, 'FaceColor', [0.8 0.8 0.8], 'EdgeColor', 'none');
+hold on;
+
+% jittered points
+rng(1); % for reproducibility
+jit = (rand(size(dat1,1),3)-0.5)*0.15;  % small horizontal jitter
+
+for i = 1:3
+    scatter(i + jit(:,i), dat1(:,i), 20, 'r', 'filled', ...
+        'MarkerFaceAlpha', 0.7, 'MarkerEdgeColor', 'none');
+end
+
+% optional error bars
+errorbar(x, meanVals, semVals, 'k', 'LineStyle', 'none', 'LineWidth', 1);
+
+% axes and labels
+xlim([0.5 3.5]);
+ylim([-0.25 0.3]);   % adjust to your data
+set(gca, 'XTick', x, 'XTickLabel', {'Pre-cue','Cue','Movement'}, ...
+         'TickDir', 'out', 'Box', 'off');
+
+ylabel('Speed Trajectory Coupling');
+
+% optional significance lines (example only)
+% line([1 2], [0.28 0.28], 'Color', 'k', 'LineWidth', 1);
+% text(1.5, 0.29, '0.01', 'HorizontalAlignment', 'center');
+% line([2 3], [0.30 0.30], 'Color', 'k', 'LineWidth', 1);
+% text(2.5, 0.31, '**', 'HorizontalAlignment', 'center');
 end
