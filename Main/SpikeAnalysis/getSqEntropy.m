@@ -11,25 +11,45 @@ for n = 1:length(bin)
     dat = Spikes.PSTH.hit.spks;
     Data = cell2mat(permute(dat,[1,3,2]));
     Data = permute(Data,[1,3,2]);
-    [CueHit.SqI(n), CueHit.PE(n), CueHit.TS(n)] = SeqIndexDB(Data,NumEntropyBins);
+    try
+        [CueHit.SqI(n), CueHit.PE(n), CueHit.TS(n)] = SeqIndexDB(Data,NumEntropyBins);
+    catch ME
+        disp('bad bin')
+        continue
+    end
     CueHit.bin = bin;
     
     dat = Spikes.PSTH.miss.spks;
     Data = cell2mat(permute(dat,[1,3,2]));
     Data = permute(Data,[1,3,2]);
+    try 
     [CueMiss.SqI(n), CueMiss.PE(n), CueMiss.TS(n)] = SeqIndexDB(Data,NumEntropyBins);
+    catch
+        disp('bad bin')
+        continue
+    end
     CueMiss.bin = bin;
     
     dat = Spikes.PSTH.MIFA.spks;
     Data = cell2mat(permute(dat,[1,3,2]));
     Data = permute(Data,[1,3,2]);
+    try
     [MIFA.SqI(n),MIFA.PE(n), MIFA.TS(n)] = SeqIndexDB(Data,NumEntropyBins);
+    catch ME
+        disp('bad bin')
+        continue
+    end
     MIFA.bin = bin;
     
     dat = Spikes.PSTH.MIHit.spks;
     Data = cell2mat(permute(dat,[1,3,2]));
     Data = permute(Data,[1,3,2]);
+    try
     [MIHit.SqI(n), MIHit.PE(n), MIHit.TS(n)] = SeqIndexDB(Data,NumEntropyBins);
+    catch ME
+        disp('bad bin') 
+        continue
+    end
     MIHit.bin = bin;
 end
 
