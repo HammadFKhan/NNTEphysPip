@@ -40,13 +40,13 @@ end
 nSess      = numel(sessions);
 nShuffles  = 1000;
 
-results(nSess) = struct( ...
-    'name', [], ...
-    'Rh_emp', [], 'Rh_shuf', [], 'p_hit', [], ...
-    'Rm_emp', [], 'Rm_shuf', [], 'p_miss', [], ...
-    'mapHit', [], 'mapOptoHit', [], ...
-    'mapMiss', [], 'mapOptoMiss', []);
-
+% results(nSess) = struct( ...
+%     'name', [], ...
+%     'Rh_emp', [], 'Rh_shuf', [], 'p_hit', [], ...
+%     'Rm_emp', [], 'Rm_shuf', [], 'p_miss', [], ...
+%     'mapHit', [], 'mapOptoHit', [], ...
+%     'mapMiss', [], 'mapOptoMiss', []);
+results = struct();
 for i = 1:nSess
         fprintf('\n[%d/%d] Loading session: %s\n', i, nSess, sessions(i).fullpath);
 
@@ -112,15 +112,30 @@ for i = 1:nSess
         Waves = zscoreWavesSpeedPGD(Waves, parameters);
     end
 
-    results(i).Waves.wavesHit.zSpeed = Waves.wavesHit.zSpeed;
-    results(i).Waves.wavesMiss.zSpeed = Waves.wavesMiss.zSpeed;
-    results(i).Waves.wavesOptoCueHit.zSpeed = Waves.wavesOptoCueHit.zSpeed;
-    results(i).Waves.wavesOptoCueMiss.zSpeed = Waves.wavesOptoCueMiss.zSpeed;
 
-    results(i).Waves.wavesHit.zPGD= Waves.wavesHit.zPGD;
-    results(i).Waves.wavesMiss.zPGD = Waves.wavesMiss.zPGD;
-    results(i).Waves.wavesOptoCueHit.zPGD = Waves.wavesOptoCueHit.zPGD;
-    results(i).Waves.wavesOptoCueMiss.zPGD = Waves.wavesOptoCueMiss.zPGD;
+    for trials = 1:length(Waves.wavesHit)
+        results(i).Waves.wavesHit(trials).evaluationPoints = Waves.wavesHit(trials).evaluationPoints;
+        results(i).Waves.wavesHit(trials).zSpeed = Waves.wavesHit(trials).zSpeed;
+        results(i).Waves.wavesHit(trials).zPGD= Waves.wavesHit(trials).zPGD;
+    end
+
+    for trials = 1:length(Waves.wavesMiss)
+        results(i).Waves.wavesMiss(trials).evaluationPoints = Waves.wavesMiss(trials).evaluationPoints;
+        results(i).Waves.wavesMiss(trials).zSpeed = Waves.wavesMiss(trials).zSpeed;
+        results(i).Waves.wavesMiss(trials).zPGD = Waves.wavesMiss(trials).zPGD;
+    end
+
+    for trials = 1:length(Waves.wavesOptoCueHit)
+        results(i).Waves.wavesOptoCueHit(trials).evaluationPoints = Waves.wavesOptoCueHit(trials).evaluationPoints;
+        results(i).Waves.wavesOptoCueHit(trials).zSpeed = Waves.wavesOptoCueHit(trials).zSpeed;
+        results(i).Waves.wavesOptoCueHit(trials).zPGD = Waves.wavesOptoCueHit(trials).zPGD;
+    end
+
+    for trials = 1:length(Waves.wavesOptoCueMiss)
+        results(i).Waves.wavesOptoCueMiss(trials).evaluationPoints = Waves.wavesOptoCueMiss(trials).evaluationPoints;
+        results(i).Waves.wavesOptoCueMiss(trials).zSpeed = Waves.wavesOptoCueMiss(trials).zSpeed;
+        results(i).Waves.wavesOptoCueMiss(trials).zPGD = Waves.wavesOptoCueMiss(trials).zPGD;
+    end
 end
 
 fprintf('\nAll %d sessions completed.\n', nSess);
@@ -135,9 +150,192 @@ Rm_shuf_mean = abs(cellfun(@(x) mean(x), {results.Rm_shuf}))';
 Rh_shuf_mean(isnan(Rh_shuf_mean)) = [];
 Rm_shuf_mean(isnan(Rm_shuf_mean)) = [];
 figure,hold on
-plotNiceBars([Rh_emp_all,Rm_emp_all/1.2,Rh_shuf_mean*50])
+plotNiceBars([Rh_emp_all,Rh_shuf_mean*50,Rm_emp_all/1.2,Rm_shuf_mean*50])
 ylim([0 1.1])
+%% Concatenate the wave speeds
+
+wavesTemp = cat(1,results.Waves);
+% wavesTemp:  [nSess x 1] struct
+% each wavesTemp(s).wavesHit is 1 x N_s struct with fields:
+%   evaluationPoints, zSpeed, zPGD (variable-length vectors)
+
+waveFields = {'wavesHit','wavesMiss','wavesOptoCueHit','wavesOptoCueMiss'};
+
+% Initialize combined struct with same subfields, but empty
+WavesCombined = struct();
+for f = 1:numel(waveFields)
+    WavesCombined.(waveFields{f}) = struct( ...
+        'evaluationPoints', {}, ...
+        'zSpeed', {}, ...
+        'zPGD', {} );
+end
+
+nSess = numel(wavesTemp);
+
+for s = 1:nSess
+    for f = 1:numel(waveFields)
+        fieldName = waveFields{f};          % e.g. 'wavesHit'
+        wStruct   = wavesTemp(s).(fieldName);   % 1 x N_s struct array
+
+        for k = 1:numel(wStruct)
+            WavesCombined.(fieldName)(end+1).evaluationPoints = ...
+                wStruct(k).evaluationPoints;
+            WavesCombined.(fieldName)(end).zSpeed = ...
+                wStruct(k).zSpeed;
+            WavesCombined.(fieldName)(end).zPGD = ...
+                wStruct(k).zPGD;
+        end
+    end
+end
+
+
 %% Plot Wave speed
+parameters.experiment = 'cue'; % self - internally generated, cue - cue initiated
+parameters.opto = 0; % 1 - opto ON , 0 - opto OFF
+parameters.cool = 0; % No Cool 
+parameters.windowBeforePull = 1.5; % in seconds
+parameters.windowAfterPull = 1.5; % in seconds
+parameters.windowBeforeCue = 1.5; % in seconds
+parameters.windowAfterCue = 1.5; % in seconds
+parameters.windowBeforeMI = 1.5; % in seconds 
+parameters.windowAfterMI = 1.5; % in seconds 
+parameters.Fs = 1000; % Eventual downsampled data
+parameters.ts = 1/parameters.Fs;
+nPoints = 30;
+% interval = (M1WavesBaseline(1).IntanBehaviour.parameters.Fs*(M1WavesBaseline(1).IntanBehaviour.parameters.windowAfterCue+M1WavesBaseline(1).IntanBehaviour.parameters.windowBeforeCue))/nPoints;
+interval = (parameters.Fs*(parameters.windowAfterCue+parameters.windowBeforeCue))/nPoints;
+waveAvgFreq = zeros(4,nPoints);
+for i=1:nPoints
+    st = (i-1)*interval + 1;
+    sp = (i)*interval + 1;
+    WaveSpeed(i).speedHit      = horzcat(selectWavesBatch(WavesCombined.wavesHit,st,sp).zSpeed);
+    WaveSpeed(i).speedMiss     = horzcat(selectWavesBatch(WavesCombined.wavesMiss,st,sp).zSpeed);
+%     WaveSpeed(i).speedMIHit    = horzcat(selectWavesBatch(results(30).Waves.wavesMIHit,st,sp).zSpeed);
+%     WaveSpeed(i).speedMIFA     = horzcat(selectWavesBatch(results(30).Waves.wavesMIFA,st,sp).zSpeed);
+    WaveSpeed(i).speedHitOpto  = horzcat(selectWavesBatch(WavesCombined.wavesOptoCueHit,st,sp).zSpeed);
+    WaveSpeed(i).speedMissOpto = horzcat(selectWavesBatch(WavesCombined.wavesOptoCueMiss,st,sp).zSpeed);
+end
+%%
+t = interval:interval:interval*nPoints;
+
+% ---- Plot Hit vs Hit‑Opto ----
+figure;
+plotWaveSpeedPair(WaveSpeed, t, 'speedHit', 'speedHitOpto', ...
+    'Hit', 'Hit + opto');
+
+% ---- Plot Miss vs Miss‑Opto ----
+figure;
+plotWaveSpeedPair(WaveSpeed, t, 'speedMiss', 'speedMissOpto', ...
+    'Miss', 'Miss + opto');
+
+t = 1:3001;          % or your actual time vector
+cueIdx = 1501;       % if cue is centered like before
+figure;
+plotZPGDPair(WavesCombined, t, ...
+             'wavesHit', 'wavesOptoCueHit', ...
+             'Hit', 'Hit+Opto', cueIdx);
+
+figure;
+plotZPGDPair(WavesCombined, t, ...
+             'wavesMiss', 'wavesOptoCueMiss', ...
+             'Miss', 'Miss+Opto', cueIdx);
+
+
+
+%% Local plotting function
+function plotZPGDPair(WavesCombined, t, fieldA, fieldB, labelA, labelB, cueIdx)
+% WavesCombined.<field>.zPGD : 1 x nTrials struct, each zPGD = 1 x T double
+
+% Colors (warm vs cool)
+colA      = [0.85 0.35 0.40];
+colA_edge = colA;
+colB      = [0.25 0.45 0.80];
+colB_edge = colB;
+
+hold on;
+
+%% Condition A
+zA = {WavesCombined.(fieldA).zPGD};      % 1 x nTrialsA cells
+zA_mat = vertcat(zA{:});                 % [nTrialsA x T]
+yA  = mean(zA_mat, 1, 'omitnan');
+eA  = std(zA_mat, 0, 1, 'omitnan') ./ sqrt(size(zA_mat,1));
+yA_s = smoothdata(yA,'gaussian');
+eA_s = smoothdata(eA,'gaussian');
+
+hA = plot(t, yA_s, 'Color', colA_edge, 'LineWidth', 2);
+plot(t, yA_s - eA_s, 'Color', colA, 'LineWidth', 1);
+plot(t, yA_s + eA_s, 'Color', colA, 'LineWidth', 1);
+
+%% Condition B
+zB = {WavesCombined.(fieldB).zPGD};      % 1 x nTrialsB cells
+zB_mat = vertcat(zB{:});                 % [nTrialsB x T]
+yB  = mean(zB_mat, 1, 'omitnan');
+eB  = std(zB_mat, 0, 1, 'omitnan') ./ sqrt(size(zB_mat,1));
+yB_s = smoothdata(yB,'gaussian');
+eB_s = smoothdata(eB,'gaussian');
+
+hB = plot(t, yB_s, 'Color', colB_edge, 'LineWidth', 2);
+plot(t, yB_s - eB_s, 'Color', colB, 'LineWidth', 1);
+plot(t, yB_s + eB_s, 'Color', colB, 'LineWidth', 1);
+
+%% Formatting
+if nargin >= 7 && ~isempty(cueIdx)
+    xline(cueIdx, '--', 'Cue', 'Color', [0.6 0 0], 'LineWidth', 1);
+end
+
+xlabel('Time (samples)');          % or 'Time (ms)' if t is in ms
+ylabel('Average zPGD');
+legend([hA hB], {labelA, labelB}, 'Location', 'best');
+title(sprintf('zPGD - %s vs %s', labelA, labelB));
+xlim([min(t) max(t)]);
+box off;
+set(gca, 'TickDir', 'out', 'FontSize', 14);
+end
+
+function plotWaveSpeedPair(WaveSpeed, t, fieldA, fieldB, labelA, labelB)
+
+% Colors (warm vs cool)
+colA      = [0.85 0.35 0.40];
+colA_edge = colA;
+colB      = [0.25 0.45 0.80];
+colB_edge = colB;
+
+hold on;
+
+% Condition A
+yA = cell2mat(arrayfun(@(s) mean(s.(fieldA),'all','omitnan'), ...
+                       WaveSpeed,'UniformOutput',false));
+eA = cell2mat(arrayfun(@(s) std(s.(fieldA),0,'all','omitnan')/ ...
+                       sqrt(numel(s.(fieldA))),WaveSpeed,'UniformOutput',false));
+yA_s = smoothdata(yA,'gaussian');
+eA_s = smoothdata(eA,'gaussian');
+
+hA = plot(t,yA_s,'Color',colA_edge,'LineWidth',2);
+plot(t,yA_s-eA_s,'Color',colA,'LineWidth',1);
+plot(t,yA_s+eA_s,'Color',colA,'LineWidth',1);
+
+% Condition B
+yB = cell2mat(arrayfun(@(s) mean(s.(fieldB),'all','omitnan'), ...
+                       WaveSpeed,'UniformOutput',false));
+eB = cell2mat(arrayfun(@(s) std(s.(fieldB),0,'all','omitnan')/ ...
+                       sqrt(numel(s.(fieldB))),WaveSpeed,'UniformOutput',false));
+yB_s = smoothdata(yB,'gaussian');
+eB_s = smoothdata(eB,'gaussian');
+
+hB = plot(t,yB_s,'Color',colB_edge,'LineWidth',2);
+plot(t,yB_s-eB_s,'Color',colB,'LineWidth',1);
+plot(t,yB_s+eB_s,'Color',colB,'LineWidth',1);
+
+xline(1501,'--','Cue','Color',[0.6 0 0],'LineWidth',1);
+xlabel('Time (ms)');
+ylabel('Average Wave Speed (Hz)');
+legend([hA hB],{labelA,labelB},'Location','best');
+title(sprintf('Wave Speed - %s vs %s', labelA, labelB));
+xlim([min(t) max(t)]);
+box off;
+set(gca,'TickDir','out','FontSize',14);
+end
+
 %% Local Functions
 function [R_emp, R_shuffle, mapA, mapB] = corr_map_with_location_shuffle(wavesA, wavesB, gridSize, nShuffles)
 
