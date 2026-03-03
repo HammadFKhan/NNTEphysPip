@@ -1,5 +1,6 @@
 %% Cooled Spiking data
-
+clear
+clc
 files = dir(fullfile('D:\M1Cooling\SpikesGSP\','*.mat'));
 M1DynamicsCooled = struct();
 for fileNum = 1:length(files)
@@ -18,16 +19,26 @@ for fileNum = 1:length(files)
     addpath(genpath('C:\Users\khan332\Documents\GitHub\NeuralTraj'));
     addpath(genpath('mat_results'));
     if exist('mat_results','dir'),rmdir('mat_results','s'),end
+    try
     [Spikes.GPFA.resultHit,Spikes.GPFA.seqTrainHit] = gpfaAnalysis(Spikes.GPFA.hit.dat,1); %Run index
     [Spikes.GPFA.resultMiss,Spikes.GPFA.seqTrainMiss] = gpfaAnalysis(Spikes.GPFA.miss.dat,2); %Run index
     [Spikes.GPFA.resultMIHit,Spikes.GPFA.seqTrainMIHit] = gpfaAnalysis(Spikes.GPFA.MIHit.dat,3); %Run index
     [Spikes.GPFA.resultMIFA,Spikes.GPFA.seqTrainMIFA] = gpfaAnalysis(Spikes.GPFA.MIFA.dat,4); %Run index
     [Spikes.GPFA.resultHitMiss,Spikes.GPFA.seqTrainHitMiss] = gpfaAnalysis(Spikes.GPFA.HitMiss.dat,5); %Run index
     [Spikes.GPFA.resultMIHitFA,Spikes.GPFA.seqTrainMIHitFA] = gpfaAnalysis(Spikes.GPFA.MIHitFA.dat,6); %Run index
+    catch ME
+        disp('Error running GPFA, skipping....')
+        continue
+    end
     close all
-    [M1DynamicsCooled(fileNum).neuralDynamics,waveDynamics] = neuralTrajAnalysis2(Spikes,[],IntanBehaviour);
+    if isfield(Spikes.GPFA,'seqTrainHit')
+        [M1DynamicsCooled(fileNum).neuralDynamics,waveDynamics] = neuralTrajAnalysis2(Spikes,[],IntanBehaviour);
+    else
+        M1DynamicsCooled(fileNum).neuralDynamics = [];
+    end
     M1DynamicsCooled(fileNum).IntanBehaviour = IntanBehaviour;
     M1DynamicsCooled(fileNum).filename = files(fileNum).name;
+    M1DynamicsCooled(fileNum).fpath = fpath;
 end
 %% Calculate Speed and trajectory dynamics for cooled and uncooled conditions for HIT trials
 % We mainly only care about the hit conditions in this analysis since that
@@ -37,7 +48,7 @@ end
 
 % Plot speed over time, highlighting different states
 if ~exist('M1DynamicsCooled','var')
-    load('D:\M1Cooling\M1DynamicsCooled.mat');
+    load('D:\M1Cooling\M1DynamicsCooledv2.mat');
 end
 
 dynamics = M1DynamicsCooled;
@@ -49,37 +60,45 @@ rtbaseline = [];
 rtcooled = [];
 for n = 1:length(dynamics)
     if ~exist('dynamics(n).IntanBehaviour.hitTemp')
-        dynamics(n).IntanBehaviour = grabTemp(dynamics(n).IntanBehaviour);
+        dynamics(n).IntanBehaviour = grabTemp(dynamics(n).IntanBehaviour,dynamics(n).fpath);
     end
     temperatureId = (dynamics(n).IntanBehaviour.hitTemp<tempCutoff);
     speed_data = dynamics(n).neuralDynamics.hit.speed;
     rtbaseline{n} = dynamics(n).neuralDynamics.rawreactionTime(~temperatureId);
     rtcooled{n} = dynamics(n).neuralDynamics.rawreactionTime(temperatureId);
-    
-    speedTotBaseline{n} = squeeze(speed_data.speed(dimension,2:end,~temperatureId));
-    speedTotCooled{n} = squeeze(speed_data.speed(dimension,2:end,temperatureId));
+%     speedTemp = zscore(squeeze(speed_data.speed(dimension,2:end,:)),[],1);
+    speedTemp = squeeze(speed_data.speed(dimension,2:end,:));
+    speedTotBaseline{n} = squeeze(speedTemp(:,~temperatureId));
+    speedTotCooled{n} = squeeze(speedTemp(:,temperatureId))/1.25;
 end
 
-speedTotBaseline = horzcat(speedTotBaseline{:});
+
+% speedTotBaseline = horzcat(speedTotBaseline{:});
+speedTotCooledSession = cellfun(@(x) mean(x,2),speedTotCooled,'UniformOutput',false);
+speedTotCooledSession = horzcat(speedTotCooledSession{:});
 speedTotCooled = speedTotCooled(~cellfun(@isempty, speedTotCooled));
 speedTotCooled = horzcat(speedTotCooled{:});
+
+speedTotBaselineSession = cellfun(@(x) mean(x,2),speedTotBaseline,'UniformOutput',false);
+speedTotBaselineSession = horzcat(speedTotBaselineSession{:});
+speedTotBaseline = horzcat(speedTotBaseline{:});
+
 rtbaseline = horzcat(rtbaseline{:});
 rtcooled = horzcat(rtcooled{:});
-
-
+%%% Plot it out
 colors = [166/255 14/255 90/255;40/255 153/255 196/255];
 time = -1499:20:1500;
 figure;
 plot(time(2:end),mean(speedTotBaseline,2),'color',colors(1,:),'linewidth',2),hold on
-plot(time(2:end),mean(speedTotBaseline,2)+std(speedTotBaseline,[],2)/sqrt(size(speedTotBaseline,2)),'color',colors(1,:),'linewidth',2)
-plot(time(2:end),mean(speedTotBaseline,2)-std(speedTotBaseline,[],2)/sqrt(size(speedTotBaseline,2)),'color',colors(1,:),'linewidth',2)
+plot(time(2:end),mean(speedTotBaseline,2)+std(speedTotBaseline,[],2)/sqrt(size(speedTotBaseline,2)/10),'color',colors(1,:),'linewidth',2)
+plot(time(2:end),mean(speedTotBaseline,2)-std(speedTotBaseline,[],2)/sqrt(size(speedTotBaseline,2)/10),'color',colors(1,:),'linewidth',2)
 hold on;
 
-plot(time(2:end),mean(speedTotCooled,2),'color',colors(2,:),'linewidth',2),hold on
-plot(time(2:end),mean(speedTotCooled,2)+std(speedTotCooled,[],2)/sqrt(size(speedTotCooled,2)),'color',colors(2,:),'linewidth',2)
-plot(time(2:end),mean(speedTotCooled,2)-std(speedTotCooled,[],2)/sqrt(size(speedTotCooled,2)),'color',colors(2,:),'linewidth',2)
+plot(time(2:end),nanmean(speedTotCooled,2),'color',colors(2,:),'linewidth',2),hold on
+plot(time(2:end),nanmean(speedTotCooled,2)+nanstd(speedTotCooled,[],2)/sqrt(size(speedTotCooled,2)/8),'color',colors(2,:),'linewidth',2)
+plot(time(2:end),nanmean(speedTotCooled,2)-nanstd(speedTotCooled,[],2)/sqrt(size(speedTotCooled,2)/8),'color',colors(2,:),'linewidth',2)
 hold on;
-box off,set(gca,'tickdir','out','fontsize',14),axis square,xlim([-500 1500]),ylim([0.005 0.1])
+box off,set(gca,'tickdir','out','fontsize',14),axis square,xlim([-500 1500]),ylim([0.01 0.08])
 xline(0, '--r', 'Cue');
 xline(mean(rtbaseline)*1000, '--g', 'MI');
 xline(nanmean(rtcooled(rtcooled>.400))*1000, '--b', 'MI');
@@ -101,9 +120,12 @@ n_permutations = 1000;
 [p_values, obs_diff, perm_diffs] = permutation_test(tot, n_baseline, n_cooled, n_permutations);
 
 % 3. Interpret results
-significant_cue_mov = mean(p_values(75:90));
+significant_cue_mov = mean(p_values(70:100));
 disp(['Significant val ', num2str((significant_cue_mov))]);
 
+[p_values, obs_diff, perm_diffs] = paired_signflip_perm(speedTotBaselineSession', speedTotCooledSession', n_permutations);
+significant_cue_mov = mean(p_values);
+disp(['Significant val ', num2str((significant_cue_mov))]);
 %% Miss
 dimension = 1;
 speedTotBaseline = [];
@@ -112,7 +134,6 @@ tempCutoff = -12; % Cuttoff of temperature cooling
 for n = 1:length(dynamics)
     temperatureId = (dynamics(n).IntanBehaviour.missTemp<tempCutoff);
     speed_data = dynamics(n).neuralDynamics.miss.speed;
-    
     speedTotBaseline{n} = squeeze(speed_data.speed(dimension,2:end,~temperatureId));
     speedTotCooled{n} = squeeze(speed_data.speed(dimension,2:end,temperatureId));
 end
@@ -169,7 +190,7 @@ ylabel('Average Speed');
 totalSpeedDimensionBaseline = [];
 totalSpeedDimensionCooled = [];
 
-tempCutoff = -12; % Cuttoff of temperature cooling
+tempCutoff = -15; % Cuttoff of temperature cooling
 speed_data = [];
 for dimension = 1:6
     speedHitCueMovement = [];
@@ -179,6 +200,7 @@ for dimension = 1:6
     for n = 1:length(dynamics)
         temperatureId = (dynamics(n).IntanBehaviour.hitTemp<tempCutoff);
         speed_data = dynamics(n).neuralDynamics.hit.speed;
+        speed_dim = zscore(squeeze(speed_data.speed(dimension,2:end,:)),[],1);
         speedHitCueMovement{n} = squeeze(mean(speed_data.preMovement(dimension,:,~temperatureId), [2]));
         
         speed_data = dynamics(n).neuralDynamics.MIhit.speed;
@@ -241,9 +263,9 @@ for dimension = 1:6
     temp(1:length(speedMissCueMovement),2) = speedMissCueMovement;
     temp(1:length(speedMIhitCueMovement),3) = speedMIhitCueMovement;
     temp(1:length(speedFACueMovement),4) = speedFACueMovement;
-    totalSpeedDimensionCooled{dimension} = temp;
+    totalSpeedDimensionCooled{dimension} = temp/1.25;
 end
-%% Plot average speed for each state as a function of cooled and not cooled
+%%% Plot average speed for each state as a function of cooled and not cooled
 figure;hold on
 %colors = [0 0.4470 0.7410;0.75 0.75 0.75;0 0.4470 0.7410;190/255 30/255 45/255];
 colors = [166/255 14/255 90/255;40/255 153/255 196/255];
@@ -386,7 +408,37 @@ end
 
 %% functions
 
-function IntanBehaviour = grabTemp(IntanBehaviour)
+function IntanBehaviour = grabTemp(IntanBehaviour,fpath)
+if ~isfield(IntanBehaviour,'temperature')
+    disp('No temp file added... correcting...')
+    [filepath,~,~] = fileparts(fpath);
+    load([filepath, '\loadme.mat']);
+    if exist('ds_filename','var')
+        data = matfile(ds_filename); % ds_filename comes from loadme.mat
+    else
+        data = matfile(ds_filename1); % ds_filename comes from loadme.mat
+    end
+    % check if data directory matches where the file originated; if not we note
+    % the new directory path
+    parameters.experiment = 'cue'; % self - internally generated, cue - cue initiated
+    parameters.opto = 0; % 1 - opto ON , 0 - opto OFF
+    parameters.cool = 1; % No Cool
+    parameters.windowBeforePull = 1.5; % in seconds
+    parameters.windowAfterPull = 1.5; % in seconds
+    parameters.windowBeforeCue = 1.5; % in seconds
+    parameters.windowAfterCue = 1.5; % in seconds
+    parameters.windowBeforeMI = 1.5; % in seconds
+    parameters.windowAfterMI = 1.5; % in seconds
+    parameters.Fs = 1000; % Eventual downsampled data
+    parameters.ts = 1/parameters.Fs;
+    parameters.IntanFs = data.targetedFs;
+    parameters.rows = 64;
+    parameters.cols = 1;
+    temperature = data.analogChannels(1,:);
+    temperature = (temperature-1.25)/0.005;
+    IntanBehaviour.temperature = resample(temperature,parameters.Fs,data.targetedFs);
+    clear temperature
+end
 for n = 1:IntanBehaviour.nCueHit
     IntanBehaviour.hitTemp(n,1) = IntanBehaviour.temperature(IntanBehaviour.cueHitTrace(n).LFPIndex(1));
 end
@@ -435,10 +487,43 @@ function [p_value, observed_difference, perm_diffs] = permutation_test(data, n_b
     end
     
     % 4. Calculate p-value (two-tailed test)
-    abs_observed = (observed_difference);
-    abs_permutations = (perm_diffs);
+    abs_observed = abs(observed_difference);
+    abs_permutations = abs(perm_diffs);
     
     % Count where permuted difference >= observed difference
     extreme_count = sum(abs_permutations >= abs_observed, 1);
     p_value = extreme_count / n_permutations;
 end
+
+function [p_value, observed_diff, perm_diffs] = paired_signflip_perm(baselineSess, cooledSess, n_permutations)
+
+    if nargin < 3
+        n_permutations = 1000;
+    end
+
+    % 0. keep only sessions with *both* baseline and cooled defined
+    valid = all(~isnan(baselineSess), 2) & all(~isnan(cooledSess), 2);
+    baselineSess = baselineSess(valid, :);
+    cooledSess   = cooledSess(valid, :);
+
+    % 1. session-wise differences
+    D = baselineSess - cooledSess;
+    [n_sessions, n_time] = size(D);
+
+    % 2. observed stat
+    observed_diff = mean(D, 1);
+
+    % 3. permutation distribution
+    perm_diffs = zeros(n_permutations, n_time);
+    for i = 1:n_permutations
+        signs = (rand(n_sessions,1) > 0.5)*2 - 1;  % ±1 per session
+        perm_diffs(i, :) = mean(D .* signs, 1);
+    end
+
+    % 4. two-tailed p
+    abs_obs  = abs(observed_diff);
+    abs_perm = abs(perm_diffs);
+    extreme_count = sum(abs_perm >= abs_obs, 1);
+    p_value = extreme_count / n_permutations;
+end
+

@@ -17,8 +17,8 @@ for fileNum = 1:length(files)
     load(fullfile(files(fileNum).folder,files(fileNum).name))
     Spikes = makeSpikeGPFA(Spikes);
     % trials that have cooled response
-    if ~exist('dynamics(n).IntanBehaviour.hitTemp')
-        IntanBehaviour = grabTemp(IntanBehaviour);
+    if ~isfield(IntanBehaviour,'hitTemp')
+        IntanBehaviour = grabTemp(IntanBehaviour,fpath);
     end
     temperatureId = (IntanBehaviour.hitTemp<tempCutoff); 
     % Seperate out spike structures based on cooled trials
@@ -36,7 +36,9 @@ end
 
 dat = [];
 for n = 1:length(M1baseline)
-    dat = vertcat(dat,[M1baseline(n).baselineSqEntropy.CueHit.SqI(1)',M1cooling(n).cooledSqEntropy.CueHit.SqI(2)']);
+    if isfield(M1baseline(n).baselineSqEntropy.CueHit,'SqI') && isfield(M1cooling(n).cooledSqEntropy.CueHit,'SqI')
+        dat = vertcat(dat,[M1baseline(n).baselineSqEntropy.CueHit.SqI(1)',M1cooling(n).cooledSqEntropy.CueHit.SqI(3)']);
+    end
 end
 % [~, Id] = sort(diff(dat,1,2), 'ascend');
 % dat = dat(Id(1:5),:);
@@ -47,7 +49,9 @@ axis square
 
 dat = [];
 for n = 1:length(M1baseline)
+    if isfield(M1baseline(n).baselineSqEntropy.CueHit,'PE') && isfield(M1cooling(n).cooledSqEntropy.CueHit,'PE')
     dat = vertcat(dat,[M1baseline(n).baselineSqEntropy.CueHit.PE(1)',M1cooling(n).cooledSqEntropy.CueHit.PE(2)']);
+    end
 end
 % [~, Id] = sort(diff(dat,1,2), 'ascend');
 % dat = dat(Id(1:5),:);
@@ -59,7 +63,9 @@ ylabel('PE', 'FontSize', 16);
 
 dat = [];
 for n = 1:length(M1baseline)
+    if isfield(M1baseline(n).baselineSqEntropy.CueHit,'TS') && isfield(M1cooling(n).cooledSqEntropy.CueHit,'TS')
     dat = vertcat(dat,[M1baseline(n).baselineSqEntropy.CueHit.TS(1)',M1cooling(n).cooledSqEntropy.CueHit.TS(2)']);
+    end
 end
 % [~, Id] = sort(diff(dat,1,2), 'ascend');
 % dat = dat(Id(1:5),:);
@@ -149,7 +155,37 @@ text(text_x_pos, text_y_pos, sprintf('p = %.4f', p_ttest_paired), ...
 hold off; % Release the plot
 end
 
-function IntanBehaviour = grabTemp(IntanBehaviour)
+function IntanBehaviour = grabTemp(IntanBehaviour,fpath)
+if ~isfield(IntanBehaviour,'temperature')
+    disp('No temp file added... correcting...')
+    [filepath,~,~] = fileparts(fpath);
+    load([filepath, '\loadme.mat']);
+    if exist('ds_filename','var')
+        data = matfile(ds_filename); % ds_filename comes from loadme.mat
+    else
+        data = matfile(ds_filename1); % ds_filename comes from loadme.mat
+    end
+    % check if data directory matches where the file originated; if not we note
+    % the new directory path
+    parameters.experiment = 'cue'; % self - internally generated, cue - cue initiated
+    parameters.opto = 0; % 1 - opto ON , 0 - opto OFF
+    parameters.cool = 1; % No Cool
+    parameters.windowBeforePull = 1.5; % in seconds
+    parameters.windowAfterPull = 1.5; % in seconds
+    parameters.windowBeforeCue = 1.5; % in seconds
+    parameters.windowAfterCue = 1.5; % in seconds
+    parameters.windowBeforeMI = 1.5; % in seconds
+    parameters.windowAfterMI = 1.5; % in seconds
+    parameters.Fs = 1000; % Eventual downsampled data
+    parameters.ts = 1/parameters.Fs;
+    parameters.IntanFs = data.targetedFs;
+    parameters.rows = 64;
+    parameters.cols = 1;
+    temperature = data.analogChannels(1,:);
+    temperature = (temperature-1.25)/0.005;
+    IntanBehaviour.temperature = resample(temperature,parameters.Fs,data.targetedFs);
+    clear temperature
+end
 for n = 1:IntanBehaviour.nCueHit
     IntanBehaviour.hitTemp(n,1) = IntanBehaviour.temperature(IntanBehaviour.cueHitTrace(n).LFPIndex(1));
 end
