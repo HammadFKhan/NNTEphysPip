@@ -22,6 +22,10 @@ PooledData.RTRMOutlier = PooledData.RT; PooledData.RTRMOutlier(outlierIndex)=[];
 mdl = fitlm(PooledData.hit.speed.cueMIPeakSpeedRMOutlier,PooledData.RTRMOutlier)
 figure,plot(mdl);
 xlabel('Peak neural trajectory speed from cue');ylabel('Reaction Time');
+
+figure,scatter(neuralTrajectoryTs*PooledData.hit.speed.cueMIPeakSpeed,PooledData.RT,'filled','k');
+xlabel('Time of peak neural trajectory speed from cue');ylabel('Reaction Time');
+set(gca,'TickDir','out'),set(gca,'fontsize',16),box off
 %%
 load('Y:\Hammad\Ephys\LeverTask\Data_for_Figures\Trajectory\PooledDataNeuralStability.mat')
 
