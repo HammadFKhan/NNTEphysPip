@@ -32,7 +32,7 @@ data = matfile(ds_filename); % ds_filename comes from loadme.mat
 % the new directory path
 parameters.experiment = 'cue'; % self - internally generated, cue - cue initiated
 parameters.opto = 0; % 1 - opto ON , 0 - opto OFF
-parameters.cool = 0; % No Cool 
+parameters.cool = 1; % No Cool 
 parameters.windowBeforePull = 1.5; % in seconds
 parameters.windowAfterPull = 1.5; % in seconds
 parameters.windowBeforeCue = 1.5; % in seconds
@@ -45,8 +45,20 @@ parameters.IntanFs = data.targetedFs;
 parameters.rows = 64;
 parameters.cols = 1;
 
-[Behaviour] = readLever(parameters,data.amplifierTime);
-[IntanBehaviour] = readLeverIntan(parameters,data.amplifierTime,data.analogChannels(1,:),data.digitalChannels,Behaviour,1);
+if ~exist('fname','var')
+    [enfile,enpath] = uigetfile('Y:\Hammad\Ephys\LeverTask\LeverTaskRebuttal\*.csv');
+    if isequal(enfile,0)
+        disp('User selected Cancel');
+    else
+        disp(['User selected ', fullfile(enpath,enfile)]);
+    end
+else
+    [enpath,enfile,ext] = fileparts(fname);
+    disp(['User selected ', fullfile(enpath,enfile)]);
+    enfile = [enfile,ext];
+end
+[Behaviour] = readLever(enpath,enfile,parameters,data.amplifierTime,0);
+[IntanBehaviour] = readLeverIntan(parameters,data.amplifierTime,data.analogChannels(2,:),data.digitalChannels,Behaviour,1);
 % Calculate ITI time for trials and reward/no reward sequence
 temp1 = arrayfun(@(x) x.LFPtime(1), IntanBehaviour.cueHitTrace);
 temp1 = vertcat(temp1,ones(1,IntanBehaviour.nCueHit)); %  write 1 for reward given
@@ -97,10 +109,10 @@ IntanBehaviour.AvgHitTrace = mean(IntanBehaviour.AvgHitTrace,1);
 % Since there are two probes we want to seperate everything into linear
 % maps for CSD and depthwise LFP analysis and then we do filtering
 data = matfile(ds_filename);
-%load UCLA_chanMap_64F2
-load UCLA_chanmap_fixed.mat
+% load UCLA_chanMap_64F2
+%load UCLA_chanmap_fixed.mat
 if ~exist('lfp','var'),lfp = data.amplifierData;end
-%TODO check if the field orientation during insertion is reversed (ie. probe 1 is lateral to probe 2)
+% % %TODO check if the field orientation during insertion is reversed (ie. probe 1 is lateral to probe 2)
 probe1 = lfp(s.sorted_probe_wiring(:,5)==1,:);
 probe2 = lfp(s.sorted_probe_wiring(:,5)==2,:);
 chanProbe1 = s.sorted_probe_wiring(s.sorted_probe_wiring(:,5)==1,:); %needed for linear channel mapping later
@@ -204,11 +216,12 @@ SpikeSamples = readNPY(fullfile(path, 'spike_times.npy'));
 SpikeChannel = readNPY(fullfile(path,'channel_positions.npy'));
 Spikes.SpikeClusters = SpikeClusters; 
 Spikes.SpikeSamples = SpikeSamples;
-Spikes = clusterSort(Spikes);
+Spikes = clusterSort(Spikes); 
 Spikes = ISI(Spikes,0.01,data.Fs,0); %Spikes, Interval, Fs
 % Calculate Depth profile
-%load chanMap64F2
-load chanMap64Sharp
+% load chanMap64F2
+%load chanMap64Sharp
+load chanMap64M
 [spikeAmps, spikeDepths, templateDepths, tempAmps, tempsUnW, templateDuration, waveforms, max_site] =...
     spikeTemplatePosition(data.fpath,ycoords,[]); % 'invert'
 for i = 1:length(tempAmps)
