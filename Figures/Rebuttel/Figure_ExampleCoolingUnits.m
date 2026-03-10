@@ -5,7 +5,7 @@ baselineTrials = IntanBehaviour.hitTemp>=-9;
 figure
 subplot(1,4,[1 3])
 Show_Spikes(M1Spikes.PSTH.hit.spks{12}),ylim([0 160]),xlim([1000,3000])  %1, 12, 13
-subplot(1,4,4),plot(smoothdata(IntanBehaviour.hitTemp,1,'movmean',5),1:212),axis tight,ylim([0 160]) 
+subplot(1,4,4),plot(smoothdata(IntanBehaviour.hitTemp/1.3,1,'movmean',5),1:212),axis tight,ylim([0 160]) 
 %%
 cooledSpikes =binSpikes(M1Spikes.PSTH.hit.spks{12}(cooledTrials,:),20,20,1);
 baseSpikes = binSpikes(M1Spikes.PSTH.hit.spks{12}(baselineTrials,:),20,20,1);
