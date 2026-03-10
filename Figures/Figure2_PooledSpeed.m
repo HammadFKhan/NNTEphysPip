@@ -1,7 +1,9 @@
+%%% Calculate aggregate relationship of peak neural stability and reaction
+%%% times
 clear
-redo = 1;
+redo = 0;
 if redo==1
-    files = dir(fullfile('D:\M1_GSP','*.mat'));
+    files = dir(fullfile('Y:\Hammad\Ephys\LeverTask\Data_for_Figures\M1_GSP','*.mat'));
     M1neuralDynamics = struct();
     for fileNum = 1:length(files)
         disp(['File number: ' num2str(fileNum)])
@@ -29,15 +31,15 @@ if redo==1
         [M1neuralDynamics(fileNum).neuralDynamics,M1waveDynamics] = neuralTrajAnalysis2(Spikes,[],IntanBehaviour);
         close all
     end
-    fpath = 'D:\TrajectoryDynamics';
+    fpath = 'Y:\Hammad\Ephys\LeverTask\Data_for_Figures\TrajectoryDynamics';
     sessionName = [fpath,'\','M1DynamicsPooledRT.mat'];
     save(sessionName,"M1neuralDynamics","fileNum","files","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
     clear
     disp('Loading processed data...')
-    load('D:\TrajectoryDynamics\M1DynamicsPooledRT.mat')
+    load('Y:\Hammad\Ephys\LeverTask\Data_for_Figures\TrajectoryDynamics\M1DynamicsPooledRT.mat')
 else
     fprintf('Loading processed data...')
-    load('D:\TrajectoryDynamics\M1DynamicsPooledRT.mat')
+    load('Y:\Hammad\Ephys\LeverTask\Data_for_Figures\TrajectoryDynamics\M1DynamicsPooledRT.mat')
     fprintf('done\n')
 end
 %% Sort by RT
@@ -223,7 +225,7 @@ plot(time,mean(stabilityHitFast,2))
 set(gca,'TickDir','out'),set(gca,'fontsize',16),box off,axis square
 xlabel('Time (s)'),ylabel('Trajectory Stability'),legend('All','Slow','Fast')
 xlim([-0.5 1.5])
-
+%%
 
 stabilityHit = horzcat(neuralStab{:});
 stabilityHitSlow = horzcat(neuralStabSlow{:});
@@ -282,6 +284,42 @@ set(gca,'TickDir','out'),set(gca,'fontsize',16),box off
 mdl = fitlm(stabilityPeak,reactionTime)
 figure,plot(mdl)
 set(gca,'TickDir','out'),set(gca,'fontsize',16),box off
+%%
+x = stabilityPeak(:);
+y = reactionTime(:);
+
+% --- first (unweighted) fit, as you already have ---
+modelfun = @(b,x) b(1) + b(2).*exp(-b(3).*x);
+b1_0 = min(y);
+b2_0 = max(y) - b1_0;
+b3_0 = 1 / range(x);
+beta0 = [b1_0, b2_0, b3_0];
+
+mdl_exp   = fitnlm(x, y, modelfun, beta0);
+
+% --- weights + second (weighted) fit ---
+r = mdl_exp.Residuals.Raw;
+[~,~,bin] = histcounts(x, 20);
+sigma = accumarray(bin, r.^2, [], @mean);
+sigma = sigma(bin);
+w = 1 ./ sigma;
+mdl_exp_w = fitnlm(x, y, modelfun, beta0, 'Weights', w)
+
+% --- common x-grid and predictions for both models ---
+xx = linspace(min(x), max(x), 200)';
+yy_unw = predict(mdl_exp,   xx);
+yy_w   = predict(mdl_exp_w, xx);   % weighted fit prediction [web:11]
+
+% --- plot data + both fits ---
+figure;
+scatter(x, y, 10, 'k', 'filled'); hold on;
+plot(xx, yy_unw, 'r', 'LineWidth', 2);      % unweighted
+plot(xx, yy_w,   'b--', 'LineWidth', 2);    % weighted
+set(gca,'TickDir','out','FontSize',16); box off;
+xlabel('stabilityPeak'); ylabel('reactionTime');
+legend('Data','Exp fit','Weighted exp fit','Location','best');
+title('Exponential-decay fits (unweighted vs weighted)');
+
 
 %% Plot example session
 load('Y:\Hammad\Ephys\LeverTask\DualShank\075356DualShank\Day6\M1SharpM2Dual_Day6_Recording1_240730_181846\UCLA_chanmap_fixed\Spikes.mat')
