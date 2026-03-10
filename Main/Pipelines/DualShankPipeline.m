@@ -88,6 +88,25 @@ temp2 = vertcat(temp2,zeros(1,IntanBehaviour.nCueMiss)); %  write 0 for no rewar
 temp = [temp1,temp2];
 [~,idx] = sort(temp(1,:)); %sort by occurance
 IntanBehaviour.ITI = temp(:,idx);
+%%
+if parameters.cool == 1
+    temperature = data.analogChannels(1,:);
+    temperature = (temperature-1.25)/0.005;
+    IntanBehaviour.temperature = resample(temperature,parameters.Fs,data.targetedFs);
+    clear temperature
+    for n = 1:IntanBehaviour.nCueHit
+        IntanBehaviour.hitTemp(n,1) = IntanBehaviour.temperature(IntanBehaviour.cueHitTrace(n).LFPIndex(1));
+    end
+    IntanBehaviour.hitTemp = IntanBehaviour.hitTemp-IntanBehaviour.temperature(100);
+    for n = 1:IntanBehaviour.nCueMiss
+        IntanBehaviour.missTemp(n,1) = IntanBehaviour.temperature(IntanBehaviour.cueMissTrace(n).LFPIndex(1));
+    end
+    IntanBehaviour.missTemp = IntanBehaviour.missTemp-IntanBehaviour.temperature(100);
+    for n = 1:length(IntanBehaviour.missTrace)
+        IntanBehaviour.FATemp(n,1) = IntanBehaviour.temperature(IntanBehaviour.missTrace(n).LFPIndex(1));
+    end
+    IntanBehaviour.FATemp = IntanBehaviour.FATemp-IntanBehaviour.temperature(100);
+end
 %% Plot behaviour
 figure
 for i=1:IntanBehaviour.nCueHit
@@ -174,14 +193,24 @@ M2Spikes = getSpikeStruct(ds_filename1, chanMap,IntanBehaviour);
 if exist('parameters','var')
     IntanBehaviour.parameters = parameters;
 end
-chanMap =  'chanMap64Sharp';
+chanMap =  'chanMap64M';
 M1Spikes = getSpikeStruct(ds_filename2, chanMap,IntanBehaviour);
-spath = 'Y:\Hammad\Ephys\LeverTask\Data_for_Figures\M1M2DualShank\CCA';
-[path,name,ext] = fileparts(fpath);
-sessionName = [spath,'\',name(1:end-14)];
+
 if saveasCCA
-    save(sessionName,"M2Spikes","M1Spikes","IntanBehaviour","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
-    disp('Saved CCA data!')
+    if IntanBehaviour.parameters.cool==1
+        spath = 'Y:\Hammad\Ephys\LeverTask\Data_for_Figures\CCA_cooling';
+        [path,~,~] = fileparts(fpath);
+        [~,name,ext] = fileparts(path);
+        sessionName = [spath,'\',name(1:end-14)];
+        save(sessionName,"M2Spikes","M1Spikes","IntanBehaviour","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
+        disp('Saved CCA data!')
+    else
+        spath = 'Y:\Hammad\Ephys\LeverTask\Data_for_Figures\M1M2DualShank\CCA';
+        [path,name,ext] = fileparts(fpath);
+        sessionName = [spath,'\',name(1:end-14)];
+        save(sessionName,"M2Spikes","M1Spikes","IntanBehaviour","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
+        disp('Saved CCA data!')
+    end
 end
 %% Trajectory Analysis of two regions (ONGOING)
 neuralTrajAnalysis(M1Spikes,[],IntanBehaviour);

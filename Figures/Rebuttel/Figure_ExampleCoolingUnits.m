@@ -40,6 +40,37 @@ for n = 2:length(col)
     plot(xin(n-1:n),yin(n-1:n),'color',double(cd1(1:3,n))/255, 'LineWidth',2);hold on %cline( time, xf, [], angle(xgp) );
 end
 box off, axis off
+%%
+M = load( 'myMap.mat' );
+smooth_temp = smoothdata(IntanBehaviour.hitTemp, 1, 'movmean', 10);
+ 
+cmap = flip(M.myMap);
+nColors = size(cmap,1);
+y = 1:numel(smooth_temp);   % now vertical
+v = smooth_temp(:);         % now horizontal
+vMin = min(v);
+vMax = max(v);
+if vMax == vMin
+    idx = ones(size(v));
+else
+    vNorm = (v - vMin) / (vMax - vMin);           % normalize to [0 1]
+    idx = round( 1 + vNorm * (nColors - 1) );     % map to [1 nColors]
+end
+figure;
+hold on;
+for k = 1:(numel(y)-1)
+    c = cmap(idx(k), :);
+    % note the swapped order: x = smooth_temp, y = index
+    plot(smooth_temp(k:k+1), y(k:k+1), 'Color', c, 'LineWidth', 1.5);
+end
+ylim([y(1) y(end)]);
+xlabel('Temperature');
+ylabel('Sample index');
+title('Colored temperature trace with axes flipped');
+colormap(cmap);
+caxis([vMin vMax]);
+colorbar;
+ylim([0 160])
 
 %%
 function IntanBehaviour = grabTemp(IntanBehaviour,fpath)
