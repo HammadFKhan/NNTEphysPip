@@ -40,16 +40,16 @@ parameters.windowBeforeCue = 1.5; % in seconds
 parameters.windowAfterCue = 1.5; % in seconds
 parameters.windowBeforeMI = 1.5; % in seconds 
 parameters.windowAfterMI = 3.5; % in seconds 
-parameters.effortPerturbation = 0
+parameters.perturbEffort = 1;
 parameters.delay = 0.5; %reward delay
 parameters.Fs = 1000; % Eventual downsampled data
 parameters.ts = 1/parameters.Fs;
 parameters.IntanFs = data.targetedFs;
 parameters.rows = 64;
 parameters.cols = 1;
-
-[Behaviour] = readLeverSq(parameters,lfpTime,fname);
-[IntanBehaviour] = readLeverIntan(parameters,data.amplifierTime,data.analogChannels(1,:),data.digitalChannels,Behaviour,1);
+lfpTime = data.amplifierTime;
+[Behaviour] = readLeverSq(parameters,lfpTime);
+[IntanBehaviour] = readLeverIntanSq(parameters,data.amplifierTime,data.analogChannels(1,:),data.digitalChannels,Behaviour,1);
 
 % Calculate ITI time for trials and reward/no reward sequence
 temp1 = arrayfun(@(x) x.LFPtime(1), IntanBehaviour.cueHitTrace);
@@ -135,7 +135,7 @@ end
 temp = arrayfun(@(x) isempty(x.cluster), Spikes.Clusters);
 Spikes.Clusters(temp) = []; 
 %%% Calculate trial PSTH for lever
-Spikes = leverPSTH(Spikes,IntanBehaviour);
+Spikes = leverPSTHSq(Spikes,IntanBehaviour);
 %%% save spike output data to load into gui
 savepath = fullfile(path,['spks4sorting','.mat']);
 path = [fpath,'/kilosort3/' mergename];
@@ -158,8 +158,6 @@ sessionName = [fpath,'/','Spikes.mat'];
 % save(sessionName,"IntanBehaviour","fpath","parameters","-v7.3");
 save(sessionName,"Spikes","IntanBehaviour","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
 disp('Saved!')
-<<<<<<< Updated upstream
-=======
 %% Prep data for warping
 prepWrap(Spikes,ds_filename)
 %% Plot out spikes aligned to the pull response
@@ -824,5 +822,4 @@ for i = 1:size(sigPairs,1)
 end
 hold off;
 end
->>>>>>> Stashed changes
 
