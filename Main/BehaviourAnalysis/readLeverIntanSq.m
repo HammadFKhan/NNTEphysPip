@@ -282,7 +282,11 @@ for i=1:IntanBehaviour.nMiss
     if ~isempty(IntanBehaviour.missTrace(i).pullCount)
         if parameters.perturbEffort == 1
             IntanBehaviour.missTrace(i).effortTrace = IntanBehaviour.effortTrace(missIndex(i)-parameters.windowBeforePull*parameters.Fs:missIndex(i)+parameters.windowAfterPull*parameters.Fs)';
+            try
             effortIdx = IntanBehaviour.missTrace(i).LFPIndex(IntanBehaviour.missTrace(i).pullCount(1))-1;
+            catch
+                continue
+            end
             IntanBehaviour.missTrace(i).effortFlag = find(effortIndex>=effortIdx & effortIndex<=(IntanBehaviour.missTrace(i).LFPIndex(end)));
         end
     end
