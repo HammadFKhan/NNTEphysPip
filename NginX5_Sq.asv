@@ -11,11 +11,12 @@ activeElectrodes = 1:64;
 chanMapFile = 'UCLA_chanmap_fixed.mat'; %UCLA Sharp
 %chanMapFile = 'UCLA_chanmap_64F2.mat';
 ds_filename = intanPreprocessing2(chanMapFile,intandsFlag,activeElectrodes); %IntanDs flag  %% double check file type
-%% Run Kilosort3 
+%%
+%%% Run Kilosort3 
 % load only neccessary variables from memory mapped file
-data = matfile(ds_filename,'Writable',true);
+data = matfile(ds_filename);
 fpath = data.fpath;
-% Kilosort264FTestcode
+%Kilosort264FTestcode
 Kilosort264SharpTestcode
 savepath = fullfile(fpath,['loadme','.mat']);
 save(savepath,'ds_filename');
@@ -33,62 +34,46 @@ data = matfile(ds_filename); % ds_filename comes from loadme.mat
 parameters.experiment = 'self'; % self - internally generated, cue - cue initiated
 parameters.opto = 0; % 1 - opto ON , 0 - opto OFF
 parameters.cool = 0; % No Cool 
-parameters.perturbEffort = 1; %perturb effort after first pull
-
-parameters.windowBeforePull = 3.5; % in seconds % technically window before reward
-parameters.windowAfterPull = 1.5; % in seconds
+parameters.windowBeforePull = 3; % in seconds
+parameters.windowAfterPull = 2; % in seconds
 parameters.windowBeforeCue = 1.5; % in seconds
-parameters.windowAfterCue = 3.5; % in seconds
+parameters.windowAfterCue = 1.5; % in seconds
 parameters.windowBeforeMI = 1.5; % in seconds 
 parameters.windowAfterMI = 3.5; % in seconds 
+parameters.perturbEffort = 1;
 parameters.delay = 0.5; %reward delay
 parameters.Fs = 1000; % Eventual downsampled data
 parameters.ts = 1/parameters.Fs;
 parameters.IntanFs = data.targetedFs;
 parameters.rows = 64;
 parameters.cols = 1;
-
-[Behaviour] = readLeverSq(parameters,data.amplifierTime);
+lfpTime = data.amplifierTime;
+[Behaviour] = readLeverSq(parameters,lfpTime);
 [IntanBehaviour] = readLeverIntanSq(parameters,data.amplifierTime,data.analogChannels(1,:),data.digitalChannels,Behaviour,0);
 
-% Calculate ITI time for trials and reward/no reward sequence
-% temp1 = arrayfun(@(x) x.LFPtime(1), IntanBehaviour.cueHitTrace);
-% temp1 = vertcat(temp1,ones(1,IntanBehaviour.nCueHit)); %  write 1 for reward given
-% temp2 = arrayfun(@(x) x.LFPtime(1), IntanBehaviour.cueMissTrace);
-% temp2 = vertcat(temp2,zeros(1,IntanBehaviour.nCueMiss)); %  write 0 for no reward given
-% temp = [temp1,temp2];
-% [~,idx] = sort(temp(1,:)); %sort by occurance
-% IntanBehaviour.ITI = temp(:,idx);
+IntanBehaviour.reactionTime = arrayfun(@(x) x.pullCount(3)-x.pullCount(1),IntanBehaviour.hitTrace)/1000;
 IntanBehaviour.parameters = parameters;
-Behaviour.parameters = parameters;
-[Behaviour.cleanedpullCounts, Behaviour.pullIndices] = cleanTimeoutSequences(Behaviour,0);
-
 %% Plot behaviour
 figure
-for i=1:length(IntanBehaviour.hitTrace)
-    plot(0:5000,smoothdata(IntanBehaviour.MIHitTrace(i).trace),'Color',[0 0 0 0.2],'LineWidth',1.5);
+for i=1:IntanBehaviour.nCueHit
+    plot(0:3000,smoothdata(IntanBehaviour.cueHitTrace(i).trace),'Color',[0 0 0 0.2],'LineWidth',1.5);
     hold on;
     try
-        hitTrace(i,:) = smoothdata(IntanBehaviour.hitTrace(i).rawtrace);
+        hitTrace(i,:) = smoothdata(IntanBehaviour.cueHitTrace(i).rawtrace);
     catch
         continue
     end
 end
-for n = 1:length(IntanBehaviour.hitTrace)
-    IntanBehaviour.AvgHitTrace(n,:) = IntanBehaviour.hitTrace(n).trace;
+for n = 1:IntanBehaviour.nCueHit
+    IntanBehaviour.AvgHitTrace(n,:) = IntanBehaviour.cueHitTrace(n).trace;
 end
 IntanBehaviour.AvgHitTrace = mean(IntanBehaviour.AvgHitTrace,1);
-figure,
-for n = 1:length(IntanBehaviour.missTrace)
-    plot(0:5000,smoothdata(IntanBehaviour.missTrace(n).trace),'Color',[0 0 0 0.2],'LineWidth',1.5);
-    hold on;
-    missTrace(n,:) = IntanBehaviour.missTrace(n).trace;
+for n = 1:IntanBehaviour.nCueMiss
+    IntanBehaviour.AvgMissTrace(n,:) = IntanBehaviour.cueMissTrace(n).trace;
 end
-IntanBehaviour.AvgMissTrace = mean(missTrace,1);
+IntanBehaviour.AvgMissTrace = mean(IntanBehaviour.AvgMissTrace,1);
 IntanBehaviour.AvgHitTrace = mean(IntanBehaviour.AvgHitTrace,1);
-%%% sequence dynamics
-pullIndex = vertcat(IntanBehaviour.hitTrace.pullCount);
-figure,imagesc(Behaviour.cleanedpullCounts)
+
 %% LFP probe setup for 64F and analysis
 % Since there are two probes we want to seperate everything into linear
 % maps for CSD and depthwise LFP analysis and then we do filtering
@@ -117,7 +102,6 @@ path = [fpath,'/kilosort3/'];
 mergename = 'merged';
 Kilosort3AutoMergeTester
 path = [fpath,'/kilosort3/' mergename];
-addpath(genpath('C:\Users\khan332\Documents\GitHub\Kilosort')) % path to kilosort folder
 %%% Spike preprocessing (includes merging (optional) and channel info
 %%% return)
 % Read in kilosort data for matlab analysis
@@ -160,13 +144,12 @@ if exist('goodSpkComponents','var')
 else 
     Spikes.goodSpkComponents = 1:length(Spikes.Clusters);
 end
-Spikes = rejectSpikes(Spikes,0.1,0.15,IntanBehaviour.parameters); % Reject spikes here for further analysis
-IntanBehaviour.reactionTime = 0;
+Spikes = rejectSpikes(Spikes,0.25,0.25,IntanBehaviour.parameters); % Reject spikes here for further analysis
 [Spikes] = sortSpkLever(Spikes,IntanBehaviour);
 [fpath,name,exts] = fileparts(ds_filename);
 sessionName = [fpath,'/','Spikes.mat'];
 % save(sessionName,"IntanBehaviour","fpath","parameters","-v7.3");
-save(sessionName,"Spikes","IntanBehaviour","fpath","ds_filename","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
+save(sessionName,"Spikes","IntanBehaviour","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
 disp('Saved!')
 %% Prep data for warping
 prepWrap(Spikes,ds_filename)
@@ -283,7 +266,7 @@ for p = 1:num_pulls
     subplot(1,3,p),
     % Bin and normalize
     counts = histcounts(warpedSpks.stats.modulationIndex(:,p), bin_edges, 'Normalization', 'probability');
-    bin_centers = bin_edges(1:end-1) + diff(bin_edges)/2;
+    bin_centers = bin_edges(1:end-1) + diffs(bin_edges)/2;
     % Stairs plot
     stairs(bin_centers, counts, 'Color', colors(p,:), 'LineWidth', 2);
     xlabel('Modulation Index');
@@ -360,7 +343,7 @@ for p = 1:num_pulls
     temp(1:length(sel_for_pull),p) = sel_for_pull;
     % Bin and normalize
     counts = histcounts(sel_for_pull, bin_edges, 'Normalization', 'count');
-    bin_centers = bin_edges(1:end-1) + diff(bin_edges)/2;
+    bin_centers = bin_edges(1:end-1) + diffs(bin_edges)/2;
     % Stairs plot
     stairs(bin_centers, counts, 'Color', colors(p,:), 'LineWidth', 2);
 end
@@ -398,9 +381,9 @@ if exist('mat_results','dir'),rmdir('mat_results','s'),end
 % [Spikes.GPFA.resultMIHitFA,Spikes.GPFA.seqTrainMIHitFA] = gpfaAnalysis(Spikes.GPFA.MIHitFA.dat,6); %Run index
 [Spikes.GPFA.resultHitEffort,Spikes.GPFA.seqTrainHitEffort] = gpfaAnalysis(Spikes.GPFA.HitEffort.dat,7); %Run index
 close all
-% sessionName = [fpath,'\','Spikes.mat'];
-% save(sessionName,"Spikes","IntanBehaviour","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
-% disp('Saved!')
+sessionName = [fpath,'\','Spikes.mat'];
+save(sessionName,"Spikes","IntanBehaviour","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
+disp('Saved!')
 %% For warping data only
 [neuralDynamics] = getGPFASq(warpedSpks.pull1A.warpSpikes  ,IntanBehaviour);
 %%
@@ -528,7 +511,7 @@ for t = 50
         title(['Initial conditions on trial = ', num2str(trial)]);
         axis([min(x(:)), max(x(:)), min(y(:)), max(y(:)), min(z(:)), max(z(:))]);
         % Calculate current azimuth angle for rotation
-        current_azimuth = mod(initial_azimuth + trial, 360);
+        current_azimuth = mod(initial_azimuth + 50*trial, 360);
         view(current_azimuth, elevation);
         grid on
         drawnow
@@ -642,8 +625,8 @@ Sigma = cov(initCond);
 
 for i = 1:n
     for j = 1:n
-        diff = initCond(i,:) - initCond(j,:);
-        pairwiseMahal(i,j) = sqrt(diff / Sigma * diff');
+        diffs = initCond(i,:) - initCond(j,:);
+        pairwiseMahal(i,j) = sqrt(diffs / Sigma * diffs');
     end
 end
 silo = zeros(n,1);
@@ -671,7 +654,7 @@ end
 
 % Plot it
 figure;
-h = histogram(silo, 'Normalization', 'probability', 'FaceColor', [0.5 0.8 1], 'EdgeColor','none');
+h = histogram(silo, 11,'Normalization', 'probability', 'FaceColor', [0.5 0.8 1], 'EdgeColor','none');
 set(gca, ...
     'TickDir', 'out', ...
     'Box', 'off', ...
@@ -686,6 +669,7 @@ xlim([-0.5, 0.75]); % Adjust as needed for your data
 ylim([0, max(h.Values)*1.1]);
 % Compute and plot mean
 m = median(silo);
+skewness(silo)
 yl = ylim;
 hold on;
 xline(m, '--k', ['Median = ' num2str(m, '%.2f')], ...

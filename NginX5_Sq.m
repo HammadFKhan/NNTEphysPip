@@ -49,16 +49,9 @@ parameters.rows = 64;
 parameters.cols = 1;
 lfpTime = data.amplifierTime;
 [Behaviour] = readLeverSq(parameters,lfpTime);
-[IntanBehaviour] = readLeverIntanSq(parameters,data.amplifierTime,data.analogChannels(1,:),data.digitalChannels,Behaviour,1);
+[IntanBehaviour] = readLeverIntanSq(parameters,data.amplifierTime,data.analogChannels(1,:),data.digitalChannels,Behaviour,0);
 
-% Calculate ITI time for trials and reward/no reward sequence
-temp1 = arrayfun(@(x) x.LFPtime(1), IntanBehaviour.cueHitTrace);
-temp1 = vertcat(temp1,ones(1,IntanBehaviour.nCueHit)); %  write 1 for reward given
-temp2 = arrayfun(@(x) x.LFPtime(1), IntanBehaviour.cueMissTrace);
-temp2 = vertcat(temp2,zeros(1,IntanBehaviour.nCueMiss)); %  write 0 for no reward given
-temp = [temp1,temp2];
-[~,idx] = sort(temp(1,:)); %sort by occurance
-IntanBehaviour.ITI = temp(:,idx);
+IntanBehaviour.reactionTime = arrayfun(@(x) x.pullCount(3)-x.pullCount(1),IntanBehaviour.hitTrace)/1000;
 IntanBehaviour.parameters = parameters;
 %% Plot behaviour
 figure
@@ -426,7 +419,7 @@ x = squeeze(M1neuralDynamics.effort.X(1,:,:));
 y = squeeze(M1neuralDynamics.effort.X(2,:,:));
 z = squeeze(M1neuralDynamics.effort.X(3,:,:));
 figure,hold on
-for n = 1:80
+for n = 1:35
 plot3(x(:,n),y(:,n),z(:,n),'color',[0 0 0 0.4])
 plot3(x(1,n), y(1,n), z(1,n), 'o', 'MarkerFaceColor', [0.9 0.5 0.5], 'MarkerEdgeColor', 'k');
 end
@@ -442,7 +435,7 @@ z = horzcat(squeeze(M1neuralDynamics.hiteffort.X(3,:,:)),squeeze(M1neuralDynamic
 timeEnd = 250;
 nTrials = size(x, 2);
 
-v = VideoWriter('D:\SQLever\neural_trajectoriesM1Day15.avi'); % Name your output file
+v = VideoWriter('D:\SQLever\neural_trajectoriesM1Day15newredo.avi'); % Name your output file
 v.FrameRate = 20; % Set the frame rate
 open(v);
 
