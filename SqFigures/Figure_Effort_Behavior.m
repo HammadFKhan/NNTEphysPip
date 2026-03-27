@@ -210,7 +210,7 @@ ylabel('Pull Weight (g)')
 %% Build a subsequent trial analysis of the effort response
 % Here we need to figure out the chronological order of the effort task vs
 % the hit task....
-% We can do this my sorting the index of the pull count to the LFP time for
+% We can do this by sorting the index of the pull count to the LFP time for
 % both effort and hit trials
 periCatchTrajectorySessions = [];
 periCatchSpeedSessions =[];
