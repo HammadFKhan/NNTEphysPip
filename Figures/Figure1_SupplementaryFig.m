@@ -37,6 +37,18 @@
 % manipulations (e.g., if one were to shuffle the time bins of a sequential
 % neural trajectory).
 % Here we use Bin width of 20
+
+M1SqEntropyMice =struct();
+files = dir(fullfile('Y:\Hammad\Ephys\LeverTask\Data_for_Figures\M1_GSP','*.mat'));
+for fileNum = 1:length(files)
+    disp(['File number: ' num2str(fileNum)])
+    load(fullfile(files(fileNum).folder,files(fileNum).name))
+%     M1eOPN(fileNum).IntanBehaviour = IntanBehaviour;
+    M1SqEntropyMice(fileNum).filename = files(fileNum).name;
+    M1SqEntropyMice(fileNum).SqEntropy = getSqEntropy(Spikes);
+end
+
+%%
 load('D:\SequenceDat\M1Sq.mat')
 load('D:\SequenceDat\M2Sq.mat')
 colors = [0 0.4470 0.7410;0.75 0.75 0.75;0 0.4470 0.7410;190/255 30/255 45/255]; % data is indexed as Hit, Miss, MIHIT, MIFA
