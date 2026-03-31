@@ -40,21 +40,20 @@ for fileNum = 1:length(files)
     M1eOPN(fileNum).IntanBehaviour = IntanBehaviour;
 
     try
-        [IntanBehaviourBaseline,IntanBehaviourOpto, Waves, WavesOpto] = separateOptoTrials(IntanBehaviour,IntanBehaviour.parameters);
-        baselineId = 1:length(IntanBehaviourBaseline.cueHitTrace);
-        eOPNId = length(IntanBehaviourBaseline.cueHitTrace)+1:length(IntanBehaviour.cueHitTrace);
-        assert(length(eOPNId)==length(IntanBehaviourOpto.cueHitTrace))
-        % Since the sqEntropy is accessing each spike structure we need to seperate the trials
-        baselineSpikes = Spikes;
-        eOPNSpikes = Spikes;
-        baselineSpikes.PSTH.hit.spks = cellfun(@(x) x(baselineId,:),baselineSpikes.PSTH.hit.spks,'UniformOutput',false);
-        eOPNSpikes.PSTH.hit.spks = cellfun(@(x) x(eOPNId,:),eOPNSpikes.PSTH.hit.spks,'UniformOutput',false);
-        Spikes.baselineSpikes = baselineSpikes;
-        Spikes.eOPNSpikes = eOPNSpikes;
+    [IntanBehaviourBaseline,IntanBehaviourOpto, Waves, WavesOpto] = separateOptoTrials(IntanBehaviour,IntanBehaviour.parameters);
+    baselineId = 1:length(IntanBehaviourBaseline.cueHitTrace);
+    eOPNId = length(IntanBehaviourBaseline.cueHitTrace)+1:length(IntanBehaviour.cueHitTrace);
+    assert(length(eOPNId)==length(IntanBehaviourOpto.cueHitTrace))
+    % Since the sqEntropy is accessing each spike structure we need to seperate the trials 
+    baselineSpikes = Spikes; 
+    eOPNSpikes = Spikes; 
+    baselineSpikes.PSTH.hit.spks = cellfun(@(x) x(baselineId,:),baselineSpikes.PSTH.hit.spks,'UniformOutput',false);
+    eOPNSpikes.PSTH.hit.spks = cellfun(@(x) x(eOPNId,:),eOPNSpikes.PSTH.hit.spks,'UniformOutput',false);
+    Spikes.baselineSpikes = baselineSpikes;
+    Spikes.eOPNSpikes = eOPNSpikes;
 
-        M1eOPN(fileNum).Spikes = Spikes;
+    M1eOPN(fileNum).Spikes = Spikes;
     catch
-        disp('error on eopn ')
         continue
     end
 end

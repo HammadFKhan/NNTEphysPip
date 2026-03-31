@@ -58,7 +58,7 @@ if ~exist('M1Dynamics','var') && ~exist('M2Dynamics','var')
     load('D:\TrajectoryDynamics\M2Dynamics.mat');
 end
 %%
-dynamics = M2neuralDynamics;
+dynamics = M1neuralDynamics;
 dimension = 1;
 speedTot = [];
 for n = 1:length(dynamics)
@@ -230,14 +230,14 @@ ylabel('Trajectory Deviation')
 [p,t,stats] = anova1(temp)
 c = multcompare(stats)
 %% Neural Trajectory difference
-dynamics = M2neuralDynamics;
+dynamics = M1neuralDynamics;
 dimension = 1;
 simTot = [];
 for n = 1:length(dynamics)
-sim_data = dynamics(n).neuralDynamics.neuralDiffhitmiss;  
-simTot{n} = squeeze(sim_data(:,dimension));
+sim_data = dynamics(n).neuralDynamics.neuralSimhitmiss;  
+simTot{n} = squeeze(sim_data);
 end
-simTot = horzcat(simTot{:});
+simTot = vertcat(simTot{:})';
 
 
 colors = [0 0.4470 0.7410;0.75 0.75 0.75;190/255 30/255 45/255];
@@ -250,10 +250,10 @@ hold on;
 
 simTot = [];
 for n = 1:length(dynamics)
-sim_data = dynamics(n).neuralDynamics.neuralDiffMI;  
-simTot{n} = squeeze(sim_data(:,dimension));
+sim_data = dynamics(n).neuralDynamics.neuralSimMI;  
+simTot{n} = squeeze(sim_data);
 end
-simTot = horzcat(simTot{:});
+simTot = vertcat(simTot{:})';
 
 
 colors = [0 0.4470 0.7410;0.75 0.75 0.75;190/255 30/255 45/255];
@@ -265,4 +265,4 @@ hold on;
 
 xlabel('Time (s)');
 ylabel('Average Speed');
-box off,set(gca,'tickdir','out','fontsize',14),axis square,xlim([-500 1500])%,ylim([-0.01 0.03])
+box off,set(gca,'tickdir','out','fontsize',14),axis square,xlim([-500 1500]),ylim([-0.03 0.03])

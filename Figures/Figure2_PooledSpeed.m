@@ -1,13 +1,14 @@
 %%% Calculate aggregate relationship of peak neural stability and reaction
 %%% times
 clear
-redo = 0;
+redo = 1;
 if redo==1
     files = dir(fullfile('Y:\Hammad\Ephys\LeverTask\Data_for_Figures\M1_GSP','*.mat'));
     M1neuralDynamics = struct();
     for fileNum = 1:length(files)
         disp(['File number: ' num2str(fileNum)])
         load(fullfile(files(fileNum).folder,files(fileNum).name))
+        try
         Spikes = makeSpikeGPFA(Spikes);
         Spikes.GPFA.HitMiss.dat = [Spikes.GPFA.hit.dat,Spikes.GPFA.miss.dat];
         for n = 1:IntanBehaviour.nCueHit%+1:length(Spikes.GPFA.BaselineOpto.dat) %fix trials
@@ -29,17 +30,21 @@ if redo==1
         M1neuralDynamics(fileNum).fname = files(fileNum).name;
         M1neuralDynamics(fileNum).IntanBehaviour = IntanBehaviour;
         [M1neuralDynamics(fileNum).neuralDynamics,M1waveDynamics] = neuralTrajAnalysis2(Spikes,[],IntanBehaviour);
+        catch ME
+            disp('Error getting neural dynamics')
+            continue
+        end
         close all
     end
     fpath = 'Y:\Hammad\Ephys\LeverTask\Data_for_Figures\TrajectoryDynamics';
-    sessionName = [fpath,'\','M1DynamicsPooledRT.mat'];
+    sessionName = [fpath,'\','M1DynamicsPooledRTv2.mat'];
     save(sessionName,"M1neuralDynamics","fileNum","files","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
     clear
     disp('Loading processed data...')
-    load('Y:\Hammad\Ephys\LeverTask\Data_for_Figures\TrajectoryDynamics\M1DynamicsPooledRT.mat')
+    load('Y:\Hammad\Ephys\LeverTask\Data_for_Figures\TrajectoryDynamics\M1DynamicsPooledRTv2.mat')
 else
     fprintf('Loading processed data...')
-    load('Y:\Hammad\Ephys\LeverTask\Data_for_Figures\TrajectoryDynamics\M1DynamicsPooledRT.mat')
+    load('Y:\Hammad\Ephys\LeverTask\Data_for_Figures\TrajectoryDynamics\M1DynamicsPooledRTv2.mat')
     fprintf('done\n')
 end
 %% Sort by RT
