@@ -12,6 +12,7 @@ addpath(genpath('npy-matlab'));
 addpath(genpath('spikes-master'));
 intandsFlag = 1; %make LFPs
 activeElectrodes = 1:64;
+% activeElectrodes = 33:96;
 %chanMapFile = 'UCLA_chanmap_fixed.mat'; %UCLA Sharp
 chanMapFile = 'UCLA_chanmap_64F2.mat';
 if ~exist('pathname','var')
@@ -19,14 +20,18 @@ if ~exist('pathname','var')
 end
 ds_filename1 = intanPreprocessingDualShanks(pathname,chanMapFile,intandsFlag,activeElectrodes);
 activeElectrodes = 65:128;
-chanMapFile = 'UCLA_chanmap_fixed.mat'; %UCLA Sharp
+% activeElectrodes = 97:160;
+
+%chanMapFile = 'UCLA_chanmap_fixed.mat'; %UCLA Sharp
+chanMapFile = 'UCLA_chanmap_64M.mat';
 %chanMapFile = 'UCLA_chanmap_64F2.mat';
 ds_filename2 = intanPreprocessingDualShanks(pathname,chanMapFile,intandsFlag,activeElectrodes);
 fpath = pathname;
 savepath = fullfile(fpath,['loadme','.mat']);
 save(savepath,'ds_filename1','ds_filename2','fpath');
 clearvars -except ds_filename1 ds_filename2
-%% Run Kilosort3 
+
+%%% Run Kilosort3 
 % load only neccessary variables from memory mapped file
 % Analysis of dual shank
 data = matfile(ds_filename1);
@@ -36,7 +41,8 @@ Kilosort264FTestcode
 %Analysis of sharp shank
 data = matfile(ds_filename2);
 fpath = data.fpath;
-Kilosort264SharpTestcode
+% Kilosort264SharpTestcode
+Kilosort264MTestcode
 %% New load me
 [fname,fpath] = uigetfile();
 savepath = fullfile(fpath,['loadme','.mat']);
@@ -60,8 +66,19 @@ parameters.ts = 1/parameters.Fs;
 parameters.IntanFs = data.targetedFs;
 parameters.rows = 64;
 parameters.cols = 1;
-
-[Behaviour] = readLever(parameters,data.amplifierTime);
+if ~exist('fname','var')
+    [enfile,enpath] = uigetfile('Y:\Hammad\Ephys\LeverTask\LeverTaskRebuttal\*.csv');
+    if isequal(enfile,0)
+        disp('User selected Cancel');
+    else
+        disp(['User selected ', fullfile(enpath,enfile)]);
+    end
+else
+    [enpath,enfile,ext] = fileparts(fname);
+    disp(['User selected ', fullfile(enpath,enfile)]);
+    enfile = [enfile,ext];
+end
+[Behaviour] = readLever(enpath,enfile,parameters,data.amplifierTime,0);
 [IntanBehaviour] = readLeverIntan(parameters,data.amplifierTime,data.analogChannels(2,:),data.digitalChannels,Behaviour,1);
 % Calculate ITI time for trials and reward/no reward sequence
 temp1 = arrayfun(@(x) x.LFPtime(1), IntanBehaviour.cueHitTrace);
@@ -71,6 +88,25 @@ temp2 = vertcat(temp2,zeros(1,IntanBehaviour.nCueMiss)); %  write 0 for no rewar
 temp = [temp1,temp2];
 [~,idx] = sort(temp(1,:)); %sort by occurance
 IntanBehaviour.ITI = temp(:,idx);
+%%
+if parameters.cool == 1
+    temperature = data.analogChannels(1,:);
+    temperature = (temperature-1.25)/0.005;
+    IntanBehaviour.temperature = resample(temperature,parameters.Fs,data.targetedFs);
+    clear temperature
+    for n = 1:IntanBehaviour.nCueHit
+        IntanBehaviour.hitTemp(n,1) = IntanBehaviour.temperature(IntanBehaviour.cueHitTrace(n).LFPIndex(1));
+    end
+    IntanBehaviour.hitTemp = IntanBehaviour.hitTemp-IntanBehaviour.temperature(100);
+    for n = 1:IntanBehaviour.nCueMiss
+        IntanBehaviour.missTemp(n,1) = IntanBehaviour.temperature(IntanBehaviour.cueMissTrace(n).LFPIndex(1));
+    end
+    IntanBehaviour.missTemp = IntanBehaviour.missTemp-IntanBehaviour.temperature(100);
+    for n = 1:length(IntanBehaviour.missTrace)
+        IntanBehaviour.FATemp(n,1) = IntanBehaviour.temperature(IntanBehaviour.missTrace(n).LFPIndex(1));
+    end
+    IntanBehaviour.FATemp = IntanBehaviour.FATemp-IntanBehaviour.temperature(100);
+end
 %% Plot behaviour
 figure
 for i=1:IntanBehaviour.nCueHit
@@ -144,6 +180,7 @@ sessionName = [fpath,'/','LFP.mat'];
 % save(sessionName,"IntanBehaviour","fpath","parameters","-v7.3");
 save(sessionName,"IntanBehaviour","parameters","LFP","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
 %% Spikes analysis
+saveasCCA = 1;
 % For spike analysis we can built the function call to call the neccessary
 % function twice for each probe. It will make like a lot easier. 
 if exist('parameters','var')
@@ -156,9 +193,24 @@ M2Spikes = getSpikeStruct(ds_filename1, chanMap,IntanBehaviour);
 if exist('parameters','var')
     IntanBehaviour.parameters = parameters;
 end
-chanMap =  'chanMap64Sharp';
+chanMap =  'chanMap64M';
 M1Spikes = getSpikeStruct(ds_filename2, chanMap,IntanBehaviour);
 
+if saveasCCA
+    if IntanBehaviour.parameters.cool==1
+        spath = 'Y:\Hammad\Ephys\LeverTask\Data_for_Figures\CCA_cooling';
+        [path,name,ext] = fileparts(fpath);
+        sessionName = [spath,'\',name(1:end-14)];
+        save(sessionName,"M2Spikes","M1Spikes","IntanBehaviour","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
+        disp('Saved CCA data!')
+    else
+        spath = 'Y:\Hammad\Ephys\LeverTask\Data_for_Figures\M1M2DualShank\CCA';
+        [path,name,ext] = fileparts(fpath);
+        sessionName = [spath,'\',name(1:end-14)];
+        save(sessionName,"M2Spikes","M1Spikes","IntanBehaviour","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
+        disp('Saved CCA data!')
+    end
+end
 %% Trajectory Analysis of two regions (ONGOING)
 neuralTrajAnalysis(M1Spikes,[],IntanBehaviour);
 

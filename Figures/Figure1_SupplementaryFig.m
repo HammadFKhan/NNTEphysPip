@@ -95,6 +95,7 @@ for n = 1:4
     xlim([0.5 2.5])
     box off, set(gca, 'tickdir','out','fontsize',10),axis square
     ylabel('Sequentiality Index')
+    ylim([0.55 0.85])
 end
 f.Position = [681 559 860 220];
 

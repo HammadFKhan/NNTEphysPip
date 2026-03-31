@@ -154,6 +154,7 @@ if isfield(Behaviour,'MIHitTrace')
                 end
                 trials{count}(i,:) = temp;
                 sqNum = Behaviour.SqNum;
+                % Check pullcount is above 1500 (quick fix) here
                 for sQN = 1:sqNum
                     pl = Behaviour.MIHitTrace(i).pullCount(sQN);
                     Spikes.PSTH.MIHit.pl(i,sQN) = pl;
