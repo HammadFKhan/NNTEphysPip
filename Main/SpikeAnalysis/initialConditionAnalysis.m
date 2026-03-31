@@ -4,14 +4,44 @@
 % and directional angles, and plots the initial condition trajectory with
 % drift vectors. This analysis helps quantify and interpret how neural
 % trajectories change over time in all dimensions.
+% Note that we concatenate trial conditions as to apply the same models for
+% statistical comparison (ie. hit vs miss, hit vs FA, opto vs no opto)
+if ~isfield(Spikes,'GPFA')
+    Spikes = makeSpikeGPFA(Spikes);
+    Spikes.GPFA.HitMiss.dat = [Spikes.GPFA.hit.dat,Spikes.GPFA.miss.dat];
+    for n = 1:length(IntanBehaviour.hitTrace)%+1:length(Spikes.GPFA.BaselineOpto.dat) %fix trials
+        Spikes.GPFA.HitMiss.dat(n).trialId = n;
+    end
+    Spikes.GPFA.MIHitFA.dat = [Spikes.GPFA.MIHit.dat,Spikes.GPFA.MIFA.dat];
+    for n = length(IntanBehaviour.MIHitTrace)+1:length(Spikes.GPFA.MIHitFA.dat) %fix trials
+        Spikes.GPFA.MIHitFA.dat(n).trialId = n;
+    end
+    Spikes.GPFA.HitEffort.dat = [Spikes.GPFA.MIHit.dat,Spikes.GPFA.effortperturb.dat];
+    for n = 1:length(IntanBehaviour.MIHitTrace)%+1:length(Spikes.GPFA.BaselineOpto.dat) %fix trials
+        Spikes.GPFA.HitEffort.dat(n).trialId = n;
+    end
+    
+    addpath(genpath('C:\Users\khan332\Documents\GitHub\NeuralTraj'));
+    addpath(genpath('mat_results'));
+    if exist('mat_results','dir'),rmdir('mat_results','s'),end
+    [Spikes.GPFA.resultHit,Spikes.GPFA.seqTrainHit] = gpfaAnalysis(Spikes.GPFA.hit.dat,1); %Run index
+    [Spikes.GPFA.resultMiss,Spikes.GPFA.seqTrainMiss] = gpfaAnalysis(Spikes.GPFA.miss.dat,2); %Run index
+    [Spikes.GPFA.resultMIHit,Spikes.GPFA.seqTrainMIHit] = gpfaAnalysis(Spikes.GPFA.MIHit.dat,3); %Run index
+    % [Spikes.GPFA.resultMIFA,Spikes.GPFA.seqTrainMIFA] = gpfaAnalysis(Spikes.GPFA.MIFA.dat,4); %Run index
+    [Spikes.GPFA.resultHitMiss,Spikes.GPFA.seqTrainHitMiss] = gpfaAnalysis(Spikes.GPFA.HitMiss.dat,5); %Run index
+    % [Spikes.GPFA.resultMIHitFA,Spikes.GPFA.seqTrainMIHitFA] = gpfaAnalysis(Spikes.GPFA.MIHitFA.dat,6); %Run index
+    [Spikes.GPFA.resultHitEffort,Spikes.GPFA.seqTrainHitEffort] = gpfaAnalysis(Spikes.GPFA.HitEffort.dat,7); %Run index
+    close all
+end
+[neuralDynamics,waveDynamics] = neuralTrajAnalysis2(Spikes,[],IntanBehaviour);
 
 %% Perform K-means clustering
 % Load your data (replace `initCond` with actual variable if different)
 % initCond = ... % n x 3 matrix
 [c,allTrials] = sort_hit_effort(IntanBehaviour);
-x = horzcat(squeeze(M1neuralDynamics.hiteffort.X(1,:,:)),squeeze(M1neuralDynamics.effort.X(1,:,:)));
-y = horzcat(squeeze(M1neuralDynamics.hiteffort.X(2,:,:)),squeeze(M1neuralDynamics.effort.X(2,:,:)));
-z = horzcat(squeeze(M1neuralDynamics.hiteffort.X(3,:,:)),squeeze(M1neuralDynamics.effort.X(3,:,:)));
+x = horzcat(squeeze(neuralDynamics.hiteffort.X(1,:,:)),squeeze(neuralDynamics.effort.X(1,:,:)));
+y = horzcat(squeeze(neuralDynamics.hiteffort.X(2,:,:)),squeeze(neuralDynamics.effort.X(2,:,:)));
+z = horzcat(squeeze(neuralDynamics.hiteffort.X(3,:,:)),squeeze(neuralDynamics.effort.X(3,:,:)));
 % sort trials
 x = x(45,c);
 y = y(45,c);
@@ -43,7 +73,107 @@ grid on
 hold off
 view(30,30)
 axis square
+%%
+t = 50;
+[c,allTrials] = sort_hit_effort(IntanBehaviour);
+x = horzcat(squeeze(neuralDynamics.hiteffort.X(1,:,:)),squeeze(neuralDynamics.effort.X(1,:,:)));
+y = horzcat(squeeze(neuralDynamics.hiteffort.X(2,:,:)),squeeze(neuralDynamics.effort.X(2,:,:)));
+z = horzcat(squeeze(neuralDynamics.hiteffort.X(3,:,:)),squeeze(neuralDynamics.effort.X(3,:,:)));
+x = x(:,c);
+y = y(:,c);
+z = z(:,c);
+figure,hold on
+for trial = 1:size(x,2)
+        % Plot a dot for the current time point based on effort
+        if allTrials(2,trial)==1
+            plot3(x(t,trial), y(t,trial), z(t,trial), 'o', 'MarkerFaceColor', [0.5 0.5 1], 'MarkerEdgeColor', 'k');
+        else
+            plot3(x(t,trial), y(t,trial), z(t,trial), 'o', 'MarkerFaceColor', [1 0.5 0.5], 'MarkerEdgeColor', 'k');
+        end
+end
+view(30,30)
+xlabel('PC1');
+ylabel('PC2');
+zlabel('PC3');
+grid on
+axis square
+%%
+figure
+for k = 1:3
+    x = horzcat(squeeze(neuralDynamics.hiteffort.X(1,:,:)),squeeze(neuralDynamics.effort.X(1,:,:)));
+    y = horzcat(squeeze(neuralDynamics.hiteffort.X(2,:,:)),squeeze(neuralDynamics.effort.X(2,:,:)));
+    z = horzcat(squeeze(neuralDynamics.hiteffort.X(3,:,:)),squeeze(neuralDynamics.effort.X(3,:,:)));
+    x = mean(x(:,idx==k),2);
+    y = mean(y(:,idx==k),2);
+    z = mean(z(:,idx==k),2);
+    plot3(x,y,z),hold on
+end
+%%
+[c,allTrials] = sort_hit_effort(IntanBehaviour);
+x = horzcat(squeeze(neuralDynamics.hiteffort.X(1,:,:)),squeeze(neuralDynamics.effort.X(1,:,:)));
+y = horzcat(squeeze(neuralDynamics.hiteffort.X(2,:,:)),squeeze(neuralDynamics.effort.X(2,:,:)));
+z = horzcat(squeeze(neuralDynamics.hiteffort.X(3,:,:)),squeeze(neuralDynamics.effort.X(3,:,:)));
+% sort trials
+x = x(:,c);
+y = y(:,c);
+z = z(:,c);
+timeEnd = 250;
+nTrials = size(x, 2);
 
+v = VideoWriter('D:\SQLever\neural_conditionsDLSDay17renew2.avi'); % Name your output file
+v.FrameRate = 10; % Set the frame rate
+open(v);
+initial_azimuth = 30;
+elevation = 45;
+
+figure('Color', 'w');
+hold on
+axis tight
+view(initial_azimuth,elevation)
+xlabel('X')
+ylabel('Y')
+zlabel('Z')
+hitTrials = size(neuralDynamics.hiteffort.X,3);
+for t = 50
+    clf; % Clear the figure each frame
+    hold on
+    % Plot each trajectory up to time t
+    for trial = 1:size(x,2)
+        plot3(x(t,1:trial), y(t,1:trial), z(t,1:trial), 'Color', [0 0 0 0.4]);
+        % Plot a dot for the current time point based on effort
+        if allTrials(2,trial)==1
+            plot3(x(t,trial), y(t,trial), z(t,trial), 'o', 'MarkerFaceColor', [0.5 0.5 1], 'MarkerEdgeColor', 'k');
+        else
+            plot3(x(t,trial), y(t,trial), z(t,trial), 'o', 'MarkerFaceColor', [1 0.5 0.5], 'MarkerEdgeColor', 'k');
+        end
+
+        title(['Initial conditions on trial = ', num2str(trial)]);
+        axis([min(x(:)), max(x(:)), min(y(:)), max(y(:)), min(z(:)), max(z(:))]);
+        % Calculate current azimuth angle for rotation
+        current_azimuth = mod(initial_azimuth + 0.5*trial, 360);
+        view(current_azimuth, elevation);
+        grid on
+        drawnow
+        % Capture the frame and write to video
+        frame = getframe(gcf);
+        writeVideo(v, frame);
+    end
+end
+
+close(v);
+%% Proportion of effort and non effort trials in each cluster
+isnoeffort = allTrials(2,:);
+% sort sorted cluser based on chrnology so we can map onto the allTrials
+% index
+sortedclusterId = idx;
+for k = 1:3
+% return allTrial value of zero or 1
+clusterTrials = isnoeffort(sortedclusterId==k); % returns trial number of that cluster
+% sum of the cluster Trial is the number of non effort trials
+effortproportion(k) = 1-(sum(clusterTrials)/length(clusterTrials)); % qik mathss
+end
+% plot out a bar plot
+figure,bar(effortproportion','stacked')
 %% Calculate Mahalanobis distance of clusters
 n = size(initCond, 1);
 mahalDists = zeros(n, numClusters);
