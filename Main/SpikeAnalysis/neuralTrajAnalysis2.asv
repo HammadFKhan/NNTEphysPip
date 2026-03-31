@@ -57,20 +57,18 @@ misstrials = length(Behaviour.hitTrace)+1:size(X,3);
 neuralDynamics.hit.speed = speedTraj(X,hittrials,6,Behaviour);
 
 try
-[neuralDynamics.miss.r,neuralDynamics.miss.s,neuralDynamics.miss.stab,neuralDynamics.miss.X] = getMeanTraj(X,misstrials,dimNum); %trajectory variable and predefined conditional trial indexes
-
+    [neuralDynamics.miss.r,neuralDynamics.miss.s,neuralDynamics.miss.stab,neuralDynamics.miss.X] = getMeanTraj(X,misstrials,dimNum); %trajectory variable and predefined conditional trial indexes
+catch
+end
 neuralDynamics.miss.speed = speedTraj(X,misstrials,6,Behaviour);
 
 % Calculate differences in trajectories r'c(t)/||r'c(t)||
 [neuralDynamics.neuralSimhitmiss,neuralDynamics.neuralDiffhitmiss,neuralDynamics.hit.rprime,neuralDynamics.miss.rprime] = neuralTrajDiff(neuralDynamics.hit.r',neuralDynamics.miss.r');
-catch
-    disp('error on neural dynamic miss')
-end
 end
 %% Do just for hits
 if exist('neuralTrajHit','var')
 X = neuralTrajHit;
-hittrials = 1:length(Behaviour.hitTrace);
+hittrials = 1:length(Behaviour.cueHitTrace);
 [neuralDynamics.hit.r,neuralDynamics.hitOnly.s,neuralDynamics.hitOnly.stab,neuralDynamics.hitOnly.X] = getMeanTraj(X,hittrials,dimNum); %trajectory variable and predefined conditional trial indexes
 neuralDynamics.hitOnly.speed = speedTraj(X,hittrials,6,Behaviour);
 end

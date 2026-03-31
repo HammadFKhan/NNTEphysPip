@@ -1,152 +1,186 @@
 %% Sequence Pipeline
+addpath(genpath('Main'));
+% addpath(genpath('chronux'));
+% addpath(genpath('Kilosort'));
+addpath(genpath('npy-matlab'));
+addpath(genpath('spikes-master'));
+% Load in CSV file
+
+csvFile = "Y:\Hammad\Ephys\SeqProject\MouseRbp4M2\session_list_Sq_MouseRbp4M2.xlsx";
+T = readtable(csvFile, 'TextType', 'string', 'VariableNamingRule', 'preserve');
+
+behaviorFiles = T.("Behavior File");
+dataPaths     = T.("File path");
+dataName      = T.("File Name");
+includeFlag   = T.("Include");
+effortVals    = T.("Effort");
+OptoVals      = T.("Opto"); 
 %% Parameters for behaviour
-data = matfile(ds_filename); % ds_filename comes from loadme.mat
-% check if data directory matches where the file originated; if not we note
-% the new directory path
+for fileNum = 1:length(behaviorFiles)
+    try
+    loadmeFile = fullfile(dataPaths(fileNum),dataName(fileNum));
+    loadmeFile = char(loadmeFile);
+    load(loadmeFile)
+    fname = fullfile(behaviorFiles(fileNum));
+    fname = char(fname);
+    disp(['Loading in: ' num2str(loadmeFile)])
+    data = matfile(ds_filename); % ds_filename comes from loadme.mat
+    % check if data directory matches where the file originated; if not we note
+    % the new directory path
 
-parameters.experiment = 'self'; % self - internally generated, cue - cue initiated
-parameters.opto = 0; % 1 - opto ON , 0 - opto OFF
-parameters.cool = 0; % No Cool 
-parameters.windowBeforePull = 3; % in seconds
-parameters.windowAfterPull = 2; % in seconds
-parameters.windowBeforeCue = 1.5; % in seconds
-parameters.windowAfterCue = 1.5; % in seconds
-parameters.windowBeforeMI = 1.5; % in seconds 
-parameters.windowAfterMI = 3.5; % in seconds 
-parameters.perturbEffort = 1;
-parameters.delay = 0.5; %reward delay
-parameters.Fs = 1000; % Eventual downsampled data
-parameters.ts = 1/parameters.Fs;
-parameters.IntanFs = data.targetedFs;
-parameters.rows = 64;
-parameters.cols = 1;
-lfpTime = data.amplifierTime;
-[Behaviour] = readLeverSq(parameters,lfpTime);
-[IntanBehaviour] = readLeverIntanSq(parameters,data.amplifierTime,data.analogChannels(1,:),data.digitalChannels,Behaviour,0);
+    parameters.experiment = 'self'; % self - internally generated, cue - cue initiated
+    parameters.opto = 0; % 1 - opto ON , 0 - opto OFF
+    parameters.cool = 0; % No Cool
+    parameters.windowBeforePull = 3; % in seconds
+    parameters.windowAfterPull = 2; % in seconds
+    parameters.windowBeforeCue = 1.5; % in seconds
+    parameters.windowAfterCue = 1.5; % in seconds
+    parameters.windowBeforeMI = 1.5; % in seconds
+    parameters.windowAfterMI = 3.5; % in seconds
+    if effortVals(fileNum)==1
+        parameters.perturbEffort = 1;
+    else
+        parameters.perturbEffort = 0;
+    end
+    parameters.delay = 0.5; %reward delay
+    parameters.Fs = 1000; % Eventual downsampled data
+    parameters.ts = 1/parameters.Fs;
+    parameters.IntanFs = data.targetedFs;
+    parameters.rows = 64;
+    parameters.cols = 1;
+    lfpTime = data.amplifierTime;
 
-IntanBehaviour.reactionTime = arrayfun(@(x) x.pullCount(3)-x.pullCount(1),IntanBehaviour.hitTrace)/1000;
-IntanBehaviour.parameters = parameters;
-%% Clean up MIFA
-for n = 1:length(IntanBehaviour.MIHitTrace)
-    IntanBehaviour.MIHitTrace(n).pullCount(IntanBehaviour.MIHitTrace(n).pullCount<IntanBehaviour.parameters.windowBeforeMI*1000) = [];
-end
-%% Spikes analysis
-[fpath,name,exts] = fileparts(ds_filename);
-data = matfile(ds_filename);
-path = [fpath,'/kilosort3/'];
-mergename = 'merged';
-Kilosort3AutoMergeTester
-path = [fpath,'/kilosort3/' mergename];
-%%% Spike preprocessing (includes merging (optional) and channel info
-%%% return)
-% Read in kilosort data for matlab analysis
-SpikeClusters = readNPY(fullfile(path, 'spike_clusters.npy'));
-SpikeSamples = readNPY(fullfile(path, 'spike_times.npy'));
-SpikeChannel = readNPY(fullfile(path,'channel_positions.npy'));
-Spikes.SpikeClusters = SpikeClusters; 
-Spikes.SpikeSamples = SpikeSamples;
-Spikes = clusterSort(Spikes);
-Spikes = ISI(Spikes,0.01,data.Fs,0); %Spikes, Interval, Fs
-% Calculate Depth profile
-%load chanMap64F2
-load chanMap64Sharp
-[spikeAmps, spikeDepths, templateDepths, tempAmps, tempsUnW, templateDuration, waveforms, max_site] =...
-    spikeTemplatePosition(data.fpath,ycoords,[]); % 'invert'
-for i = 1:length(tempAmps)
-    Spikes.Clusters(i).spikeDepth = templateDepths(i);
-    Spikes.Clusters(i).channelDepth = max_site(i);
-    Spikes.Clusters(i).spikeAmplitude = tempAmps(i);
-    Spikes.Clusters(i).waveforms = waveforms(i,:);
-    Spikes.Clusters(i).spikeDuration = templateDuration(i)/data.Fs*1000;
-end
-%%% delete empty spikes
-temp = arrayfun(@(x) isempty(x.cluster), Spikes.Clusters);
-Spikes.Clusters(temp) = []; 
-%%% Calculate trial PSTH for lever
-Spikes = leverPSTHSq(Spikes,IntanBehaviour);
-%%% save spike output data to load into gui
-savepath = fullfile(path,['spks4sorting','.mat']);
-path = [fpath,'/kilosort3/' mergename];
-save(savepath,'Spikes','-v7.3')
-%ManualSpikeCurateGUI
-%%% Basic spike analysis
-% z-score spike rates
-if exist('parameters','var')
+    [Behaviour] = readLeverSq(parameters,lfpTime,fname);
+    [IntanBehaviour] = readLeverIntanSq(parameters,data.amplifierTime,data.analogChannels(1,:),data.digitalChannels,Behaviour,0);
+
+    IntanBehaviour.reactionTime = arrayfun(@(x) x.pullCount(3)-x.pullCount(1),IntanBehaviour.hitTrace)/1000;
     IntanBehaviour.parameters = parameters;
+    %% Clean up MIFA
+    for n = 1:length(IntanBehaviour.MIHitTrace)
+        IntanBehaviour.MIHitTrace(n).pullCount(IntanBehaviour.MIHitTrace(n).pullCount<IntanBehaviour.parameters.windowBeforeMI*1000) = [];
+    end
+    %% Spikes analysis
+    [fpath,name,exts] = fileparts(ds_filename);
+    data = matfile(ds_filename);
+    path = [fpath,'/kilosort3/'];
+    mergename = 'merged';
+    Kilosort3AutoMergeTester
+    path = [fpath,'/kilosort3/' mergename];
+    %%% Spike preprocessing (includes merging (optional) and channel info
+    %%% return)
+    % Read in kilosort data for matlab analysis
+    SpikeClusters = readNPY(fullfile(path, 'spike_clusters.npy'));
+    SpikeSamples = readNPY(fullfile(path, 'spike_times.npy'));
+    SpikeChannel = readNPY(fullfile(path,'channel_positions.npy'));
+    Spikes.SpikeClusters = SpikeClusters;
+    Spikes.SpikeSamples = SpikeSamples;
+    Spikes = clusterSort(Spikes);
+    Spikes = ISI(Spikes,0.01,data.Fs,0); %Spikes, Interval, Fs
+    % Calculate Depth profile
+    %load chanMap64F2
+    load chanMap64Sharp
+    [spikeAmps, spikeDepths, templateDepths, tempAmps, tempsUnW, templateDuration, waveforms, max_site] =...
+        spikeTemplatePosition(data.fpath,ycoords,[]); % 'invert'
+    for i = 1:length(tempAmps)
+        Spikes.Clusters(i).spikeDepth = templateDepths(i);
+        Spikes.Clusters(i).channelDepth = max_site(i);
+        Spikes.Clusters(i).spikeAmplitude = tempAmps(i);
+        Spikes.Clusters(i).waveforms = waveforms(i,:);
+        Spikes.Clusters(i).spikeDuration = templateDuration(i)/data.Fs*1000;
+    end
+    %%% delete empty spikes
+    temp = arrayfun(@(x) isempty(x.cluster), Spikes.Clusters);
+    Spikes.Clusters(temp) = [];
+    %%% Calculate trial PSTH for lever
+    Spikes = leverPSTHSq(Spikes,IntanBehaviour);
+    %%% save spike output data to load into gui
+    savepath = fullfile(path,['spks4sorting','.mat']);
+    path = [fpath,'/kilosort3/' mergename];
+    save(savepath,'Spikes','-v7.3')
+    %ManualSpikeCurateGUI
+    %%% Basic spike analysis
+    % z-score spike rates
+    if exist('parameters','var')
+        IntanBehaviour.parameters = parameters;
+    end
+    if exist('goodSpkComponents','var')
+        Spikes.goodSpkComponents = unique(goodSpkComponents);
+    else
+        Spikes.goodSpkComponents = 1:length(Spikes.Clusters);
+    end
+    Spikes = rejectSpikes(Spikes,0.1,0.1,IntanBehaviour.parameters); % Reject spikes here for further analysis
+    [Spikes] = sortSpkLever(Spikes,IntanBehaviour);
+    [fpath,name,exts] = fileparts(ds_filename);
+    sessionName = [fpath,'/','Spikes.mat'];
+    % save(sessionName,"IntanBehaviour","fpath","parameters","-v7.3");
+    save(sessionName,"Spikes","IntanBehaviour","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
+    disp('Saved!')
+%     %% Prep data for warping
+%     prepWrap(Spikes,ds_filename)
+%     %% Plot out spikes aligned to the pull response
+%     % From the behaviour figure where we have the pull counts
+%     %% Plot trial sorted by earliest first pull
+%     % than by earliest second pull
+%     pullIndex = vertcat(IntanBehaviour.hitTrace.pullCount);
+%     [ft,firstPull] = sort(pullIndex(:,1));
+%     [sc,secondPull] = sort(pullIndex(:,2));
+%     [trialMask] = getAUTOResponse(IntanBehaviour,1); %expFlag = 1
+%     %% Load in warped data and make psth based on warping models
+%     %
+%     if ~exist('fpath','var')
+%         [fpath,fname] = fileparts(ds_filename);
+%     end
+%     load(fullfile(fpath,'warpedSpks'))
+%     % Plot out warped pulls
+%     warpedSpks = getAlignedSqpulls(Spikes,warpedSpks,IntanBehaviour);
+%     close all
+%     % Build spike rasters based on aligned data
+%     sessionName = [fpath,'/','warpedSpks.mat'];
+%     % save(sessionName,"IntanBehaviour","fpath","parameters","-v7.3");
+%     save(sessionName,"warpedSpks","Spikes","IntanBehaviour","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
+%     disp('Saved!')
+    %% Get statistics
+%     warpedSpks = getWarpSpkStats(warpedSpks);
+    %% Neural Trajectory Segementation using GPFA
+    % Note that we concatenate trial conditions as to apply the same models for
+    % statistical comparison (ie. hit vs miss, hit vs FA, opto vs no opto)
+    Spikes = makeSpikeGPFA(Spikes);
+    Spikes.GPFA.HitMiss.dat = [Spikes.GPFA.hit.dat,Spikes.GPFA.miss.dat];
+    for n = 1:length(IntanBehaviour.hitTrace)%+1:length(Spikes.GPFA.BaselineOpto.dat) %fix trials
+        Spikes.GPFA.HitMiss.dat(n).trialId = n;
+    end
+    Spikes.GPFA.MIHitFA.dat = [Spikes.GPFA.MIHit.dat,Spikes.GPFA.MIFA.dat];
+    for n = length(IntanBehaviour.MIHitTrace)+1:length(Spikes.GPFA.MIHitFA.dat) %fix trials
+        Spikes.GPFA.MIHitFA.dat(n).trialId = n;
+    end
+    Spikes.GPFA.HitEffort.dat = [Spikes.GPFA.MIHit.dat,Spikes.GPFA.effortperturb.dat];
+    for n = 1:length(IntanBehaviour.MIHitTrace)%+1:length(Spikes.GPFA.BaselineOpto.dat) %fix trials
+        Spikes.GPFA.HitEffort.dat(n).trialId = n;
+    end
+    %%%
+    addpath(genpath('C:\Users\khan332\Documents\GitHub\NeuralTraj'));
+    addpath(genpath('mat_results'));
+    if exist('mat_results','dir'),rmdir('mat_results','s'),end
+    [Spikes.GPFA.resultHit,Spikes.GPFA.seqTrainHit] = gpfaAnalysis(Spikes.GPFA.hit.dat,1); %Run index
+    [Spikes.GPFA.resultMiss,Spikes.GPFA.seqTrainMiss] = gpfaAnalysis(Spikes.GPFA.miss.dat,2); %Run index
+    [Spikes.GPFA.resultMIHit,Spikes.GPFA.seqTrainMIHit] = gpfaAnalysis(Spikes.GPFA.MIHit.dat,3); %Run index
+    % [Spikes.GPFA.resultMIFA,Spikes.GPFA.seqTrainMIFA] = gpfaAnalysis(Spikes.GPFA.MIFA.dat,4); %Run index
+    [Spikes.GPFA.resultHitMiss,Spikes.GPFA.seqTrainHitMiss] = gpfaAnalysis(Spikes.GPFA.HitMiss.dat,5); %Run index
+    % [Spikes.GPFA.resultMIHitFA,Spikes.GPFA.seqTrainMIHitFA] = gpfaAnalysis(Spikes.GPFA.MIHitFA.dat,6); %Run index
+    [Spikes.GPFA.resultHitEffort,Spikes.GPFA.seqTrainHitEffort] = gpfaAnalysis(Spikes.GPFA.HitEffort.dat,7); %Run index
+    close all
+    sessionName = [fpath,'\','Spikes.mat'];
+    save(sessionName,"Spikes","IntanBehaviour","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
+    disp('Saved!')
+    % %% For warping data only
+    % [neuralDynamics] = getGPFASq(warpedSpks.pull1A.warpSpikes  ,IntanBehaviour);
+    % %% Neural Trajectory Analysis
+    % %IntanBehaviour.parameters = parameters;
+    % %neuralTrajAnalysis(Spikes,Waves1,IntanBehaviour1);
+    % [M1neuralDynamics,M1waveDynamics] = neuralTrajAnalysis2(Spikes,[],IntanBehaviour);
+    %
+    catch ME
+        disp(ME)
+        continue
+    end
 end
-if exist('goodSpkComponents','var')
-    Spikes.goodSpkComponents = unique(goodSpkComponents);
-else 
-    Spikes.goodSpkComponents = 1:length(Spikes.Clusters);
-end
-Spikes = rejectSpikes(Spikes,0.1,0.1,IntanBehaviour.parameters); % Reject spikes here for further analysis
-[Spikes] = sortSpkLever(Spikes,IntanBehaviour);
-[fpath,name,exts] = fileparts(ds_filename);
-sessionName = [fpath,'/','Spikes.mat'];
-% save(sessionName,"IntanBehaviour","fpath","parameters","-v7.3");
-save(sessionName,"Spikes","IntanBehaviour","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
-disp('Saved!')
-%% Prep data for warping
-prepWrap(Spikes,ds_filename)
-%% Plot out spikes aligned to the pull response
-% From the behaviour figure where we have the pull counts
-%% Plot trial sorted by earliest first pull
-% than by earliest second pull
-pullIndex = vertcat(IntanBehaviour.hitTrace.pullCount);
-[ft,firstPull] = sort(pullIndex(:,1));
-[sc,secondPull] = sort(pullIndex(:,2));
-[trialMask] = getAUTOResponse(IntanBehaviour,1); %expFlag = 1
-%% Load in warped data and make psth based on warping models
-% 
-if ~exist('fpath','var')
-[fpath,fname] = fileparts(ds_filename);
-end
-load(fullfile(fpath,'warpedSpks'))
-% Plot out warped pulls
-warpedSpks = getAlignedSqpulls(Spikes,warpedSpks,IntanBehaviour);
-close all
-% Build spike rasters based on aligned data
-sessionName = [fpath,'/','warpedSpks.mat'];
-% save(sessionName,"IntanBehaviour","fpath","parameters","-v7.3");
-save(sessionName,"warpedSpks","Spikes","IntanBehaviour","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
-disp('Saved!')
-%% Get statistics
-warpedSpks = getWarpSpkStats(warpedSpks);
-%% Neural Trajectory Segementation using GPFA
-% Note that we concatenate trial conditions as to apply the same models for
-% statistical comparison (ie. hit vs miss, hit vs FA, opto vs no opto)
-Spikes = makeSpikeGPFA(Spikes);
-Spikes.GPFA.HitMiss.dat = [Spikes.GPFA.hit.dat,Spikes.GPFA.miss.dat];
-for n = 1:length(IntanBehaviour.hitTrace)%+1:length(Spikes.GPFA.BaselineOpto.dat) %fix trials
-    Spikes.GPFA.HitMiss.dat(n).trialId = n;
-end
-Spikes.GPFA.MIHitFA.dat = [Spikes.GPFA.MIHit.dat,Spikes.GPFA.MIFA.dat];
-for n = length(IntanBehaviour.MIHitTrace)+1:length(Spikes.GPFA.MIHitFA.dat) %fix trials
-    Spikes.GPFA.MIHitFA.dat(n).trialId = n;
-end
-Spikes.GPFA.HitEffort.dat = [Spikes.GPFA.MIHit.dat,Spikes.GPFA.effortperturb.dat];
-for n = 1:length(IntanBehaviour.MIHitTrace)%+1:length(Spikes.GPFA.BaselineOpto.dat) %fix trials
-    Spikes.GPFA.HitEffort.dat(n).trialId = n;
-end
-%%%
-addpath(genpath('C:\Users\khan332\Documents\GitHub\NeuralTraj'));
-addpath(genpath('mat_results'));
-if exist('mat_results','dir'),rmdir('mat_results','s'),end
-[Spikes.GPFA.resultHit,Spikes.GPFA.seqTrainHit] = gpfaAnalysis(Spikes.GPFA.hit.dat,1); %Run index
-[Spikes.GPFA.resultMiss,Spikes.GPFA.seqTrainMiss] = gpfaAnalysis(Spikes.GPFA.miss.dat,2); %Run index
-[Spikes.GPFA.resultMIHit,Spikes.GPFA.seqTrainMIHit] = gpfaAnalysis(Spikes.GPFA.MIHit.dat,3); %Run index
-% [Spikes.GPFA.resultMIFA,Spikes.GPFA.seqTrainMIFA] = gpfaAnalysis(Spikes.GPFA.MIFA.dat,4); %Run index
-[Spikes.GPFA.resultHitMiss,Spikes.GPFA.seqTrainHitMiss] = gpfaAnalysis(Spikes.GPFA.HitMiss.dat,5); %Run index
-% [Spikes.GPFA.resultMIHitFA,Spikes.GPFA.seqTrainMIHitFA] = gpfaAnalysis(Spikes.GPFA.MIHitFA.dat,6); %Run index
-[Spikes.GPFA.resultHitEffort,Spikes.GPFA.seqTrainHitEffort] = gpfaAnalysis(Spikes.GPFA.HitEffort.dat,7); %Run index
-close all
-sessionName = [fpath,'\','Spikes.mat'];
-save(sessionName,"Spikes","IntanBehaviour","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
-disp('Saved!')
-%% For warping data only
-[neuralDynamics] = getGPFASq(warpedSpks.pull1A.warpSpikes  ,IntanBehaviour);
-%% Neural Trajectory Analysis
-%IntanBehaviour.parameters = parameters;
-%neuralTrajAnalysis(Spikes,Waves1,IntanBehaviour1);
-[M1neuralDynamics,M1waveDynamics] = neuralTrajAnalysis2(Spikes,[],IntanBehaviour);
-

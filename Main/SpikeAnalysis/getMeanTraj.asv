@@ -1,7 +1,7 @@
 function [r,zscore_s,stability,matrix] = getMeanTraj(X,trials,components)
 matrix = X(1:components,:,trials);
 if length(trials)==1
-    trials = repmat(trials,1,20);
+    trials = repmat(trials,1,10);
 end
 r = squeeze(mean(matrix,3));
 % Subtract the mean from each element
