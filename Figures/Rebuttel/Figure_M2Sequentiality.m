@@ -36,9 +36,9 @@ end
 %%
 
 dat = [];
-for n = 1:length(M1baseline)
-    if isfield(M1baseline(n).baselineSqEntropy.CueHit,'SqI') && isfield(M1cooling(n).cooledSqEntropy.CueHit,'SqI')
-        dat = vertcat(dat,[M1baseline(n).baselineSqEntropy.CueHit.SqI(1)',M1cooling(n).cooledSqEntropy.CueHit.SqI(3)']);
+for n = 1:length(M2baseline)
+    if isfield(M2baseline(n).baselineSqEntropy.CueHit,'SqI') && isfield(M2cooling(n).cooledSqEntropy.CueHit,'SqI')
+        dat = vertcat(dat,[M2baseline(n).baselineSqEntropy.CueHit.SqI(1)',M2cooling(n).cooledSqEntropy.CueHit.SqI(3)']);
     end
 end
 % [~, Id] = sort(diff(dat,1,2), 'ascend');
@@ -49,9 +49,9 @@ axis square
 
 
 dat = [];
-for n = 1:length(M1baseline)
-    if isfield(M1baseline(n).baselineSqEntropy.CueHit,'PE') && isfield(M1cooling(n).cooledSqEntropy.CueHit,'PE')
-    dat = vertcat(dat,[M1baseline(n).baselineSqEntropy.CueHit.PE(1)',M1cooling(n).cooledSqEntropy.CueHit.PE(2)']);
+for n = 1:length(M2baseline)
+    if isfield(M2baseline(n).baselineSqEntropy.CueHit,'PE') && isfield(M2cooling(n).cooledSqEntropy.CueHit,'PE')
+    dat = vertcat(dat,[M2baseline(n).baselineSqEntropy.CueHit.PE(1)',M2cooling(n).cooledSqEntropy.CueHit.PE(2)']);
     end
 end
 % [~, Id] = sort(diff(dat,1,2), 'ascend');
@@ -63,9 +63,9 @@ ylabel('PE', 'FontSize', 16);
 
 
 dat = [];
-for n = 1:length(M1baseline)
-    if isfield(M1baseline(n).baselineSqEntropy.CueHit,'TS') && isfield(M1cooling(n).cooledSqEntropy.CueHit,'TS')
-    dat = vertcat(dat,[M1baseline(n).baselineSqEntropy.CueHit.TS(1)',M1cooling(n).cooledSqEntropy.CueHit.TS(2)']);
+for n = 1:length(M2baseline)
+    if isfield(M2baseline(n).baselineSqEntropy.CueHit,'TS') && isfield(M2cooling(n).cooledSqEntropy.CueHit,'TS')
+    dat = vertcat(dat,[M2baseline(n).baselineSqEntropy.CueHit.TS(1)',M2cooling(n).cooledSqEntropy.CueHit.TS(2)']);
     end
 end
 % [~, Id] = sort(diff(dat,1,2), 'ascend');
@@ -74,7 +74,6 @@ plotDat(dat)
 ylim([0.8 1])
 axis square
 ylabel('TS', 'FontSize', 16); 
-%%
 
 %%
 function plotDat(dat)
