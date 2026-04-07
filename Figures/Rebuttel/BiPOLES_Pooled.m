@@ -7,8 +7,8 @@ for fileNum = 1:length(files)
     load(fullfile(files(fileNum).folder,files(fileNum).name))
     M2BiPOLES(fileNum).filename = files(fileNum).name;
     M2BiPOLES(fileNum).Spikes = Spikes;
-    [M2BiPOLES(fileNum).neuralDynamics,waveDynamics] = ...
-        neuralTrajAnalysis2(Spikes,[],IntanBehaviour);
+%     [M2BiPOLES(fileNum).neuralDynamics,waveDynamics] = ...
+%         neuralTrajAnalysis2(Spikes,[],IntanBehaviour);
     M2BiPOLES(fileNum).IntanBehaviour = IntanBehaviour;
 end
 
@@ -138,12 +138,12 @@ ylim([0 1]);
 
 %% 3) PROPORTION OF TAGGED NEURONS PER SESSION
 
-propTagged = nan(nSess,1);
-for s = 1:nSess
-    tagged_s = dynamics(s).Spikes.BiPOLES.tagged;   % logical per neuron
-    valid    = ~isnan(tagged_s);
-    propTagged(s) = 100 * sum(tagged_s(valid)) / sum(valid);
-end
+% propTagged = nan(nSess,1);
+% for s = 1:nSess
+%     tagged_s = dynamics(s).Spikes.BiPOLES.tagged;   % logical per neuron
+%     valid    = ~isnan(tagged_s);
+%     propTagged(s) = 100 * sum(tagged_s(valid)) / sum(valid);
+% end
 
 m_prop   = mean(propTagged,'omitnan');
 sem_prop = std(propTagged,'omitnan') / sqrt(sum(~isnan(propTagged)));
