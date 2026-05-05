@@ -1,0 +1,235 @@
+clear
+clc
+files = dir(fullfile('Y:\Hammad\Ephys\LeverTask\Data_for_Figures\M1Cooling\SpikesGSP','*.mat'));
+M1DynamicsCooled = struct();
+tempCutoff = -9; % Cuttoff of temperature cooling
+for fileNum = 1:length(files)
+    disp(['File number: ' num2str(fileNum)])
+    load(fullfile(files(fileNum).folder,files(fileNum).name))
+    if ~exist('dynamics(n).IntanBehaviour.hitTemp')
+        IntanBehaviour = grabTemp(IntanBehaviour,fpath);
+    end
+    Spikes = makeSpikeGPFA(Spikes);
+    temperatureId = (IntanBehaviour.hitTemp<tempCutoff);
+    Spikes.GPFA.hit.datbaseline = Spikes.GPFA.hit.dat(~temperatureId);
+    Spikes.GPFA.hit.datcooled = Spikes.GPFA.hit.dat(temperatureId);
+    Spikes.GPFA.MIHit.datbaseline = Spikes.GPFA.MIHit.dat(~temperatureId);
+    Spikes.GPFA.MIHit.datcooled = Spikes.GPFA.MIHit.dat(temperatureId);
+
+    % Do for FA
+    temperatureId = (IntanBehaviour.FATemp<tempCutoff);
+    Spikes.GPFA.MIFA.datbaseline = Spikes.GPFA.MIFA.dat(~temperatureId);
+    Spikes.GPFA.MIFA.datcooled = Spikes.GPFA.MIFA.dat(temperatureId);
+    Spikes.GPFA.MIHitFA.datbaseline = [Spikes.GPFA.MIHit.datbaseline,Spikes.GPFA.MIFA.datbaseline];
+    Spikes.GPFA.MIHitFA.datcooled = [Spikes.GPFA.MIHit.datcooled,Spikes.GPFA.MIFA.datcooled];
+
+    for n = length(Spikes.GPFA.MIHit.datbaseline)+1:length(Spikes.GPFA.MIHitFA.datbaseline) %fix trials
+        Spikes.GPFA.MIHitFA.datbaseline(n).trialId = n;
+    end
+
+    for n = length(Spikes.GPFA.MIHit.datcooled)+1:length(Spikes.GPFA.MIHitFA.datcooled) %fix trials
+         Spikes.GPFA.MIHitFA.datcooled(n).trialId = n;
+    end
+    %%%
+    addpath(genpath('C:\Users\khan332\Documents\GitHub\NeuralTraj'));
+    addpath(genpath('mat_results'));
+    if exist('mat_results','dir'),rmdir('mat_results','s'),end
+    try
+    [Spikes.GPFA.resultHitbaseline,Spikes.GPFA.seqTrainHitbaseline] = gpfaAnalysis(Spikes.GPFA.hit.datbaseline,1); %Run index
+    [Spikes.GPFA.resultHitcooled,Spikes.GPFA.seqTrainHitcooled] = gpfaAnalysis(Spikes.GPFA.hit.datcooled,2); %Run index
+
+    [Spikes.GPFA.resultMIHitbaseline,Spikes.GPFA.seqTrainMIHitbaseline] = gpfaAnalysis(Spikes.GPFA.MIHit.datbaseline,3); %Run index
+    [Spikes.GPFA.resultMIHitcooled,Spikes.GPFA.seqTrainMIHitcooled] = gpfaAnalysis(Spikes.GPFA.MIHit.datcooled,4); %Run index
+
+    [Spikes.GPFA.resultMIFAdatbaseline,Spikes.GPFA.seqTrainMIFAdatbaseline] = gpfaAnalysis(Spikes.GPFA.MIFA.datbaseline,5); %Run index
+    [Spikes.GPFA.resultMIFAcooled,Spikes.GPFA.seqTrainMIFAcooled] = gpfaAnalysis(Spikes.GPFA.MIFA.datcooled,6); %Run index
+
+    [Spikes.GPFA.resultMIHitFAbaseline,Spikes.GPFA.seqTrainMIHitFAbaseline] = gpfaAnalysis(Spikes.GPFA.MIHitFA.datbaseline,7); %Run index
+    [Spikes.GPFA.resultMIHitFAcooled,Spikes.GPFA.seqTrainMIHitFAcooled] = gpfaAnalysis(Spikes.GPFA.MIHitFA.datcooled,8); %Run index
+    catch ME
+        disp('Error running GPFA, skipping....')
+        continue
+    end
+    close all
+%     if isfield(Spikes.GPFA,'seqTrainHit')
+%         [M1DynamicsCooled(fileNum).neuralDynamics,waveDynamics] = neuralTrajAnalysis2(Spikes,[],IntanBehaviour);
+%     else
+%         M1DynamicsCooled(fileNum).neuralDynamics = [];
+%     end
+    M1DynamicsCooled(fileNum).IntanBehaviour = IntanBehaviour;
+    M1DynamicsCooled(fileNum).filename = files(fileNum).name;
+    M1DynamicsCooled(fileNum).fpath = fpath;
+    M1DynamicsCooled(fileNum).GPFA = Spikes.GPFA;
+end
+%% Calculate loadings
+cosSim_neuron = cell(1,length(M1DynamicsCooled));
+meanCosSim = nan(1,length(M1DynamicsCooled));
+for n = 1:length(M1DynamicsCooled)
+    try
+        PCloadingsbaseline = M1DynamicsCooled(n).GPFA.resultMIHitFAbaseline.kern.estParams.L;
+        PCloadingscooled = M1DynamicsCooled(n).GPFA.resultMIHitFAcooled.kern.estParams.L;
+        % Cosine of loading vectors
+        % Row-normalize so each neuron vector has unit norm
+        [cosSim_neuron{n}, meanCosSim(n)] = neuronEmbeddingCosineSimilarity(PCloadingsbaseline(:,1:3), PCloadingscooled(:,1:3));
+        fprintf('Mean neuron-wise cosine similarity = %.3f\n', meanCosSim(n));
+    catch
+        continue;
+    end
+end
+
+%% LOCAL FUNCTIONS
+function IntanBehaviour = grabTemp(IntanBehaviour,fpath)
+if ~isfield(IntanBehaviour,'temperature')
+    disp('No temp file added... correcting...')
+    [filepath,~,~] = fileparts(fpath);
+    load([filepath, '\loadme.mat']);
+    if exist('ds_filename','var')
+        data = matfile(ds_filename); % ds_filename comes from loadme.mat
+    else
+        data = matfile(ds_filename1); % ds_filename comes from loadme.mat
+    end
+    % check if data directory matches where the file originated; if not we note
+    % the new directory path
+    parameters.experiment = 'cue'; % self - internally generated, cue - cue initiated
+    parameters.opto = 0; % 1 - opto ON , 0 - opto OFF
+    parameters.cool = 1; % No Cool
+    parameters.windowBeforePull = 1.5; % in seconds
+    parameters.windowAfterPull = 1.5; % in seconds
+    parameters.windowBeforeCue = 1.5; % in seconds
+    parameters.windowAfterCue = 1.5; % in seconds
+    parameters.windowBeforeMI = 1.5; % in seconds
+    parameters.windowAfterMI = 1.5; % in seconds
+    parameters.Fs = 1000; % Eventual downsampled data
+    parameters.ts = 1/parameters.Fs;
+    parameters.IntanFs = data.targetedFs;
+    parameters.rows = 64;
+    parameters.cols = 1;
+    temperature = data.analogChannels(1,:);
+    temperature = (temperature-1.25)/0.005;
+    IntanBehaviour.temperature = resample(temperature,parameters.Fs,data.targetedFs);
+    clear temperature
+end
+for n = 1:IntanBehaviour.nCueHit
+    IntanBehaviour.hitTemp(n,1) = IntanBehaviour.temperature(IntanBehaviour.cueHitTrace(n).LFPIndex(1));
+end
+IntanBehaviour.hitTemp = IntanBehaviour.hitTemp-IntanBehaviour.temperature(100);
+for n = 1:IntanBehaviour.nCueMiss
+    IntanBehaviour.missTemp(n,1) = IntanBehaviour.temperature(IntanBehaviour.cueMissTrace(n).LFPIndex(1));
+end
+IntanBehaviour.missTemp = IntanBehaviour.missTemp-IntanBehaviour.temperature(100);
+for n = 1:length(IntanBehaviour.missTrace)
+    IntanBehaviour.FATemp(n,1) = IntanBehaviour.temperature(IntanBehaviour.missTrace(n).LFPIndex(1));
+end
+IntanBehaviour.FATemp = IntanBehaviour.FATemp-IntanBehaviour.temperature(100);
+end
+
+function [cosSim_neuron, meanCosSim] = neuronEmbeddingCosineSimilarity(E1, E2)
+% E1, E2: [nNeurons x nDims] neuron embedding matrices
+% Returns:
+%   cosSim_neuron: [nNeurons x 1] cosine similarity per neuron
+%   meanCosSim: scalar, average across neurons
+
+    % Basic checks
+    if ~isequal(size(E1), size(E2))
+        error('E1 and E2 must have the same size [nNeurons x nDims].');
+    end
+
+    % Flatten to double
+    E1 = double(E1);
+    E2 = double(E2);
+
+    % Compute norms per neuron (row-wise)
+    n1 = sqrt(sum(E1.^2, 2));   % [nNeurons x 1]
+    n2 = sqrt(sum(E2.^2, 2));   % [nNeurons x 1]
+
+    % Avoid division by zero: set zero-norm rows to eps
+    n1(n1 == 0) = eps;
+    n2(n2 == 0) = eps;
+
+    % Dot product per neuron across dimensions
+    dotProd = sum(E1 .* E2, 2);  % [nNeurons x 1]
+
+    % Cosine similarity per neuron: cos(theta_i)
+    cosSim_neuron = dotProd ./ (n1 .* n2);  % in [-1, 1]
+
+    % Optional summary: mean cosine similarity across neurons
+    meanCosSim = mean(cosSim_neuron, 'omitnan');
+end
+
+function plotNiceBars(totData)
+means = nanmean(totData);          % Bar heights
+sems = nanstd(totData) ./ sqrt(size(totData,1));   % Error bar (standard error)
+b = bar(means, 'FaceColor', [0.8 0.8 0.8], 'EdgeColor', 'k'); % Gray bars with black edge
+
+% Overlay error bars
+errorbar(1:size(totData,2), means, sems, 'k', 'LineStyle', 'none', 'LineWidth', 1);
+
+% Overlay individual jittered points
+xjitter = randn(size(totData))*0.01; % Controls point jitter
+for i = 1:size(totData,2)
+    scatter(i + xjitter(:,min(i,2)), totData(:,i), 18, 'o', ...
+        'MarkerEdgeColor', [0.25 0.25 0.25], ...
+        'MarkerFaceAlpha', 0.4, 'MarkerEdgeAlpha', 0.4);
+end
+
+nTrials = size(totData,1);
+% Draw paired lines between columns 1 and 2
+for j = 1:size(totData,1)
+    if size(totData,2) >= 3  % If there are at least 3 columns
+        xvals = [1 + xjitter(j,1), 2 + xjitter(j,2), 3 + xjitter(j,3)];
+        yvals = [totData(j,1),    totData(j,2),    totData(j,3)];
+        plot(xvals, yvals, '-', 'Color',[0.3 0.3 0.3],'LineWidth', 1);
+    else % Connect just columns 1 and 2
+        xvals = [1 + xjitter(j,1), 2 + xjitter(j,2)];
+        yvals = [totData(j,1),    totData(j,2)];
+        plot(xvals, yvals, '-', 'Color', [0.3 0.3 0.3], 'LineWidth', 1);
+    end
+end
+
+% Style similar to image
+set(gca, 'XTick', 1:size(totData,2), 'XTickLabel', {'Second Pull', 'Third Pull', 'Polymer', 'Late'}, ...
+    'TickDir', 'out', 'Box', 'off', 'FontSize', 12);
+ylabel('IPI (s)');
+ylim([0 2]);
+
+hold off;
+
+%%% RUN STATS
+[p, tbl, stats] = anova1(totData, [], 'off'); % columns as groups
+results = multcompare(stats, 'Display', 'off'); % Pairwise comparisons
+
+disp(['ANOVA p-value: ', num2str(p)]);
+alpha = 0.05; % significance level
+sigPairs = results(results(:,6) < alpha, :); % rows where p < 0.05
+hold on;
+ylims = ylim;
+
+% vertical height offset for significance lines above bars
+baseY = max(means + sems) * 1.05;  
+offsetStep = max(means + sems) * 0.05; 
+if all(results(:,6) >= 0.05) % No significant pairwise differences
+    % Extract F statistic from ANOVA table
+    Fstat = cell2mat(tbl(2,5)); % Assumes standard anova1 output tbl
+    p_anova = p;
+    % Place text on plot upper corner
+    xPos = size(totData,2)/2;
+    yPos = max(means + sems) * 2.4;
+    text(xPos, yPos, sprintf('ANOVA F=%.2f, p=%.3f', Fstat, p_anova), ...
+        'HorizontalAlignment', 'left', 'FontSize', 10);
+    % Add pairwise stars or p-values as before (your existing code)
+end
+
+for i = 1:size(sigPairs,1)
+    x1 = sigPairs(i,1);
+    x2 = sigPairs(i,2);
+    y = baseY + (i-1)*offsetStep;
+    
+    % Draw line connecting bars
+    plot([x1 x1 x2 x2], [y y+offsetStep y+offsetStep y], 'k-', 'LineWidth', 1);
+    
+    % Add star above the line
+    text(mean([x1 x2]), y + offsetStep*0.1, '*', 'HorizontalAlignment', 'center', ...
+        'FontSize', 16, 'FontWeight', 'bold');
+end
+hold off;
+end
