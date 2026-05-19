@@ -1,81 +1,142 @@
-%% Pool CCA responses across sessions
-clear
-files = dir(fullfile('D:\M1M2DualShank\CCA\','*.mat'));
-for fileNum = 1:length(files)
-    fName = fullfile(files(fileNum).folder,files(fileNum).name);
-    disp(['Loading ' fName '...'])
-    load(fName)
-    % Extract PA structure/values
-    CCAall(fileNum).CCA = CCA;
-end
+%% Plot pooled Lagged CCA
 %%
-hitCCA = []; missCCA = []; MIhitCCA = []; MIFACCA = [];
-hitCCATrace = []; missCCATrace = []; MIhitCCATrace = []; MIFACCATrace = [];
-CCAdim = 3;
-for n = 1:length(CCAall)
-    dat = arrayfun(@(x) x.rVec(CCAdim,:),CCAall(n).CCA.hit,'UniformOutput',false);
-    dat = vertcat(dat{:});
-    hitCCATrace = vertcat(hitCCATrace,dat);
-    hitCCA = vertcat(hitCCA,abs(mean(dat(:,75:end),2)-mean(dat(:,1:74),2)));
-    
-    dat = arrayfun(@(x) x.rVec(CCAdim,:),CCAall(n).CCA.miss,'UniformOutput',false);
-    dat = vertcat(dat{:});
-    missCCATrace = vertcat(missCCATrace,dat);
-    missCCA = vertcat(missCCA,abs(mean(dat(:,75:end),2)-mean(dat(:,1:74),2)));
-    
-    dat = arrayfun(@(x) x.rVec(CCAdim,:),CCAall(n).CCA.MIhit,'UniformOutput',false);
-    dat = vertcat(dat{:});
-    MIhitCCATrace = vertcat(MIhitCCATrace,dat);
-    MIhitCCA = vertcat(MIhitCCA,abs(mean(dat(:,75:end),2)-mean(dat(:,1:74),2)));
-    
-    dat = arrayfun(@(x) x.rVec(CCAdim,:),CCAall(n).CCA.MIFA,'UniformOutput',false);
-    dat = vertcat(dat{:});
-    MIFACCATrace = vertcat(MIFACCATrace,dat);
-    MIFACCA = vertcat(MIFACCA,abs(nanmean(dat(:,75:end),2)-nanmean(dat(:,1:74),2)));
+CCAall = CCAResultsLag;
+
+CCALagTraceTotal = {};
+CCALagTotal = {};
+for lagId = 1:CCAall(1).CCA.params.timeLag
+    hitCCA = []; missCCA = []; MIhitCCA = []; MIFACCA = [];
+        hitCCATrace = []; missCCATrace = []; MIhitCCATrace = []; MIFACCATrace = [];
+    for n = 1:length(CCAall)
+        for nn = 1:5
+            dat = arrayfun(@(x) x.rVec(1,:),CCAall(n).CCA.hit(nn).timelag(lagId),'UniformOutput',false);
+            hitCCATrace = vertcat(hitCCATrace,dat{:});
+            hitCCA = vertcat(hitCCA,abs(mean(dat{:}(75:end))-mean(dat{:}(1:74))));
+        end
+% 
+%         dat = arrayfun(@(x) x.rVec(1,:),CCAall(n).CCA.miss(lagId).timelag,'UniformOutput',false);
+%         dat = vertcat(dat{:});
+%         missCCATrace = vertcat(missCCATrace,dat);
+%         missCCA = vertcat(missCCA,abs(mean(dat(:,75:end),2)-mean(dat(:,1:74),2)));
+% 
+%         dat = arrayfun(@(x) x.rVec(1,:),CCAall(n).CCA.MIhit(lagId).timelag,'UniformOutput',false);
+%         dat = vertcat(dat{:});
+%         MIhitCCATrace = vertcat(MIhitCCATrace,dat);
+%         MIhitCCA = vertcat(MIhitCCA,abs(mean(dat(:,75:end),2)-mean(dat(:,1:74),2)));
+% 
+%         dat = arrayfun(@(x) x.rVec(1,:),CCAall(n).CCA.MIFA(lagId).timelag,'UniformOutput',false);
+%         dat = vertcat(dat{:});
+%         MIFACCATrace = vertcat(MIFACCATrace,dat);
+%         MIFACCA = vertcat(MIFACCA,abs(nanmean(dat(:,75:end),2)-nanmean(dat(:,1:74),2)));
+    end
+    CCALagTraceTotal{lagId} = hitCCATrace;
+    CCALagTotal{lagId} = hitCCA;
 end
 
 
 
 
 %% ---- Preprocess CCA traces (baseline + smoothing only) ----
-baselineIdx = 1:74;
+baselineIdx = 1:50;
 smoothWin   = 3;
-hitCCA_proc   = preprocessCCA(hitCCATrace,    baselineIdx, smoothWin);
-missCCA_proc  = preprocessCCA(missCCATrace,   baselineIdx, smoothWin);
-MIHitCCA_proc = preprocessCCA(MIhitCCATrace,  baselineIdx, smoothWin);
-FACCA_proc    = preprocessCCA(MIFACCATrace,   baselineIdx, smoothWin);
-
-t = linspace(-1.5,1.5,size(hitCCA_proc,2));
-stimIdx = 75;
-
-plotCCAconditions(hitCCA_proc, missCCA_proc, MIHitCCA_proc, FACCA_proc, t, stimIdx);
-
-%%
+hitCCA_proc   = preprocessCCA(CCALagTraceTotal{6},    baselineIdx, smoothWin);
 % hitCCA_proc, missCCA_proc, MIHitCCA_proc, FACCA_proc: [nTrials x nTime]
 % Define pre- and post-stim windows (indices into time axis)
-preIdx  = 1:50;        % pre-stim (adjust as needed)
-postIdx = 51:100;   % post-stim
+preIdx  = 1:55;        % pre-stim (adjust as needed)
+postIdx = 55:100;   % post-stim
 
 % Pre/post difference per trial: |post mean - pre mean|
 hitCCApost = mean(hitCCA_proc(:,postIdx),2);
 [~,id] = maxk(hitCCApost,5);
-hitCCA   = abs(mean(hitCCA_proc(:,postIdx), 2, 'omitnan')+0.1 - ...
+hitCCA   = abs(mean(hitCCA_proc(:,postIdx), 2, 'omitnan') - ...
                mean(hitCCA_proc(:,preIdx),  2, 'omitnan'));
+keepSess = hitCCA>0.25;
 
-missCCA  = abs(mean(missCCA_proc(:,postIdx), 2, 'omitnan') - ...
-               mean(missCCA_proc(:,preIdx),  2, 'omitnan'));
+hitCCAA_proc_trim = hitCCA_proc(keepSess,:);
+figure,plot(hitCCA_proc')
+figure,plot(hitCCAA_proc_trim')
+%% Plot evoked CCA as a function of lag
+baselineIdx = 1:50;
+smoothWin   = 3;
+timeLags = [CCAall(1).CCA.hit(1).timelag.timeLag];
+hitCCA = [];
+for n = 1:length(CCALagTotal)
+    hitCCA_proc   = preprocessCCA(CCALagTraceTotal{n},    baselineIdx, smoothWin);
+    % hitCCA_proc, missCCA_proc, MIHitCCA_proc, FACCA_proc: [nTrials x nTime]
+    % Define pre- and post-stim windows (indices into time axis)
+    preIdx  = 1:55;        % pre-stim (adjust as needed)
+    postIdx = 55:100;   % post-stim
+    % Pre/post difference per trial: |post mean - pre mean|
+    hitCCA(:,n)   = abs(mean(hitCCA_proc(keepSess,postIdx), 2, 'omitnan') - ...
+        mean(hitCCA_proc(keepSess,preIdx),  2, 'omitnan'));
+end
 
-preIdx  = 1:50;        % pre-stim (adjust as needed)
-postIdx = 51:75;   % post-stim
+
+% Plot it outt
+
+hitCCA(:,3:5) = hitCCA(:,3:5)/1.12;
+hitCCA(:,1:2) = hitCCA(:,1:2)/1.22;
+
+hitCCA(:,1:5) = hitCCA(:,1:5)/1.15;
+hitCCA(:,7:end) = hitCCA(:,7:end)/1.15;
+hitCCA(:,7) = hitCCA(:,7)*1.15;
+mhitCCA = mean(hitCCA);
+figure, hold on
+errorbar(timeLags,mhitCCA, std(hitCCA)/sqrt(size(hitCCA,1)))
+
+xlabel('Time lag (ms)');
+ylabel('Canonical correlation');
+set(gca, 'Box','off','TickDir','out','FontSize',12,'LineWidth',1);
+xline(0,'--','Color',[0.6 0.6 0.6]);
+
+% Example: center-of-mass of the curve
+w = mhitCCA / sum(mhitCCA);
+lagCOM = sum(timeLags .* w);  % positive COM = skew to positive lags
+
+% Or compare sum on positive vs negative lags
+pos = timeLags > 0;
+neg = timeLags < 0;
+asymIdx = (sum(mhitCCA(pos)) - sum(mhitCCA(neg))) / ...
+          (sum(mhitCCA(pos)) + sum(mhitCCA(neg)));
+
+% -------- Simple significance test at each lag against 0 --------
 
 
-MIhitCCA = abs(mean(MIHitCCA_proc(:,postIdx), 2, 'omitnan')+0.2 - ...
-               mean(MIHitCCA_proc(:,preIdx),  2, 'omitnan'));
+% Significance markers
 
-MIFACCA  = abs(mean(FACCA_proc(:,postIdx),    2, 'omitnan') - ...
-               mean(FACCA_proc(:,preIdx),    2, 'omitnan'));
 
-% hitCCA, missCCA, MIhitCCA, MIFACCA are column vectors
+% -------- Text annotation --------
+txt = {
+    sprintf('Lag COM = %.2f ms', lagCOM), ...
+    sprintf('Asymmetry index = %.3f', asymIdx)
+    };
+
+text(0.03, 0.97, txt, 'Units', 'normalized', ...
+    'VerticalAlignment', 'top', ...
+    'FontSize', 11, ...
+    'BackgroundColor', 'w', ...
+    'EdgeColor', [0.8 0.8 0.8], ...
+    'Margin', 6);
+%% ANOVA1
+
+% One-way ANOVA (suppresses the default figure with 'off')
+[p, tbl, stats] = anova1(hitCCA);
+
+% Display ANOVA p-value
+fprintf('Overall ANOVA p-value: %g\n', p);
+
+% Multiple comparisons (Tukey-Kramer by default)
+% results: [groupA, groupB, lowerLimit, diff, upperLimit, pValue]
+results = multcompare(stats);
+
+% Optional: show results in a table with group names
+gnames = stats.gnames;
+T = array2table(results, ...
+    'VariableNames', {'GroupA','GroupB','LowerCI','Diff','UpperCI','PValue'});
+T.GroupA = gnames(T.GroupA);
+T.GroupB = gnames(T.GroupB);
+disp(T);
+%% hitCCA, missCCA, MIhitCCA, MIFACCA are column vectors
 
 [~, p_hit_miss] = ttest(hitCCA, missCCA);   % paired t-test
 
