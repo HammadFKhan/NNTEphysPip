@@ -149,8 +149,10 @@ n_permutations = 1000;
 % 3. Interpret results
 significant_pre_cue = mean(p_values(50:75));
 disp(['Significant val from pre cue ', num2str((significant_pre_cue))]);
-significant_cue_mov = mean(p_values(75:100));
+significant_cue_mov = mean(p_values(75:80));
 disp(['Significant val from cue to MI ', num2str((significant_cue_mov))]);
+significant_mov_post= mean(p_values(85:95));
+disp(['Significant val from MI to post ', num2str((significant_mov_post))]);
 
 % [p_values, obs_diff, perm_diffs] = paired_signflip_perm(speedTotBaselineSession', speedTotCooledSession', n_permutations);
 % significant_cue_mov = mean(p_values);
@@ -222,10 +224,12 @@ n_permutations = 1000;
 [p_values, obs_diff, perm_diffs] = permutation_test(tot, n_baseline, n_eOPN, n_permutations);
 
 % 3. Interpret results
-significant_pre_cue = mean(p_values(1:75));
+significant_pre_cue = mean(p_values(1:50));
 disp(['Significant val from pre cue ', num2str((significant_pre_cue))]);
-significant_cue_mov = mean(p_values(70:100));
+significant_cue_mov = mean(p_values(75:80));
 disp(['Significant val from cue to MI ', num2str((significant_cue_mov))]);
+significant_mov_post= mean(p_values(85:95));
+disp(['Significant val from MI to post ', num2str((significant_mov_post))])
 
 % [p_values, obs_diff, perm_diffs] = paired_signflip_perm(speedTotBaselineSession', speedTotCooledSession', n_permutations);
 % significant_cue_mov = mean(p_values);
