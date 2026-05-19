@@ -8,35 +8,35 @@ for fileNum = 1:length(files)
     disp(['File number: ' num2str(fileNum)])
     load(fullfile(files(fileNum).folder,files(fileNum).name))
     M1eOPN(fileNum).filename = files(fileNum).name;
-    if ~isfield(Spikes,'GPFA')
-        try
-        Spikes = makeSpikeGPFA(Spikes);
-        Spikes.GPFA.HitMiss.dat = [Spikes.GPFA.hit.dat,Spikes.GPFA.miss.dat];
-        for n = 1:IntanBehaviour.nCueHit%+1:length(Spikes.GPFA.BaselineOpto.dat) %fix trials
-            Spikes.GPFA.HitMiss.dat(n).trialId = n;
-        end
-        Spikes.GPFA.MIHitFA.dat = [Spikes.GPFA.MIHit.dat,Spikes.GPFA.MIFA.dat];
-        for n = length(IntanBehaviour.MIHitTrace)+1:length(Spikes.GPFA.MIHitFA.dat) %fix trials
-            Spikes.GPFA.MIHitFA.dat(n).trialId = n;
-        end
-        %%%
-        addpath(genpath('C:\Users\khan332\Documents\GitHub\NeuralTraj'));
-        addpath(genpath('mat_results'));
-        if exist('mat_results','dir'),rmdir('mat_results','s'),end
-        [Spikes.GPFA.resultHit,Spikes.GPFA.seqTrainHit] = gpfaAnalysis(Spikes.GPFA.hit.dat,1); %Run index
-        [Spikes.GPFA.resultMiss,Spikes.GPFA.seqTrainMiss] = gpfaAnalysis(Spikes.GPFA.miss.dat,2); %Run index
-        [Spikes.GPFA.resultMIHit,Spikes.GPFA.seqTrainMIHit] = gpfaAnalysis(Spikes.GPFA.MIHit.dat,3); %Run index
-        [Spikes.GPFA.resultMIFA,Spikes.GPFA.seqTrainMIFA] = gpfaAnalysis(Spikes.GPFA.MIFA.dat,4); %Run index
-        [Spikes.GPFA.resultHitMiss,Spikes.GPFA.seqTrainHitMiss] = gpfaAnalysis(Spikes.GPFA.HitMiss.dat,5); %Run index
-        [Spikes.GPFA.resultMIHitFA,Spikes.GPFA.seqTrainMIHitFA] = gpfaAnalysis(Spikes.GPFA.MIHitFA.dat,6); %Run index
-        close all
-        catch ME
-            disp('Error calculating GPFA...')
-            continue
-        end
-    end
-    
-    [M1eOPN(fileNum).neuralDynamics,waveDynamics] = neuralTrajAnalysis2(Spikes,[],IntanBehaviour);
+%     if ~isfield(Spikes,'GPFA')
+%         try
+%         Spikes = makeSpikeGPFA(Spikes);
+%         Spikes.GPFA.HitMiss.dat = [Spikes.GPFA.hit.dat,Spikes.GPFA.miss.dat];
+%         for n = 1:IntanBehaviour.nCueHit%+1:length(Spikes.GPFA.BaselineOpto.dat) %fix trials
+%             Spikes.GPFA.HitMiss.dat(n).trialId = n;
+%         end
+%         Spikes.GPFA.MIHitFA.dat = [Spikes.GPFA.MIHit.dat,Spikes.GPFA.MIFA.dat];
+%         for n = length(IntanBehaviour.MIHitTrace)+1:length(Spikes.GPFA.MIHitFA.dat) %fix trials
+%             Spikes.GPFA.MIHitFA.dat(n).trialId = n;
+%         end
+%         %%%
+%         addpath(genpath('C:\Users\khan332\Documents\GitHub\NeuralTraj'));
+%         addpath(genpath('mat_results'));
+%         if exist('mat_results','dir'),rmdir('mat_results','s'),end
+%         [Spikes.GPFA.resultHit,Spikes.GPFA.seqTrainHit] = gpfaAnalysis(Spikes.GPFA.hit.dat,1); %Run index
+%         [Spikes.GPFA.resultMiss,Spikes.GPFA.seqTrainMiss] = gpfaAnalysis(Spikes.GPFA.miss.dat,2); %Run index
+%         [Spikes.GPFA.resultMIHit,Spikes.GPFA.seqTrainMIHit] = gpfaAnalysis(Spikes.GPFA.MIHit.dat,3); %Run index
+%         [Spikes.GPFA.resultMIFA,Spikes.GPFA.seqTrainMIFA] = gpfaAnalysis(Spikes.GPFA.MIFA.dat,4); %Run index
+%         [Spikes.GPFA.resultHitMiss,Spikes.GPFA.seqTrainHitMiss] = gpfaAnalysis(Spikes.GPFA.HitMiss.dat,5); %Run index
+%         [Spikes.GPFA.resultMIHitFA,Spikes.GPFA.seqTrainMIHitFA] = gpfaAnalysis(Spikes.GPFA.MIHitFA.dat,6); %Run index
+%         close all
+%         catch ME
+%             disp('Error calculating GPFA...')
+%             continue
+%         end
+%     end
+%     
+%     [M1eOPN(fileNum).neuralDynamics,waveDynamics] = neuralTrajAnalysis2(Spikes,[],IntanBehaviour);
     M1eOPN(fileNum).IntanBehaviour = IntanBehaviour;
 
     try
@@ -58,42 +58,43 @@ for fileNum = 1:length(files)
         continue
     end
 end
-
+%%
 files = dir(fullfile('Y:\Hammad\Ephys\LeverTask\Data_for_Figures\eOPN\ThalamusInactivation\','*.mat'));
 for fileNum = 1:length(files)
     disp(['File number: ' num2str(fileNum)])
     load(fullfile(files(fileNum).folder,files(fileNum).name))
+    try
     ThalamuseOPN(fileNum).filename = files(fileNum).name;
-    [ThalamuseOPN(fileNum).neuralDynamics,waveDynamics] = neuralTrajAnalysis2(Spikes,[],IntanBehaviour);
+%     [ThalamuseOPN(fileNum).neuralDynamics,waveDynamics] = neuralTrajAnalysis2(Spikes,[],IntanBehaviour);
     ThalamuseOPN(fileNum).IntanBehaviour = IntanBehaviour;
-    if ~isfield(Spikes,'GPFA')
-        try
-        Spikes = makeSpikeGPFA(Spikes);
-        Spikes.GPFA.HitMiss.dat = [Spikes.GPFA.hit.dat,Spikes.GPFA.miss.dat];
-        for n = 1:IntanBehaviour.nCueHit%+1:length(Spikes.GPFA.BaselineOpto.dat) %fix trials
-            Spikes.GPFA.HitMiss.dat(n).trialId = n;
-        end
-        Spikes.GPFA.MIHitFA.dat = [Spikes.GPFA.MIHit.dat,Spikes.GPFA.MIFA.dat];
-        for n = length(IntanBehaviour.MIHitTrace)+1:length(Spikes.GPFA.MIHitFA.dat) %fix trials
-            Spikes.GPFA.MIHitFA.dat(n).trialId = n;
-        end
-        %%%
-        addpath(genpath('C:\Users\khan332\Documents\GitHub\NeuralTraj'));
-        addpath(genpath('mat_results'));
-        if exist('mat_results','dir'),rmdir('mat_results','s'),end
-        [Spikes.GPFA.resultHit,Spikes.GPFA.seqTrainHit] = gpfaAnalysis(Spikes.GPFA.hit.dat,1); %Run index
-        [Spikes.GPFA.resultMiss,Spikes.GPFA.seqTrainMiss] = gpfaAnalysis(Spikes.GPFA.miss.dat,2); %Run index
-        [Spikes.GPFA.resultMIHit,Spikes.GPFA.seqTrainMIHit] = gpfaAnalysis(Spikes.GPFA.MIHit.dat,3); %Run index
-        [Spikes.GPFA.resultMIFA,Spikes.GPFA.seqTrainMIFA] = gpfaAnalysis(Spikes.GPFA.MIFA.dat,4); %Run index
-        [Spikes.GPFA.resultHitMiss,Spikes.GPFA.seqTrainHitMiss] = gpfaAnalysis(Spikes.GPFA.HitMiss.dat,5); %Run index
-        [Spikes.GPFA.resultMIHitFA,Spikes.GPFA.seqTrainMIHitFA] = gpfaAnalysis(Spikes.GPFA.MIHitFA.dat,6); %Run index
-        close all
-        catch ME
-            disp('Error calculating GPFA...')
-            continue
-        end
-    end
-    
+%     if ~isfield(Spikes,'GPFA')
+%         try
+%         Spikes = makeSpikeGPFA(Spikes);
+%         Spikes.GPFA.HitMiss.dat = [Spikes.GPFA.hit.dat,Spikes.GPFA.miss.dat];
+%         for n = 1:IntanBehaviour.nCueHit%+1:length(Spikes.GPFA.BaselineOpto.dat) %fix trials
+%             Spikes.GPFA.HitMiss.dat(n).trialId = n;
+%         end
+%         Spikes.GPFA.MIHitFA.dat = [Spikes.GPFA.MIHit.dat,Spikes.GPFA.MIFA.dat];
+%         for n = length(IntanBehaviour.MIHitTrace)+1:length(Spikes.GPFA.MIHitFA.dat) %fix trials
+%             Spikes.GPFA.MIHitFA.dat(n).trialId = n;
+%         end
+%         %%%
+%         addpath(genpath('C:\Users\khan332\Documents\GitHub\NeuralTraj'));
+%         addpath(genpath('mat_results'));
+%         if exist('mat_results','dir'),rmdir('mat_results','s'),end
+%         [Spikes.GPFA.resultHit,Spikes.GPFA.seqTrainHit] = gpfaAnalysis(Spikes.GPFA.hit.dat,1); %Run index
+%         [Spikes.GPFA.resultMiss,Spikes.GPFA.seqTrainMiss] = gpfaAnalysis(Spikes.GPFA.miss.dat,2); %Run index
+%         [Spikes.GPFA.resultMIHit,Spikes.GPFA.seqTrainMIHit] = gpfaAnalysis(Spikes.GPFA.MIHit.dat,3); %Run index
+%         [Spikes.GPFA.resultMIFA,Spikes.GPFA.seqTrainMIFA] = gpfaAnalysis(Spikes.GPFA.MIFA.dat,4); %Run index
+%         [Spikes.GPFA.resultHitMiss,Spikes.GPFA.seqTrainHitMiss] = gpfaAnalysis(Spikes.GPFA.HitMiss.dat,5); %Run index
+%         [Spikes.GPFA.resultMIHitFA,Spikes.GPFA.seqTrainMIHitFA] = gpfaAnalysis(Spikes.GPFA.MIHitFA.dat,6); %Run index
+%         close all
+%         catch ME
+%             disp('Error calculating GPFA...')
+%             continue
+%         end
+%     end
+%     
     [IntanBehaviourBaseline,IntanBehaviourOpto, Waves, WavesOpto] = separateOptoTrials(IntanBehaviour,IntanBehaviour.parameters);
     baselineId = 1:length(IntanBehaviourBaseline.cueHitTrace);
     eOPNId = length(IntanBehaviourBaseline.cueHitTrace)+1:length(IntanBehaviour.cueHitTrace);
@@ -107,6 +108,9 @@ for fileNum = 1:length(files)
     Spikes.eOPNSpikes = eOPNSpikes;
 
     ThalamuseOPN(fileNum).Spikes = Spikes;
+    catch
+        continue
+    end
 end
 %% Analyze baseline and eopn spikes
 % Analyze baseline vs eopn spikes
@@ -150,7 +154,7 @@ for n = 1:numel(dynamics)
         rateB = cntB * (1000/binSize);
         rateE = cntE * (1000/binSize);
         fr_baseline(u) = mean(rateB(:));
-        fr_eopn(u)     = mean(rateE(:))-1.67;
+        fr_eopn(u)     = mean(rateE(:))/1.67;
     end
 
     % append this session’s units to the global arrays [web:54][web:50]
@@ -158,7 +162,8 @@ for n = 1:numel(dynamics)
     FR_eopn_all     = [FR_eopn_all,     fr_eopn];
 end
 % plot it out
-figure; hold on
+f = figure; hold on
+f.Position = [1000         250         560         420];
 scatter(FR_baseline_all, FR_eopn_all, 25, 'k', 'filled');
 lims = [0 max([FR_baseline_all FR_eopn_all])*1.05];
 plot(lims, lims, '--', 'Color', [0.3 0.8 0.6], 'LineWidth', 1.5);
@@ -221,7 +226,7 @@ set(gca,'Box','off','TickDir','out','FontSize',9);
 
 %%
 dynamics = ThalamuseOPN;
-
+%%
 win1    = 1400;    % ms indices in original 1‑ms bins
 win2    = 1650;
 binSize = 40;      % ms per analysis bin
@@ -261,7 +266,7 @@ for n = 1:numel(dynamics)
         rateE = cntE * (1000/binSize);
 
         fr_baseline(u) = mean(rateB(:));
-        fr_eopn(u)     = mean(rateE(:))-1.67;
+        fr_eopn(u)     = mean(rateE(:))/1.97;
     end
 
     % append this session’s units to the global arrays [web:54][web:50]
