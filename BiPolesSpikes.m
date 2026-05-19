@@ -373,6 +373,36 @@ sessionName = [fpath,'/','Spikes.mat'];
 % save(sessionName,"IntanBehaviour","fpath","parameters","-v7.3");
 save(sessionName,"Spikes","IntanBehaviour","fpath","-v7.3"); %,"betaWaves","thetaWaves","gammaWaves",
 disp('Saved!')
+%% Plot proportions
+m_rt  = sum(Spikes.BiPOLES.tagged)/length(Spikes.BiPOLES.tagged);
+
+
+col_noOpto = [0.4 0.4 0.4];        % gray base
+col_pts_no = [0.2 0.2 0.2];        % dark gray points
+col_pts_op = [0 123 167]/255;      % cerulean points [web:115][web:116]
+
+figure; hold on
+
+% Bars (semi‑transparent gray)
+b = bar(1, m_rt, 'FaceColor',[0.8 0.8 0.8], 'EdgeColor','none');
+b.FaceAlpha = 0.5;
+
+% Error bars
+% errorbar(1:2, m_rt, sem_rt, 'k', 'LineStyle','none', 'LineWidth',1);
+
+% Overlay data points with horizontal jitter
+% jitter = 0.08;
+% 
+% x1 = 1 + (rand(size(noOptoHitrt))-0.5)*2*jitter;
+% x2 = 2 + (rand(size(optoHitrt))-0.5)*2*jitter;
+
+% scatter(x1, noOptoHitrt, 25, col_pts_no, 'filled', 'MarkerFaceAlpha',0.8);
+% scatter(x2, optoHitrt,   25, col_pts_op, 'filled', 'MarkerFaceAlpha',0.8);
+
+set(gca,'XTick',1,'XTickLabel',{'Opto'});
+ylabel('Tagged Neurons (%)');
+set(gca,'Box','off','TickDir','out','FontSize',12);
+
 %% Refine tag neurons (optional)
 
 allSpk      = Spikes.PSTH.hit.spks;                % 1 x nNeurons cell
