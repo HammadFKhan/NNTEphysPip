@@ -15,7 +15,7 @@ if redo==1
         try
         Spikes = makeSpikeGPFA(Spikes);
         Spikes.GPFA.HitMiss.dat = [Spikes.GPFA.hit.dat,Spikes.GPFA.miss.dat];
-        for n = 1:IntanBehaviour.nCueHit%+1:length(Spikes.GPFA.BaselineOpto.dat) %fix trials
+        for n = length(Spikes.GPFA.hit.dat)+1:length(Spikes.GPFA.HitMiss.dat) %fix trials
             Spikes.GPFA.HitMiss.dat(n).trialId = n;
         end
         Spikes.GPFA.MIHitFA.dat = [Spikes.GPFA.MIHit.dat,Spikes.GPFA.MIFA.dat];
@@ -230,11 +230,49 @@ ylabel('Trajectory Deviation')
 [p,t,stats] = anova1(temp)
 c = multcompare(stats)
 %% Neural Trajectory difference
-dynamics = M2neuralDynamics;
+dynamics = M1neuralDynamics;
 dimension = 1;
 simTot = [];
 for n = 1:length(dynamics)
-sim_data = dynamics(n).neuralDynamics.neuralDiffhitmiss;  
+sim_data = dynamics(n).neuralDynamics_unbalanced.neuralDiffhitmiss;  
+simTot{n} = squeeze(sim_data(:,dimension));
+end
+simTot = horzcat(simTot{:});
+
+
+colors = [0 0.4470 0.7410;0.75 0.75 0.75;190/255 30/255 45/255];
+time = -1499:20:1500;
+figure;
+plot(time(2:end),mean(simTot,2),'color',colors(1,:),'linewidth',2),hold on
+plot(time(2:end),mean(simTot,2)+std(simTot,[],2)/sqrt(size(simTot,2)),'color',colors(1,:),'linewidth',2)
+plot(time(2:end),mean(simTot,2)-std(simTot,[],2)/sqrt(size(simTot,2)),'color',colors(1,:),'linewidth',2)
+hold on;
+
+dimension = 1;
+simTot = [];
+for n = 1:length(dynamics)
+sim_data = dynamics(n).neuralDynamics_rebalanced.neuralDiffhitmiss;  
+simTot{n} = squeeze(sim_data(:,dimension));
+end
+simTot = horzcat(simTot{:});
+
+
+colors = [0 0.4470 0.7410;0.75 0.75 0.75;190/255 30/255 45/255];
+time = -1499:20:1500;
+plot(time(2:end),mean(simTot,2),'color',colors(2,:),'linewidth',2),hold on
+plot(time(2:end),mean(simTot,2)+std(simTot,[],2)/sqrt(size(simTot,2)),'color',colors(2,:),'linewidth',2)
+plot(time(2:end),mean(simTot,2)-std(simTot,[],2)/sqrt(size(simTot,2)),'color',colors(2,:),'linewidth',2)
+hold on;
+
+xlabel('Time (s)');
+ylabel('Average Speed');
+box off,set(gca,'tickdir','out','fontsize',14),axis square,xlim([-500 1500])%,ylim([-0.01 0.03
+%%
+dynamics = M1neuralDynamics;
+dimension = 1;
+simTot = [];
+for n = 1:length(dynamics)
+sim_data = dynamics(n).neuralDynamics_unbalanced.neuralDiffMI;  
 simTot{n} = squeeze(sim_data(:,dimension));
 end
 simTot = horzcat(simTot{:});
@@ -250,7 +288,7 @@ hold on;
 
 simTot = [];
 for n = 1:length(dynamics)
-sim_data = dynamics(n).neuralDynamics.neuralDiffMI;  
+sim_data = dynamics(n).neuralDynamics_rebalanced.neuralDiffMI;  
 simTot{n} = squeeze(sim_data(:,dimension));
 end
 simTot = horzcat(simTot{:});
@@ -258,9 +296,9 @@ simTot = horzcat(simTot{:});
 
 colors = [0 0.4470 0.7410;0.75 0.75 0.75;190/255 30/255 45/255];
 time = -1499:20:1500;
-plot(time(2:end),mean(simTot,2),'color',colors(1,:),'linewidth',2),hold on
-plot(time(2:end),mean(simTot,2)+std(simTot,[],2)/sqrt(size(simTot,2)),'color',colors(1,:),'linewidth',2)
-plot(time(2:end),mean(simTot,2)-std(simTot,[],2)/sqrt(size(simTot,2)),'color',colors(1,:),'linewidth',2)
+plot(time(2:end),mean(simTot,2),'color',colors(2,:),'linewidth',2),hold on
+plot(time(2:end),mean(simTot,2)+std(simTot,[],2)/sqrt(size(simTot,2)),'color',colors(2,:),'linewidth',2)
+plot(time(2:end),mean(simTot,2)-std(simTot,[],2)/sqrt(size(simTot,2)),'color',colors(2,:),'linewidth',2)
 hold on;
 
 xlabel('Time (s)');
