@@ -58,12 +58,30 @@ elseif isfield(Behaviour,'nHit')
                 end
                 trials{count}(i,:) = temp;
                 sqNum = Behaviour.SqNum;
+                W     = 500;                    % half-window
+                winSz = 2*W + 1;                
+                N     = numel(temp);
+
                 for sQN = 1:sqNum
                     pl = Behaviour.hitTrace(i).pullCount(sQN);
                     Spikes.PSTH.hit.pl(i,sQN) = pl;
-                    neurons{ii,sQN}(i,:) = temp((pl-500):(pl+500));
-                    lever{sQN}(i,:) = leverTemp((pl-500):(pl+500));
-                end
+                    % Desired indices (can be out of bounds)
+                    iStart = pl - W;
+                    iEnd   = pl + W;
+                    % Allocate zero-padded window
+                   win_neur  = zeros(1, winSz);
+                   win_lever = zeros(1, winSz);
+                   % Overlap with valid data
+                   srcStart = max(iStart, 1);
+                   srcEnd   = min(iEnd, N);
+                   % Corresponding positions inside the window
+                   dstStart = srcStart - iStart + 1;
+                   dstEnd   = dstStart + (srcEnd - srcStart);
+                   win_neur(dstStart:dstEnd)  = temp(srcStart:srcEnd);
+                   win_lever(dstStart:dstEnd) = leverTemp(srcStart:srcEnd);
+                   neurons{ii,sQN}(i,:) = win_neur;
+                   lever{sQN}(i,:)      = win_lever;
+               end
             end
         else
             trials{count} = [];
