@@ -15,7 +15,7 @@
 % tho.... So we can instead transform the warpSpikes as a cell array with
 % each cell entry being the trial type which we can affix with a label. 
 files = dir(fullfile('Y:\Hammad\Ephys\SeqProject\ForceField\','*.mat'));
-for fileNum = 2:length(files)
+for fileNum = 1:3
     fName = fullfile(files(fileNum).folder,files(fileNum).name);
     disp(['Loading ' fName '...'])
     load(fName)
