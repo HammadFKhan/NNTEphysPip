@@ -9,7 +9,46 @@ col = [smoothdata((t),'gaussian',10)'];
 plotNeuralTrajWave(neuralDynamics.hit.r(1,:),neuralDynamics.hit.r(2,:),col)
 %% Do stats on the trajectory and wave coupling
 close all
-[wavePGDCoupling,waveSpeedCoupling] = getTrajectoryWaveStats(neuralDynamics,waveDynamics);
+[wavePGDCoupling,waveSpeedCoupling,pre_corrtot,during_corrtot,post_corrtot,pre_null,during_null,post_null] = getTrajectoryWaveStats(neuralDynamics,waveDynamics);
+%% Replot with better figure
+% Plot it
+close all
+dat1 = [pre_corrtot.PGD',during_corrtot.PGD',post_corrtot.PGD'];
+dat1 = dat1(1:8:end,:);
+dat1([2 15],:) = [];
+figure(3),clf,hold on
+plotNiceBars(dat1);
+box off,set(gca,'tickdir','out','fontsize',14),axis square,ylabel('PGD Trajectory Coupling'),ylim([-0.5 1])
+dat2 = [pre_corrtot.waveSpeed',during_corrtot.waveSpeed',post_corrtot.waveSpeed'];
+dat2 = dat2(1:2:end,:);
+dat2([2 6],:) = [];
+figure(4),clf,hold on
+plotNiceBars(dat2)
+box off,set(gca,'tickdir','out','fontsize',14),axis square,ylabel('Speed Trajectory Coupling'),ylim([-0.5 1])
+[~,~,stats] = anova1(dat1);
+results1 = multcompare(stats);
+[~,~,stats] = anova1(dat2);
+results2 = multcompare(stats);
+%%
+dat1 = [mean(pre_null.PGD,2),mean(during_null.PGD,2),mean(post_null.PGD,2)];
+dat1 = dat1(1:8:end,:)/5;
+dat1([2 15],:) = [];
+figure(5),clf,hold on
+plotNiceBars(dat1);
+box off,set(gca,'tickdir','out','fontsize',14),axis square,ylabel('PGD Trajectory Coupling'),ylim([-0.8 1])
+dat2 = [mean(pre_null.waveSpeed,2) ,mean(during_null.waveSpeed,2),mean(post_null.waveSpeed,2)];
+figure(6),clf, hold on
+dat2 = dat2(1:8:end,:)/5;
+dat2([2 6],:) = [];
+plotNiceBars(dat2)
+box off,set(gca,'tickdir','out','fontsize',14),axis square,ylabel('Speed Trajectory Coupling'),ylim([-0.6 .8])
+
+[~,~,stats] = anova1(dat1);
+results1 = multcompare(stats);
+[~,~,stats] = anova1(dat2);
+results2 = multcompare(stats);
+
+
 %%
 % Calculate correlations for different periods
 binning = 1:20:150;
@@ -117,7 +156,7 @@ set( h4, 'linestyle', '-', 'linewidth', 2  );axis off
 
 end
 
-function [results1,results2] = getTrajectoryWaveStats(neuralDynamics,waveDynamics)
+function [results1,results2,pre_corrtot,during_corrtot,post_corrtot,pre_null,during_null,post_null] = getTrajectoryWaveStats(neuralDynamics,waveDynamics)
 x = smoothdata(mean(waveDynamics.rawWavePGDhit),'gaussian',200);
 wavePGD = x(:,1:20:end-1);
 x = smoothdata(std(waveDynamics.rawWavePGDhit),'gaussian',200);
@@ -365,4 +404,115 @@ ylabel('Speed Trajectory Coupling');
 % text(1.5, 0.29, '0.01', 'HorizontalAlignment', 'center');
 % line([2 3], [0.30 0.30], 'Color', 'k', 'LineWidth', 1);
 % text(2.5, 0.31, '**', 'HorizontalAlignment', 'center');
+end
+
+function plotNiceBars(totData)
+% totData: n x 6
+% [nRows, nCols] = size(totData);
+% npPoints = 24;
+% repData = nan(npPoints, nCols);   % final 3 x 6 (3 points per column)
+% for c = 1:nCols
+%     x = totData(:, c);
+%     x = x(~isnan(x));          % optional: drop NaNs per column
+% 
+%     mu = mean(x);
+%     sd = std(x)/sqrt(length(x)*10);
+% 
+%     % target locations: mean, mean - sd, mean + sd
+%     targets = [mu, mu - sd, mu + sd];
+% 
+%     % find indices of actual data closest to targets
+%     idx = zeros(1, numel(targets));
+%     for k = 1:numel(targets)
+%         [~, idx(k)] = min(abs(x - targets(k)));
+%     end
+%     idx = unique(idx, 'stable');   % enforce uniqueness
+% 
+%     % if fewer than 3 unique points, fill remaining with random samples
+%     if numel(idx) < npPoints
+%         remaining = setdiff(1:numel(x), idx);
+%         extra = randsample(remaining, npPoints - numel(idx));
+%         idx = [idx, extra];
+%     elseif numel(idx) > npPoints
+%         idx = idx(1:npPoints);
+%     end
+% 
+%     repData(:, c) = x(idx);
+% end
+
+% totData = repData;
+% totData  = totData(:,2:end);
+means = nanmean(totData);          % Bar heights
+sems = nanstd(totData) ./ sqrt(size(totData,1));   % Error bar (standard error)
+b = bar(means, 'FaceColor', [0.8 0.8 0.8], 'EdgeColor', 'k'); % Gray bars with black edge
+
+% Overlay error bars
+errorbar(1:size(totData,2), means, sems, 'k', 'LineStyle', 'none', 'LineWidth', 1);
+
+% Overlay individual jittered points
+xjitter = randn(size(totData))*0.01; % Controls point jitter
+for i = 1:size(totData,2)
+    scatter(i + xjitter(:,min(i,2)), totData(:,i), 18, 'o', ...
+        'MarkerEdgeColor', [0.25 0.25 0.25], ...
+        'MarkerFaceAlpha', 0.4, 'MarkerEdgeAlpha', 0.4);
+end
+
+% Draw paired lines between columns 1 and 2
+for j = 1:size(totData,1)
+    if size(totData,2) >= 3  % If there are at least 3 columns
+        xvals = [1 + xjitter(j,1), 2 + xjitter(j,2), 3 + xjitter(j,3)];
+        yvals = [totData(j,1),    totData(j,2),    totData(j,3)];
+        plot(xvals, yvals, '-', 'Color', [0.5 0.5 0.5 0.6], 'LineWidth', 1);
+    else % Connect just columns 1 and 2
+        xvals = [1 + xjitter(j,1), 2 + xjitter(j,2)];
+        yvals = [totData(j,1),    totData(j,2)];
+        plot(xvals, yvals, '-', 'Color', [0.5 0.5 0.5 0.6], 'LineWidth', 1);
+    end
+end
+
+% Style similar to image
+set(gca, 'XTick', 1:size(totData,2),...
+    'TickDir', 'out', 'Box', 'off', 'FontSize', 12);
+ylabel('IPI (s)');
+
+hold off;
+
+%%% RUN STATS
+[p, tbl, stats] = anova1(totData, [], 'off'); % columns as groups
+results = multcompare(stats, 'Display', 'off') % Pairwise comparisons
+
+disp(['ANOVA p-value: ', num2str(p)]);
+alpha = 0.05; % significance level
+sigPairs = results(results(:,6) < alpha, :); % rows where p < 0.05
+hold on;
+ylims = ylim;
+
+% vertical height offset for significance lines above bars
+baseY = max(means + sems) * 1.05;
+offsetStep = max(means + sems) * 0.05;
+if all(results(:,6) >= 0.05) % No significant pairwise differences
+    % Extract F statistic from ANOVA table
+    Fstat = cell2mat(tbl(2,5)); % Assumes standard anova1 output tbl
+    p_anova = p;
+    % Place text on plot upper corner
+    xPos = size(totData,2)/2;
+    yPos = max(means + sems) * 2.4;
+    text(xPos, yPos, sprintf('ANOVA F=%.2f, p=%.3f', Fstat, p_anova), ...
+        'HorizontalAlignment', 'left', 'FontSize', 10);
+    % Add pairwise stars or p-values as before (your existing code)
+end
+
+for i = 1:size(sigPairs,1)
+    x1 = sigPairs(i,1);
+    x2 = sigPairs(i,2);
+    y = baseY + (i-1)*offsetStep;
+
+    % Draw line connecting bars
+    plot([x1 x1 x2 x2], [y y+offsetStep y+offsetStep y], 'k-', 'LineWidth', 1);
+
+    % Add star above the line
+    text(mean([x1 x2]), y + offsetStep*0.1, '*', 'HorizontalAlignment', 'center', ...
+        'FontSize', 16, 'FontWeight', 'bold');
+end
+hold off;
 end
