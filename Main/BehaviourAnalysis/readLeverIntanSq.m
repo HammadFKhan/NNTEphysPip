@@ -98,7 +98,7 @@ for i=1:IntanBehaviour.nHit
     IntanBehaviour.hitTrace(i).time = (0:1/parameters.Fs:(size(IntanBehaviour.hitTrace(i).trace,1)-1)*1/parameters.Fs)' - parameters.windowBeforePull;
     IntanBehaviour.hitTrace(i).LFPIndex = ([rewardIndex(i)-parameters.windowBeforePull*parameters.Fs:1:rewardIndex(i)+parameters.windowAfterPull*parameters.Fs])';
     IntanBehaviour.hitTrace(i).LFPtime = IntanBehaviour.time(rewardIndex(i)-parameters.windowBeforePull*parameters.Fs:rewardIndex(i)+parameters.windowAfterPull*parameters.Fs)';
-    IntanBehaviour.hitTrace(i).rewardindex = 0; % calculated by the reward index and starting point of MI
+    IntanBehaviour.hitTrace(i).rewardindex = rewardIndex; % calculated by the reward index and starting point of MI
     IntanBehaviour.hitTrace(i).rewardtime = (IntanBehaviour.hitTrace(i).rewardindex/parameters.Fs)-parameters.delay; % Time of reward from sequence (ie. sequence length)
     % Here we only access the pull counts before reward is dispensed
     rewardSt = nlengthBeforePull-parameters.delay*parameters.Fs;
@@ -125,6 +125,26 @@ for i=1:IntanBehaviour.nHit
             IntanBehaviour.hitTrace(i).effortFlag = 0;
         end
     end
+
+    if parameters.opto == 1
+        IntanBehaviour.hitTrace(i).optoTrace = IntanBehaviour.optoTrace(rewardIndex(i)-parameters.windowBeforePull*parameters.Fs:rewardIndex(i)+parameters.windowAfterPull*parameters.Fs)';
+       
+        optoWin = find(IntanBehaviour.hitTrace(i).optoTrace==1);
+        % If there is no effort trial triggered
+        if ~isempty(optoWin)
+            % We can check for an effort flag if the pullcounts lie within an
+            % effort flag (cos this means the piston was happening under this
+            % hit trial)
+            if sum(optoWin(1)>=IntanBehaviour.hitTrace(i).pullCount(1) & optoWin(end)<=(IntanBehaviour.hitTrace(i).pullCount(end)+700))>0
+                IntanBehaviour.hitTrace(i).optoFlag = 1;
+            else
+                IntanBehaviour.hitTrace(i).optoFlag = 0;
+            end
+        else
+            IntanBehaviour.hitTrace(i).optoFlag = 0;
+        end
+    end
+
 
 end
 IntanBehaviour.SqNum = Behaviour.SqNum;
@@ -293,6 +313,27 @@ for i=1:IntanBehaviour.nMiss
             IntanBehaviour.missTrace(i).effortFlag = find(effortIndex>=effortIdx & effortIndex<=(IntanBehaviour.missTrace(i).LFPIndex(end)));
         end
     end
+
+    if ~isempty(IntanBehaviour.missTrace(i).pullCount)
+        if parameters.opto == 1
+            IntanBehaviour.missTrace(i).optoTrace = IntanBehaviour.optoTrace(missIndex(i)-parameters.windowBeforePull*parameters.Fs:missIndex(i)+parameters.windowAfterPull*parameters.Fs)';
+            % Check pull index 
+            if IntanBehaviour.missTrace(i).pullCount(1)>0
+                plIdx = IntanBehaviour.missTrace(i).pullCount(1);
+            else
+                try
+                plIdx = IntanBehaviour.missTrace(i).pullCount(2);
+                catch
+                    disp('error indexing miss trace on opto')
+                    continue
+                end
+            end
+
+            optoIdx = IntanBehaviour.missTrace(i).LFPIndex(plIdx)-1;
+            IntanBehaviour.missTrace(i).effortFlag = find(optoIndex>=optoIdx & optoIndex<=(IntanBehaviour.missTrace(i).LFPIndex(end)));
+        end
+    end
+
 end
 
 
@@ -406,6 +447,25 @@ if parameters.perturbEffort == 1
         IntanBehaviour.effortperturbTrace(i).effortTrace = IntanBehaviour.effortTrace(effortIndex(i)-parameters.windowBeforeMI*parameters.Fs:effortIndex(i)+parameters.windowAfterMI*parameters.Fs)';
         % Check if reward was ever given out
         IntanBehaviour.effortperturbTrace(i).rewardFlag = find(rewardIndex>=IntanBehaviour.effortperturbTrace(i).LFPIndex(1) & rewardIndex<=IntanBehaviour.effortperturbTrace(i).LFPIndex(end));
+%         IntanBehaviour.effortperturbTrace(i).pullCount(IntanBehaviour.effortperturbTrace(i).pullCount<parameters.windowBeforeMI*parameters.Fs) = [];
+    end
+end
+
+if parameters.opto == 1
+    rewardIndex = find(diff(IntanBehaviour.rewardTrace)==1)+1;
+    for i=1:IntanBehaviour.nOpto
+        % So here we take the effort index which is the pull time prior to it -
+        % this is because we know that the effort trace goes up when the pull
+        % count increments by 1
+        pullst = find(IntanBehaviour.pullCount==optoIndex(i)); % grab nearest past pull it should basically be zero
+        IntanBehaviour.OptoTrace(i).trace = IntanBehaviour.leverTrace(optoIndex(i)-parameters.windowBeforeMI*parameters.Fs:optoIndex(i)+parameters.windowAfterMI*parameters.Fs)';
+        IntanBehaviour.OptoTrace(i).time = (0:1/parameters.Fs:(size(IntanBehaviour.OptoTrace(i).trace,1)-1)*1/parameters.Fs)' - parameters.windowBeforeMI;
+        IntanBehaviour.OptoTrace(i).LFPIndex = ([optoIndex(i)-parameters.windowBeforeMI*parameters.Fs:1:optoIndex(i)+parameters.windowAfterMI*parameters.Fs])';
+        IntanBehaviour.OptoTrace(i).LFPtime = IntanBehaviour.time(optoIndex(i)-parameters.windowBeforeMI*parameters.Fs:optoIndex(i)+parameters.windowAfterMI*parameters.Fs)';
+        IntanBehaviour.OptoTrace(i).pullCount = IntanBehaviour.pullCount(IntanBehaviour.pullCount>=IntanBehaviour.OptoTrace(i).LFPIndex(1) & IntanBehaviour.pullCount<=IntanBehaviour.OptoTrace(i).LFPIndex(1)+rewardSt)-IntanBehaviour.OptoTrace(i).LFPIndex(1);
+        IntanBehaviour.OptoTrace(i).optoTrace = IntanBehaviour.optoTrace(optoIndex(i)-parameters.windowBeforeMI*parameters.Fs:optoIndex(i)+parameters.windowAfterMI*parameters.Fs)';
+        % Check if reward was ever given out
+        IntanBehaviour.OptoTrace(i).rewardFlag = find(rewardIndex>=IntanBehaviour.OptoTrace(i).LFPIndex(1) & rewardIndex<=IntanBehaviour.OptoTrace(i).LFPIndex(end));
 %         IntanBehaviour.effortperturbTrace(i).pullCount(IntanBehaviour.effortperturbTrace(i).pullCount<parameters.windowBeforeMI*parameters.Fs) = [];
     end
 end
