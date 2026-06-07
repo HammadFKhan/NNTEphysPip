@@ -165,10 +165,9 @@ close(v);
 isnoeffort = allTrials(2,:);
 % sort sorted cluser based on chrnology so we can map onto the allTrials
 % index
-sortedclusterId = idx;
 for k = 1:3
 % return allTrial value of zero or 1
-clusterTrials = isnoeffort(sortedclusterId==k); % returns trial number of that cluster
+clusterTrials = isnoeffort(idx==k); % returns trial number of that cluster
 % sum of the cluster Trial is the number of non effort trials
 effortproportion(k) = 1-(sum(clusterTrials)/length(clusterTrials)); % qik mathss
 end
