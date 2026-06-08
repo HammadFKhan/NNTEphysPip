@@ -59,7 +59,7 @@ elseif isfield(Behaviour,'nHit')
                 trials{count}(i,:) = temp;
                 sqNum = Behaviour.SqNum;
                 W     = 500;                    % half-window
-                winSz = 2*W + 1;                
+                winSz = 2*W + 1;
                 N     = numel(temp);
 
                 for sQN = 1:sqNum
@@ -69,19 +69,19 @@ elseif isfield(Behaviour,'nHit')
                     iStart = pl - W;
                     iEnd   = pl + W;
                     % Allocate zero-padded window
-                   win_neur  = zeros(1, winSz);
-                   win_lever = zeros(1, winSz);
-                   % Overlap with valid data
-                   srcStart = max(iStart, 1);
-                   srcEnd   = min(iEnd, N);
-                   % Corresponding positions inside the window
-                   dstStart = srcStart - iStart + 1;
-                   dstEnd   = dstStart + (srcEnd - srcStart);
-                   win_neur(dstStart:dstEnd)  = temp(srcStart:srcEnd);
-                   win_lever(dstStart:dstEnd) = leverTemp(srcStart:srcEnd);
-                   neurons{ii,sQN}(i,:) = win_neur;
-                   lever{sQN}(i,:)      = win_lever;
-               end
+                    win_neur  = zeros(1, winSz);
+                    win_lever = zeros(1, winSz);
+                    % Overlap with valid data
+                    srcStart = max(iStart, 1);
+                    srcEnd   = min(iEnd, N);
+                    % Corresponding positions inside the window
+                    dstStart = srcStart - iStart + 1;
+                    dstEnd   = dstStart + (srcEnd - srcStart);
+                    win_neur(dstStart:dstEnd)  = temp(srcStart:srcEnd);
+                    win_lever(dstStart:dstEnd) = leverTemp(srcStart:srcEnd);
+                    neurons{ii,sQN}(i,:) = win_neur;
+                    lever{sQN}(i,:)      = win_lever;
+                end
             end
         else
             trials{count} = [];
@@ -172,12 +172,29 @@ if isfield(Behaviour,'MIHitTrace')
                 end
                 trials{count}(i,:) = temp;
                 sqNum = Behaviour.SqNum;
-                % Check pullcount is above 1500 (quick fix) here
-                for sQN = 1:sqNum
+                W     = 500;                    % half-window
+                winSz = 2*W + 1;
+                N     = numel(temp);
+
+                for sQN = 1:length(Behaviour.MIHitTrace(i).pullCount)
                     pl = Behaviour.MIHitTrace(i).pullCount(sQN);
                     Spikes.PSTH.MIHit.pl(i,sQN) = pl;
-                    neurons{ii,sQN}(i,:) = temp((pl-500):(pl+500));
-                    lever{sQN}(i,:) = leverTemp((pl-500):(pl+500));
+                    % Desired indices (can be out of bounds)
+                    iStart = pl - W;
+                    iEnd   = pl + W;
+                    % Allocate zero-padded window
+                    win_neur  = zeros(1, winSz);
+                    win_lever = zeros(1, winSz);
+                    % Overlap with valid data
+                    srcStart = max(iStart, 1);
+                    srcEnd   = min(iEnd, N);
+                    % Corresponding positions inside the window
+                    dstStart = srcStart - iStart + 1;
+                    dstEnd   = dstStart + (srcEnd - srcStart);
+                    win_neur(dstStart:dstEnd)  = temp(srcStart:srcEnd);
+                    win_lever(dstStart:dstEnd) = leverTemp(srcStart:srcEnd);
+                    neurons{ii,sQN}(i,:) = win_neur;
+                    lever{sQN}(i,:)      = win_lever;
                 end
             end
         else
@@ -185,7 +202,7 @@ if isfield(Behaviour,'MIHitTrace')
         end
         count = count+1;
     end
-   
+
     output = make_nice_mean_raster(trials,20,0);
     Spikes.PSTH.MIHit.SqspkRates = [];
     for n = 1:sqNum
@@ -259,11 +276,11 @@ if isfield(Behaviour,'effortperturbTrace')
         end
         count = count+1;
     end
-   
+
     output = make_nice_mean_raster(trials,20,0);
     Spikes.PSTH.effortperturb.SqspkRates = [];
     for n = 1:size(neurons,2)
-        if size(neurons{1,n},1)>1 % Edge case if there is only one trial 
+        if size(neurons{1,n},1)>1 % Edge case if there is only one trial
             Spikes.PSTH.effortperturb.SqspkRates(:,:,n) = make_nice_mean_raster(neurons(:,n)',20,0);
         else
             Spikes.PSTH.effortperturb.SqspkRates(:,:,n) = vertcat(neurons{:,n});
@@ -272,6 +289,56 @@ if isfield(Behaviour,'effortperturbTrace')
     Spikes.PSTH.effortperturb.Sqlever = lever;
     Spikes.PSTH.effortperturb.spks = trials;
     Spikes.PSTH.effortperturb.spkRates = output;
+end
+
+if isfield(Behaviour,'incompleteSqTrace')
+    fprintf('Analyzing incomplete sequence trials...\n')
+    count = 1;
+    trials = {};
+    neurons = {};
+    lever = {};
+    Spikes.PSTH.incompleteSq.pl = nan(length(Behaviour.incompleteSqTrace),Behaviour.SqNum);
+    for ii = 1:length(Spikes.Clusters)
+        if ~isempty(Spikes.Clusters(ii).spikeTime)
+            for i = 1:length(Behaviour.incompleteSqTrace)
+                st = floor(Behaviour.incompleteSqTrace(i).LFPtime(1));
+                stp = floor(Behaviour.incompleteSqTrace(i).LFPtime(end));
+                temp = zeros(1,length(0:0.001:(stp-st)));
+                spiketm = Spikes.Clusters(ii).spikeTime(Spikes.Clusters(ii).spikeTime>=st & Spikes.Clusters(ii).spikeTime<=stp);
+                spiked = discretize(spiketm,st:0.001:stp); % 0.001 bin for 1 ms
+                if ~isnan(spiked)
+                    temp(spiked) = 1;
+                end
+                trials{count}(i,:) = temp;
+                sqNum = Behaviour.SqNum;
+                pullTrial = Behaviour.incompleteSqTrace(i).pullCount;
+                % Check pulls after effort trial starts
+                pullTrial(pullTrial<Behaviour.parameters.windowBeforeMI*Behaviour.parameters.Fs) = [];
+                for sQN = 1:length(pullTrial)
+                    pl = pullTrial(sQN);
+                    Spikes.PSTH.incompleteSq.pl(i,sQN) = pl;
+                    neurons{ii,sQN}(i,:) = temp((pl-500):(pl+500));
+                    lever{sQN}(i,:) = leverTemp((pl-500):(pl+500));
+                end
+            end
+        else
+            trials{count} = [];
+        end
+        count = count+1;
+    end
+
+    output = make_nice_mean_raster(trials,20,0);
+    Spikes.PSTH.incompleteSq.SqspkRates = [];
+    for n = 1:size(neurons,2)
+        if size(neurons{1,n},1)>1 % Edge case if there is only one trial
+            Spikes.PSTH.incompleteSq.SqspkRates(:,:,n) = make_nice_mean_raster(neurons(:,n)',20,0);
+        else
+            Spikes.PSTH.incompleteSq.SqspkRates(:,:,n) = vertcat(neurons{:,n});
+        end
+    end
+    Spikes.PSTH.incompleteSq.Sqlever = lever;
+    Spikes.PSTH.incompleteSq.spks = trials;
+    Spikes.PSTH.incompleteSq.spkRates = output;
 end
 
 end

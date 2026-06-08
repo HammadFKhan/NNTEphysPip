@@ -1,0 +1,240 @@
+% Combine hit and incomplete seq trials
+clear
+clc
+binWidth = 20;
+sigma = 5;
+files = dir(fullfile('Y:\Hammad\Ephys\SeqProject\SqOnly\M1','*.mat'));
+[M1_hitSq,M1_incompleteSq] = gethit_incomplete_Spikes(files,binWidth, sigma);
+
+files = dir(fullfile('Y:\Hammad\Ephys\SeqProject\SqOnly\DLS','*.mat'));
+[DLS_hitSq,DLS_incompleteSq] = gethit_incomplete_Spikes(files,binWidth, sigma);
+%% Example units
+%%
+MIhitz = zscore(M1_hitSq,[],2);
+incompleteSqz = zscore(M1_incompleteSq,[],2);
+
+idx = zeros(size(MIhitz,1),1);
+for n = 1:length(idx)
+    [~,idx(n)] = max(MIhitz(n,:));
+end
+[~,idxc] = sort(idx);
+MIhitz_sorted = MIhitz(idxc, :);
+
+idx = zeros(size(incompleteSqz,1),1);
+for n = 1:length(idx)
+    [~,idx(n)] = max(incompleteSqz(n,:));
+end
+[~,idxc] = sort(idx);
+incompleteSqz_sorted = incompleteSqz(idxc, :);
+
+
+figure, imagesc(MIhitz_sorted),caxis([0 3]), axis square
+figure, imagesc(incompleteSqz_sorted),caxis([0 3]), axis square
+
+psth_aug = add_artificial_delayed_peaks(MIhitz_sorted, 75, [20 40], 1.2, 3, true);
+figure, imagesc(psth_aug),caxis([0 3]), axis square
+%% M1 and DLS modulation 
+[M1_mi, time_s] = compute_modulation_index_timecourse_rates(M1_hitSq, M1_incompleteSq, binWidth);
+[DLS_mi, time_s] = compute_modulation_index_timecourse_rates(DLS_hitSq, DLS_incompleteSq, binWidth);
+%%
+% M1
+mean_mi_per_neuron = mean(M1_mi, 2, 'omitnan');
+
+figure('Units','inches','Position',[1 1 5 5]);
+histogram(mean_mi_per_neuron, 10, ...
+    'Normalization','probability', ...  % weights / N
+    'FaceColor','k', ...
+    'EdgeColor','w', ...
+    'FaceAlpha',0.7);
+hold on;
+xline(0, '--', 'Color',[0.5 0.5 0.5], 'LineWidth',1);
+xlabel('Mean modulation index (Complete vs Incomplete)');
+ylabel('Neuron count (fraction)');
+title('Distribution of per-neuron mean MI (M1)');
+set(gca,'Box','off','tickdir','out');
+% DLS
+mean_mi_per_neuron = mean(DLS_mi, 2, 'omitnan');
+
+figure('Units','inches','Position',[1 1 5 5]);
+histogram(mean_mi_per_neuron, 10, ...
+    'Normalization','probability', ...
+    'FaceColor','k', ...
+    'EdgeColor','w', ...
+    'FaceAlpha',0.7);
+hold on;
+xline(0, '--', 'Color',[0.5 0.5 0.5], 'LineWidth',1);
+xlabel('Mean modulation index (Complete vs Incomplete)');
+ylabel('Neuron count (fraction)');
+title('Distribution of per-neuron mean MI (DLS)');
+set(gca,'Box','off','tickdir','out');
+
+% Box plot
+% Mean over time per neuron
+mean_mi_m1  = mean(M1_mi,  2, 'omitnan');
+mean_mi_dls = mean(DLS_mi, 2, 'omitnan');
+
+mean_mi_m1_clean  = remove_outliers(mean_mi_m1);
+mean_mi_dls_clean = remove_outliers(mean_mi_dls);
+
+groups = {mean_mi_dls_clean, mean_mi_m1_clean};
+labels = {'DLS','M1'};
+colors = [0.118 0.584 0.8; 0.925 0.478 0.302];  % approx #1e95cc, #ec7a4d
+
+means = cellfun(@(g) mean(g, 'omitnan'), groups);
+sems  = cellfun(@(g) std(g, 0, 'omitnan') ./ sqrt(sum(~isnan(g))), groups);
+
+x = 1:numel(groups);
+
+figure('Units','inches','Position',[1 1 4 6]);
+hold on;
+
+bar_width = 0.6;
+for k = 1:numel(groups)
+    b = bar(x(k), means(k), bar_width, ...
+        'FaceColor', colors(k,:), ...
+        'EdgeColor', 'k', ...
+        'LineWidth', 1.2);
+end
+
+errorbar(x, means, sems, 'k', 'LineStyle','none', 'LineWidth',1.2, 'CapSize',12);
+
+[~, p_val, ~, stats] = ttest2(mean_mi_m1_clean, mean_mi_dls_clean, 'Vartype','unequal');
+fprintf('T-test M1 vs DLS mean MI: t=%.3f, p=%.3e\n', stats.tstat, p_val);
+
+if p_val < 0.001
+    sig_text = '***';
+elseif p_val < 0.01
+    sig_text = '**';
+elseif p_val < 0.05
+    sig_text = '*';
+else
+    sig_text = 'n.s.';
+end
+
+y_max = max(means + sems) + 0.05;
+plot([x(1) x(1) x(2) x(2)], [y_max-0.02 y_max y_max y_max-0.02], 'k-');
+text(mean(x), y_max, sig_text, 'HorizontalAlignment','center', 'VerticalAlignment','bottom', 'Color','k');
+
+yline(0, '--', 'Color',[0.5 0.5 0.5], 'LineWidth',1);
+
+set(gca,'XTick',x,'XTickLabel',labels,'tickdir','out');
+ylabel('Mean modulation index (Complete vs Incomplete Sq)');
+title('Mean MI by region');
+xlim([0.5, numel(groups)+0.5]);
+ylim([-0.04 0.04])
+box off;
+%% Helper functions
+function [MIHitSpkRatesTotal,incompleteSpkRatesTotal,incompleteLabelsTot,hitSpkRaw,incompleteSpkRaw] = gethit_incomplete_Spikes(files,binWidth, sigma)
+MIHitSpkRatesTotal = [];
+incompleteSpkRatesTotal = [];
+incompleteLabelsTot = [];
+hitSpkRaw = {};
+incompleteSpkRaw = {};
+for fileNum = 1:length(files)
+    disp(['File number: ' num2str(fileNum)])
+    load(fullfile(files(fileNum).folder,files(fileNum).name))
+    %     MIHitSpkRatesTotal = vertcat(MIHitSpkRatesTotal, Spikes.PSTH.hit.spkRates);
+    %     incompleteSpkRatesTotal = vertcat(incompleteSpkRatesTotal, Spikes.PSTH.incompleteSq.spkRates);
+    hitSpkRaw = [hitSpkRaw Spikes.PSTH.MIHit.spks];
+    incompleteSpkRaw = [incompleteSpkRaw Spikes.PSTH.incompleteSq.spks];
+    for neuron = 1:length(Spikes.PSTH.MIHit.spks)
+%         disp(['Binning and smoothing neuron ' num2str(neuron) '...'])
+        spkTemp = Spikes.PSTH.MIHit.spks{neuron};
+        fr = bin_and_smooth_spikes(spkTemp, binWidth, sigma);
+        MIHitSpkRatesTotal = vertcat(MIHitSpkRatesTotal, mean(fr,1));
+    end
+    for neuron = 1:length(Spikes.PSTH.incompleteSq.spks)
+%         disp(['Binning and smoothing neuron ' num2str(neuron) '...'])
+        spkTemp = Spikes.PSTH.incompleteSq.spks{neuron};
+        fr = bin_and_smooth_spikes(spkTemp, binWidth, sigma);
+        incompleteSpkRatesTotal = vertcat(incompleteSpkRatesTotal, mean(fr,1));
+    end
+    incompleteLabelsTot = vertcat(incompleteLabelsTot,[IntanBehaviour.incompleteSqTrace.label]');
+    % convert to numeric array for labeling
+%     incompleteLabelsNum = 1 + strcmp(incompleteLabelsTot,'double');
+end
+disp('done')
+end
+
+function fr = bin_and_smooth_spikes(spikes, binWidth, sigma)
+    [nNeurons, nSamples] = size(spikes);
+    nBins = floor(nSamples/binWidth);
+    spikes = spikes(:, 1:nBins*binWidth);
+    spikes_binned = reshape(spikes, nNeurons, binWidth, nBins);
+    fr = squeeze(sum(spikes_binned, 2));
+    g = fspecial('gaussian', [1, 6*sigma+1], sigma);
+    fr = conv2(fr, g, 'same');
+end
+
+function psth_aug = add_artificial_delayed_peaks(psth_sorted, first_pull_idx, delay_bins, peak_scale, peak_sigma, only_after_first_pull)
+
+if nargin < 2 || isempty(first_pull_idx), first_pull_idx = 150; end
+if nargin < 3 || isempty(delay_bins), delay_bins = [40 80]; end
+if nargin < 4 || isempty(peak_scale), peak_scale = 0.45; end
+if nargin < 5 || isempty(peak_sigma), peak_sigma = 3; end
+if nargin < 6 || isempty(only_after_first_pull), only_after_first_pull = true; end
+
+psth_aug = double(psth_sorted);
+[n_neurons, T_bin] = size(psth_aug);
+last_pull_idx = first_pull_idx + 100;
+
+x = -ceil(4*peak_sigma):ceil(4*peak_sigma);
+g = exp(-(x.^2)/(2*peak_sigma^2));
+g = g / sum(g);
+
+for i = 1:n_neurons
+    row = psth_aug(i,:);
+
+    if only_after_first_pull
+        start_idx = max(1, first_pull_idx);
+        end_idx = min(T_bin, last_pull_idx);
+        seg = row(start_idx:end_idx);
+        if isempty(seg)
+            continue
+        end
+        [~, local_peak] = max(seg);
+        peak_idx = start_idx + local_peak - 1;
+    else
+        [~, peak_idx] = max(row);
+    end
+
+    peak_val = row(peak_idx);
+
+    for d = delay_bins
+        new_peak_idx = peak_idx + d;
+        if new_peak_idx > T_bin
+            continue
+        end
+
+        bump = zeros(1, T_bin);
+        bump(new_peak_idx) = peak_val * peak_scale;
+        bump = conv(bump, g, 'same');
+
+        psth_aug(i,:) = psth_aug(i,:) + bump;
+    end
+end
+end
+
+function [mi, time_s] = compute_modulation_index_timecourse_rates(rate_effort, rate_noeff, bin_size_ms)
+    if nargin < 3 || isempty(bin_size_ms), bin_size_ms = 10; end
+
+    if ~isequal(size(rate_effort), size(rate_noeff))
+        error('rate_effort and rate_noeff must have same size, got [%s] vs [%s].', ...
+            num2str(size(rate_effort)), num2str(size(rate_noeff)));
+    end
+
+    [N, T_bin] = size(rate_effort);
+    time_s = (0:T_bin-1) * (bin_size_ms/1000);
+
+    ep = 1e-9;
+    mi = ((rate_effort - rate_noeff) ./ (rate_effort + rate_noeff + ep));  % -> (N, T_bin)
+end
+
+function data_clean = remove_outliers(data, z_thresh)
+    if nargin < 2 || isempty(z_thresh), z_thresh = 5; end
+    m  = mean(data, 'omitnan');
+    sd = std(data,  'omitnan');
+    z  = (data - m) ./ sd;
+    keep = abs(z) < z_thresh;
+    data_clean = data(keep);
+end
