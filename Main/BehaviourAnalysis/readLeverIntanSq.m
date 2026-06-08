@@ -5,6 +5,7 @@ if strcmp(parameters.experiment,'self')
     disp('Experiment set to self initiated.');
     cue = 0;
     pullCountTrace = dig_in_data(3,:);
+    lickTrace = dig_in_data(end,:);
 elseif strcmp(parameters.experiment,'cue')
     if size(dig_in_data,1)<3
         rewardTrace = dig_in_data(1,:);
@@ -43,6 +44,7 @@ IntanBehaviour.leverTrace = resample(((double(leverTrace)- resting_position)*fli
 IntanBehaviour.time = downsample(lfpTime,round(intanFs/parameters.Fs),1); % time in seconds
 IntanBehaviour.rewardTrace = downsample(rewardTrace,round(intanFs/parameters.Fs),1);
 IntanBehaviour.pullCountTrace = downsample(pullCountTrace,round(intanFs/parameters.Fs),1);
+IntanBehaviour.lickTrace = downsample(lickTrace,round(intanFs/parameters.Fs),1);
 
 IntanBehaviour.pullCount = find(diff(IntanBehaviour.pullCountTrace)==1)+1;
 
@@ -125,6 +127,9 @@ for i=1:IntanBehaviour.nHit
             IntanBehaviour.hitTrace(i).effortFlag = 0;
         end
     end
+
+    % grab lick data
+    IntanBehaviour.hitTrace(i).licks= IntanBehaviour.lickTrace(rewardIndex(i)-parameters.windowBeforePull*parameters.Fs:rewardIndex(i)+parameters.windowAfterPull*parameters.Fs)';
 
 end
 IntanBehaviour.SqNum = Behaviour.SqNum;
@@ -293,6 +298,7 @@ for i=1:IntanBehaviour.nMiss
             IntanBehaviour.missTrace(i).effortFlag = find(effortIndex>=effortIdx & effortIndex<=(IntanBehaviour.missTrace(i).LFPIndex(end)));
         end
     end
+    IntanBehaviour.missTrace(i).licks= IntanBehaviour.lickTrace(missIndex(i)-parameters.windowBeforePull*parameters.Fs:missIndex(i)+parameters.windowAfterPull*parameters.Fs)';
 end
 
 
@@ -315,21 +321,21 @@ for i=1:length(IntanBehaviour.hitTrace)
     if isempty(fCross)
         badTrials = [badTrials,i];
         disp('Bad trial in Motion Allignment Detected');
+    end
         %         IntanBehaviour.MIHitTrace(i).MIIndex = IntanBehaviour.hitTrace(i).LFPIndex(fCross(end));
         %         IntanBehaviour.MIHitTrace(i).trace = IntanBehaviour.leverTrace(IntanBehaviour.MIHitTrace(i).MIIndex-parameters.windowBeforeMI*parameters.Fs:IntanBehaviour.MIHitTrace(i).MIIndex+parameters.windowAfterMI*parameters.Fs)';
         %         IntanBehaviour.MIHitTrace(i).time = (0:1/parameters.Fs:(size(IntanBehaviour.MIHitTrace(i).trace,1)-1)*1/parameters.Fs)' - parameters.windowBeforeMI;
         %         IntanBehaviour.MIHitTrace(i).LFPIndex = ([IntanBehaviour.MIHitTrace(i).MIIndex-parameters.windowBeforeMI*parameters.Fs:1:IntanBehaviour.MIHitTrace(i).MIIndex+parameters.windowAfterMI*parameters.Fs])';
         %         IntanBehaviour.MIHitTrace(i).LFPtime = IntanBehaviour.time(IntanBehaviour.MIHitTrace(i).MIIndex-parameters.windowBeforeMI*parameters.Fs:IntanBehaviour.MIHitTrace(i).MIIndex+parameters.windowAfterMI*parameters.Fs)';
-    else
-%         try
-%             if length(fCross)<pullSqNum
-%                 IntanBehaviour.MIHitTrace(i).MIIndex = IntanBehaviour.hitTrace(i).LFPIndex(fCross(1));
-%             else
-%                 IntanBehaviour.MIHitTrace(i).MIIndex = IntanBehaviour.hitTrace(i).LFPIndex(fCross(end-pullSqNum+1));
-%             end
-%         catch
-%             disp('hold up')
-%         end
+        %         try
+        %             if length(fCross)<pullSqNum
+        %                 IntanBehaviour.MIHitTrace(i).MIIndex = IntanBehaviour.hitTrace(i).LFPIndex(fCross(1));
+        %             else
+        %                 IntanBehaviour.MIHitTrace(i).MIIndex = IntanBehaviour.hitTrace(i).LFPIndex(fCross(end-pullSqNum+1));
+        %             end
+        %         catch
+        %             disp('hold up')
+        %         end
 
         % NEW MI Index based on pullcount index
         % Pull count before reward response since we know the Sq index
@@ -346,17 +352,19 @@ for i=1:length(IntanBehaviour.hitTrace)
         IntanBehaviour.MIHitTrace(i).LFPtime = IntanBehaviour.time(IntanBehaviour.MIHitTrace(i).MIIndex-parameters.windowBeforeMI*parameters.Fs:IntanBehaviour.MIHitTrace(i).MIIndex+parameters.windowAfterMI*parameters.Fs)';
         IntanBehaviour.MIHitTrace(i).pullCount = IntanBehaviour.pullCount(IntanBehaviour.pullCount>=IntanBehaviour.MIHitTrace(i).LFPIndex(1) & IntanBehaviour.pullCount<IntanBehaviour.MIHitTrace(i).LFPIndex(end))-IntanBehaviour.MIHitTrace(i).LFPIndex(1);
         IntanBehaviour.MIHitTrace(i).pullCount(IntanBehaviour.MIHitTrace(i).pullCount<parameters.windowBeforeMI*parameters.Fs) = [];
-    end
+        IntanBehaviour.MIHitTrace(i).licks= IntanBehaviour.lickTrace(IntanBehaviour.MIHitTrace(i).MIIndex-parameters.windowBeforeMI*parameters.Fs:IntanBehaviour.MIHitTrace(i).MIIndex+parameters.windowAfterMI*parameters.Fs)';
 end
-
 % Removing bad trials
-
-IntanBehaviour.hitTrace(badTrials) = [];
-if cue==1
-IntanBehaviour.cueHitTrace(badTrials) = [];
-IntanBehaviour.nCueHit = size(IntanBehaviour.cueHitTrace,2);
+if length(badTrials)<10
+    IntanBehaviour.hitTrace(badTrials) = [];
+    if cue==1
+        IntanBehaviour.cueHitTrace(badTrials) = [];
+        IntanBehaviour.nCueHit = size(IntanBehaviour.cueHitTrace,2);
+    end
+    IntanBehaviour.MIHitTrace(badTrials) = [];
+else
+    disp('Lots of non detected lever traces, we are not taking anything')
 end
-IntanBehaviour.MIHitTrace(badTrials) = [];
 IntanBehaviour.nHit = size(IntanBehaviour.hitTrace,2);
 
 
@@ -406,7 +414,7 @@ if parameters.perturbEffort == 1
         IntanBehaviour.effortperturbTrace(i).effortTrace = IntanBehaviour.effortTrace(effortIndex(i)-parameters.windowBeforeMI*parameters.Fs:effortIndex(i)+parameters.windowAfterMI*parameters.Fs)';
         % Check if reward was ever given out
         IntanBehaviour.effortperturbTrace(i).rewardFlag = find(rewardIndex>=IntanBehaviour.effortperturbTrace(i).LFPIndex(1) & rewardIndex<=IntanBehaviour.effortperturbTrace(i).LFPIndex(end));
-%         IntanBehaviour.effortperturbTrace(i).pullCount(IntanBehaviour.effortperturbTrace(i).pullCount<parameters.windowBeforeMI*parameters.Fs) = [];
+        IntanBehaviour.effortperturbTrace(i).pullCount(IntanBehaviour.effortperturbTrace(i).pullCount<parameters.windowBeforeMI*parameters.Fs) = [];
     end
 end
 
