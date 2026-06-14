@@ -9,33 +9,19 @@ files = dir(fullfile('Y:\Hammad\Ephys\SeqProject\SqOnly\M1','*.mat'));
 files = dir(fullfile('Y:\Hammad\Ephys\SeqProject\SqOnly\DLS','*.mat'));
 [DLS_hitSq,DLS_incompleteSq,DLS_incompleteLabelsTot,DLS_hitSpkRaw,DLS_incompleteSpkRaw] = gethit_incomplete_Spikes(files,binWidth, sigma);
 %% Example units
-neuron = 201; %181
+neuron = 20; %181
 figure(1),clf
 subplot(221),
 Show_Spikes(DLS_hitSpkRaw{neuron}),xlim([0 5000])
 subplot(222),
 Show_Spikes(DLS_incompleteSpkRaw{neuron}),xlim([0 5000])
 subplot(223),
-fr = bin_and_smooth_spikes(DLS_hitSpkRaw{neuron},10,5);
-timeSp = linspace(0,5000,size(fr,2));
-plot(timeSp,mean(fr)),xlim([0 5000])
-subplot(224),
-fr = bin_and_smooth_spikes(DLS_incompleteSpkRaw{neuron},10,5);
-plot(timeSp,mean(fr)),xlim([0 5000])
 %%
-neuron = 11; %6 7
-figure(1),clf
-subplot(221),
-Show_Spikes(M1_hitSpkRaw{neuron}),xlim([0 5000])
-subplot(222),
-Show_Spikes(M1_incompleteSpkRaw{neuron}),xlim([0 5000])
-subplot(223),
-fr = bin_and_smooth_spikes(M1_hitSpkRaw{neuron},10,5);
-timeSp = linspace(0,5000,size(fr,2));
-plot(timeSp,mean(fr)),xlim([0 5000])
+fr = bin_and_smooth_spikes(DLS_hitSpkRaw{neuron},20,10);
+%%
+plot(smoothdata(mean(fr),'movmean',5)*150),xlim([0 5000])
 subplot(224),
-fr = bin_and_smooth_spikes(M1_incompleteSpkRaw{neuron},10,5);
-plot(timeSp,mean(fr)),xlim([0 5000])
+plot(smoothdata(mean(DLS_incompleteSpkRaw{neuron}),'movmean',150)*150),xlim([0 5000])
 %%
 MIhitz = zscore(M1_hitSq,[],2);
 incompleteSqz = zscore(M1_incompleteSq,[],2);
