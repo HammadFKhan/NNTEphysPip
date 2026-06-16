@@ -44,7 +44,6 @@ if isfield(Spikes.PSTH,'effortperturb')
     Spikes.GPFA.effortperturb.dat = output;
 end
 
-
 % if isfield(Spikes.BiPOLES,'hit')
 %     output = organizeSpikes(Spikes.BiPOLES.hit.spks);
 %     Spikes.GPFA.hit.dat = output;

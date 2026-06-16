@@ -49,9 +49,9 @@ for session = 1:length(newSessionId)
         acc_heldout(:,session),acc_train(:,session),...
         acc_heldout_shuf(:,session),acc_train_shuf(:,session)] = getSVMdecode(latentDynamics3,trialLabels,shufNum);
 end
-%% Get Hit vs miss
+% Get Hit vs miss
 figure; hold on
-plotDecoderPerformance(F1miss,F1miss_shuf)
+plotDecoderPerformance(acc_train,acc_train_shuf)
 
 %% M1
 M1FRcompleteSq = [];
@@ -100,9 +100,9 @@ for session = 1:length(newSessionId)
         acc_heldout(:,session),acc_train(:,session),...
         acc_heldout_shuf(:,session),acc_train_shuf(:,session)] = getSVMdecode(latentDynamics3,trialLabels,shufNum);
 end
-%%
+
 figure; hold on
-plotDecoderPerformance(acc_heldout,acc_heldout_shuf)
+plotDecoderPerformance(acc_train,acc_train_shuf)
 %%
 function plotDecoderPerformance(F1miss,F1miss_shuf)
 bar(1, mean(F1miss), 0.5, 'FaceColor', [0.7 0.3 0.3]);

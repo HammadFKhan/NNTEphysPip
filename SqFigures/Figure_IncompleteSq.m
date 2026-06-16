@@ -4,10 +4,58 @@ clc
 binWidth = 20;
 sigma = 5;
 files = dir(fullfile('Y:\Hammad\Ephys\SeqProject\SqOnly\M1','*.mat'));
+
 [M1_hitSq,M1_incompleteSq,M1_incompleteLabelsTot,M1_hitSpkRaw,M1_incompleteSpkRaw] = gethit_incomplete_Spikes(files,binWidth, sigma);
 
 files = dir(fullfile('Y:\Hammad\Ephys\SeqProject\SqOnly\DLS','*.mat'));
 [DLS_hitSq,DLS_incompleteSq,DLS_incompleteLabelsTot,DLS_hitSpkRaw,DLS_incompleteSpkRaw] = gethit_incomplete_Spikes(files,binWidth, sigma);
+%% Get behaviour
+files = dir(fullfile('Y:\Hammad\Ephys\SeqProject\SqOnly\M1','*.mat'));
+[incompleteLabelsTot,cs_firstPull_tot,is_firstPull_single_tot,is_firstPull_double_tot] = gethit_incomplete_Behaviour(files);
+%%
+time = linspace(-1.5,3.5,size(cs_firstPull_tot,2));
+figure
+color = [46,49,149]/255;
+for n = 1:size(cs_firstPull_tot,1)
+    scatter(time,n*cs_firstPull_tot(n,:),10,'filled','MarkerFaceColor',color),hold on
+end
+xlim([-2.5, 0.5])
+ylim([300 350])
+xline(0,'k','reward')
+axis square
+
+figure
+color = [46,149,49]/255;
+for n = 1:size(is_firstPull_double_tot,1)
+    scatter(time,n*is_firstPull_double_tot(n,:),10,'filled','MarkerFaceColor',color),hold on
+end
+xlim([-2.5, 0.5])
+ylim([200 250])
+xline(0,'k','reward')
+axis square
+
+figure
+color = [149,49,46]/255;
+for n = 1:size(is_firstPull_single_tot,1)
+    scatter(time,n*is_firstPull_single_tot(n,:),10,'filled','MarkerFaceColor',color),hold on
+end
+xlim([-2.5, 0.5])
+ylim([200 250])
+xline(0,'k','reward')
+axis square
+%% Analysis of Behaviour
+incompleteLabelsNum = 1 + strcmp(incompleteLabelsTot,'double');
+% Plot out proportion of incomplete types
+doubleProb = sum(incompleteLabelsNum==2)/length(incompleteLabelsNum);
+singleProb = 1-doubleProb;
+% Plot out ITI of pulls
+labels = {'Double','Single'};
+pie([doubleProb,singleProb])
+legend(labels)
+axis square,box off
+
+
+
 %% Example units
 neuron = 201; %181
 figure(1),clf
@@ -183,6 +231,105 @@ for fileNum = 1:length(files)
 end
 disp('done')
 end
+
+function [incompleteLabelsTot,cs_firstPull_tot,is_firstPull_single_tot,is_firstPull_double_tot] = gethit_incomplete_Behaviour(files)
+cs_firstPull_tot = [];
+is_firstPull_single_tot = [];
+is_firstPull_double_tot = [];
+incompleteLabelsTot = [];
+for fileNum = 1:length(files)
+    disp(['File number: ' num2str(fileNum)])
+    load(fullfile(files(fileNum).folder,files(fileNum).name))
+    pullIndex = vertcat(IntanBehaviour.hitTrace.pullCount);
+    target_first = 1500;
+
+    % For each row, compute scale so that first column becomes 1500
+    scale = target_first - pullIndex(:,1);     % nRows x 1
+
+    % Apply the same scale factor to the first three columns
+    X_warped = pullIndex;                        % copy
+    X_warped(:,1:3) = pullIndex(:,1:3) + scale; % broadcast scaling row-wise
+    pullIndex = floor(X_warped);
+
+    [ft,firstPull] = sort(pullIndex(:,1));
+    [sc,secondPull] = sort(pullIndex(:,2));
+    trialMask = zeros(length(IntanBehaviour.hitTrace),length(IntanBehaviour.hitTrace(1).time));
+    for n = 1:length(IntanBehaviour.hitTrace)
+        trialMask(n,pullIndex(n,:)) = 1;
+    end
+    trialMask(trialMask==0) = NaN;
+
+    cs_firstPull = trialMask(secondPull,:);
+    cs_firstPull_tot = vertcat(cs_firstPull_tot,cs_firstPull);
+
+    incompleteLabelsTot = vertcat(incompleteLabelsTot,[IntanBehaviour.incompleteSqTrace.label]');
+    incompleteLabelsNum = 1 + strcmp([IntanBehaviour.incompleteSqTrace.label]','double');
+    % Build sequence passed on one or double pull
+    pullIndex_is = [];
+    for n = find(incompleteLabelsNum==2)
+        pullIndex_is = vertcat(pullIndex_is,IntanBehaviour.incompleteSqTrace(n).pullCount);
+    end
+
+    [sc,secondPull_is] = sort(pullIndex_is(:,2));
+%     pullIndex_is = pullIndex_is(secondPull_is,:);
+    sqPullMask = zeros(size(pullIndex_is,1),length(IntanBehaviour.incompleteSqTrace(1).time));
+    sqId = find(incompleteLabelsNum==2);
+    for n = 1:size(pullIndex_is,1)
+        sqPullMask(n,pullIndex_is(n,:)) = 1;
+    end
+    sqPullMask(sqPullMask==0) = NaN;
+    is_firstPull_double = sqPullMask(secondPull_is,:);
+    is_firstPull_double_tot = vertcat(is_firstPull_double_tot,pullIndex_is);
+
+    
+    %%%#### Now do for single
+    pullIndex_is = [];
+    for n = find(incompleteLabelsNum==1)
+        pullIndex_is = vertcat(pullIndex_is,IntanBehaviour.incompleteSqTrace(n).pullCount);
+    end
+
+    sqPullMask = zeros(size(pullIndex_is,1),length(IntanBehaviour.incompleteSqTrace(1).time));
+    sqId = find(incompleteLabelsNum==1);
+    for n = 1:size(pullIndex_is,1)
+        sqPullMask(n,pullIndex_is(n,:)) = 1;
+    end
+    sqPullMask(sqPullMask==0) = NaN;
+    is_firstPull_single_tot = vertcat(is_firstPull_single_tot,pullIndex_is);
+    time = linspace(-1.5,3.5,size(cs_firstPull_tot,2));
+
+%     figure
+%     color = [46,49,149]/255;
+%     for n = 1:size(cs_firstPull,1)
+%         scatter(time,n*cs_firstPull(n,:),10,'filled','MarkerFaceColor',color),hold on
+%     end
+%     xlim([-.5, 2])
+%     ylim([1 90])
+%     xline(0,'k','reward')
+%     axis square
+% 
+%      figure
+%     color = [46,49,149]/255;
+%     for n = 1:size(is_firstPull_double,1)
+%         scatter(time,n*is_firstPull_double(n,:),10,'filled','MarkerFaceColor',color),hold on
+%     end
+%     xlim([-.5, 2])
+%     ylim([1 90])
+%     xline(0,'k','reward')
+%     axis square
+% 
+%      figure
+%     color = [46,49,149]/255;
+%     for n = 1:size(sqPullMask,1)
+%         scatter(time,n*sqPullMask(n,:),10,'filled','MarkerFaceColor',color),hold on
+%     end
+%     xlim([-.5, 2])
+%     ylim([1 90])
+%     xline(0,'k','reward')
+%     axis square
+end
+disp('done')
+end
+
 
 function fr = bin_and_smooth_spikes(spikes, binWidth, sigma)
     [nNeurons, nSamples] = size(spikes);
