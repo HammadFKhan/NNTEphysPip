@@ -50,8 +50,8 @@ end
 dimNum = 15; %nu,ber of dimensions to take
 if exist('neuralTrajHitMiss','var')
 X = neuralTrajHitMiss;
-hittrials = 1:length(Behaviour.hitTrace);
-misstrials = length(Behaviour.hitTrace)+1:size(X,3);
+hittrials = 1:length(Spikes.GPFA.hit.dat);
+misstrials = length(Spikes.GPFA.hit.dat)+1:size(X,3);
 
 [neuralDynamics.hit.r,neuralDynamics.hit.s,neuralDynamics.hit.stab,neuralDynamics.hit.X] = getMeanTraj(X,hittrials,dimNum); %trajectory variable and predefined conditional trial indexes
 neuralDynamics.hit.speed = speedTraj(X,hittrials,6,Behaviour);
@@ -70,15 +70,15 @@ end
 %% Do just for hits
 if exist('neuralTrajHit','var')
 X = neuralTrajHit;
-hittrials = 1:length(Behaviour.hitTrace);
+hittrials = 1:length(Spikes.GPFA.hit.dat);
 [neuralDynamics.hit.r,neuralDynamics.hitOnly.s,neuralDynamics.hitOnly.stab,neuralDynamics.hitOnly.X] = getMeanTraj(X,hittrials,dimNum); %trajectory variable and predefined conditional trial indexes
 neuralDynamics.hitOnly.speed = speedTraj(X,hittrials,6,Behaviour);
 end
 %% Do for effort and hit
 if exist('neuralTrajHitEffort','var')
 X = neuralTrajHitEffort;
-hittrials = 1:length(Behaviour.hitTrace);
-efforttrials = length(Behaviour.hitTrace)+1:size(X,3);
+hittrials = 1:length(Spikes.GPFA.hit.dat);
+efforttrials = length(Spikes.GPFA.hit.dat)+1:size(X,3);
 
 [neuralDynamics.hiteffort.r,neuralDynamics.hiteffort.s,neuralDynamics.hiteffort.stab,neuralDynamics.hiteffort.X] = getMeanTraj(X,hittrials,dimNum); %trajectory variable and predefined conditional trial indexes
 
@@ -90,8 +90,8 @@ end
 %% Now do analysis for MI hit vs FA
 if exist('neuralTrajMIHitFA','var')
 X = neuralTrajMIHitFA;
-MIHittrials = 1:length(Behaviour.MIHitTrace);
-MIFAtrials = length(Behaviour.MIHitTrace)+1:size(X,3);
+MIHittrials = 1:length(Spikes.GPFA.MIHit.dat);
+MIFAtrials = length(Spikes.GPFA.MIHit.dat)+1:size(X,3);
 
 [neuralDynamics.MIhit.r,neuralDynamics.MIhit.s,neuralDynamics.MIhit.stab,neuralDynamics.MIhit.X] = getMeanTraj(X,MIHittrials,dimNum); %trajectory variable and predefined conditional trial indexes
 neuralDynamics.MIhit.speed = speedTraj(X,MIHittrials,6,Behaviour);
@@ -114,14 +114,14 @@ neuralDynamics.mreactionTime = interp1(t,1:length(t),mean(rawreactionTime),'near
 reactionTime = interp1(t,1:length(t),rawreactionTime,'nearest');
 reactionTime(isnan(reactionTime)) = length(t);
 
-PQ = [];
-idx = discretize(reactionTime,20);
-
-for n = 1:length(reactionTime)
-    dat = meanTraj(X,n,6); %grab and calculate distance per reaction time
-    x = dat(1,:); y = dat(2,:); z = dat(3,:);
-    neuralDynamics.PQ(n) = sqrt((x(end)-x(1))^2+(y(end)-y(1))^2+(z(end)-z(1))^2)/rawreactionTime(n); %Calculate Distance
-end
+% PQ = [];
+% idx = discretize(reactionTime,20);
+% 
+% for n = 1:length(reactionTime)
+%     dat = getMeanTraj(X,n,6); %grab and calculate distance per reaction time
+%     x = dat(1,:); y = dat(2,:); z = dat(3,:);
+%     neuralDynamics.PQ(n) = sqrt((x(end)-x(1))^2+(y(end)-y(1))^2+(z(end)-z(1))^2)/rawreactionTime(n); %Calculate Distance
+% end
 neuralDynamics.rawreactionTime = rawreactionTime;
 
 %% Grab wave data
@@ -223,16 +223,6 @@ end
 
 %% Local functions
 
-function [r,zscore_s,stability,matrix] = meanTraj(X,trials,components)
-matrix = X(1:components,:,trials);
-r = squeeze(mean(matrix,3));
-% Subtract the mean from each element
-centered_matrix = matrix - r;
-
-% Calculate the Euclidean distance for each row
-s = squeeze(sqrt(sum(centered_matrix.^2, 1)));
-end
-
 function speed_struct = speedTraj(X,trials,components,behaviour)
 % data: 3D array (neural dimensions x time x trials)
 % dimension: the neural dimension to analyze
@@ -266,24 +256,6 @@ speed_struct.preMovement = speed_data(:,pre_movement_idx, :);
 speed_struct.reward = speed_data(:,reward_idx, :);
 end
 
-function [neuralTrajSim,neuralTrajdiff,rprimehnorm,rprimemnorm] = neuralTrajDiff(r1,r2,varargin)
-if strcmp(varargin,'initial'),initCalc = 1;else, initCalc = 0;end
-if initCalc %r'(t)/||r'(t)|| * r(0)-ri(t)/||r(0)-ri(t)||
-    rprimeh = diff(r1);
-    rprimehnorm = rprimeh/norm(rprimeh);
-    rprimem = r2(1,:)-r1; % control condition for reference
-    rprimemnorm = rprimem/norm(rprimem);
-    neuralTrajSim = dot(rprimehnorm',rprimemnorm(1:end-1,:)');
-    neuralTrajdiff = rprimeh-rprimem;
-else
-    rprimeh = diff(r1);
-    rprimehnorm = rprimeh/norm(rprimeh);
-    rprimem = diff(r2);
-    rprimemnorm = rprimem/norm(rprimem);
-    neuralTrajSim = dot(rprimehnorm',rprimemnorm');
-    neuralTrajdiff = rprimeh-rprimem;
-end
-end
 
 function waveDynamics = getWaveDynamics(Waves)
 rawWaveDensityhit = arrayfun(@(x) vertcat(x.wavePresent),Waves.wavesHit,'UniformOutput',false);waveDynamics.rawWaveDensityhit= vertcat(rawWaveDensityhit{:});
