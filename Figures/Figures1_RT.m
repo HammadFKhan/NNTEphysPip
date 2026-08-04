@@ -55,13 +55,14 @@ for mouse = 1:5
         ylim([0 1])
     end
 end
-%%
 
 %%
 load('Y:\Hammad\Ephys\LeverTask\Data_for_Figures\LeverTaskBehavior\PooledRT.mat')
+%%
+nMice = size(RTmice,1);
 figure,customBarplot(RTmice),hold on
-scatter(1*ones(23,1),RTmice(:,1),'filled','k')
-scatter(2*ones(23,1),RTmice(:,2),'filled','k')
+scatter(1*ones(nMice,1),RTmice(:,1),'filled','k')
+scatter(2*ones(nMice,1),RTmice(:,2),'filled','k')
 for n = 1:size(RTmice)
     line([1 2],[RTmice(n,1),RTmice(n,2)])
 end
