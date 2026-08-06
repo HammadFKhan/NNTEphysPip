@@ -10,6 +10,9 @@ elseif strcmp(parameters.experiment,'cue')
     if parameters.BiPOLES == 1
         cueTrace = dig_in_data(3,:);
         optocueTrace = dig_in_data(4,:);
+        if size(dig_in_data,1)>4
+            optoPulseTrace = dig_in_data(5,:);
+        end
     end
     disp('Experiment set to cue initiated.');
     cue = 1;
@@ -47,6 +50,7 @@ if cue == 1
     IntanBehaviour.nCueMiss = Behaviour.nCueMiss;
     if parameters.BiPOLES == 1
         IntanBehaviour.optocueTrace = downsample(optocueTrace,round(intanFs/parameters.Fs),1); 
+        IntanBehaviour.optoPulseTrace = downsample(optoPulseTrace,round(intanFs/parameters.Fs),1); 
         optocueIndex = find(diff(IntanBehaviour.optocueTrace)==1)+1;
         IntanBehaviour.nOptoCueHit = Behaviour.nOptoCueHit;
         % initially all opto cue traces will be classified as miss and then
