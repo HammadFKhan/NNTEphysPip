@@ -1,16 +1,20 @@
 %% Generate figure related to pooled eOPN inactivation experiments in primary motor cortex and primary motor thalamus 
 % Combining eOPN data together
-M1eOPN = struct();
-ThalamuseOPN = struct();
+M2eOPN = struct();
+dirFiles = "Y:\Hammad\Ephys\LeverTask\LeverTaskRebuttal\eOPN3\eOPN_dual_thalamus\eOPN_Th_files.xlsx";
 
-files = dir(fullfile('Y:\Hammad\Ephys\LeverTask\Data_for_Figures\eOPN\M1Inactivation\','*.mat'));
-M1totalSpikes.nonOptoHit = [];
-M1totalSpikes.optoHit = [];
-%%
-for fileNum = 13:length(files)
+% Read the data as a table (recommended)
+T = readtable(dirFiles);
+
+colNames = T.Properties.VariableNames;  % column names as cell array of strings
+Spks_to_analyze = T(T.Spks == 1 & T.Region == "M1", :); % Change to M1 or Th depending on region
+ %%
+totalSpikes.nonOptoHit = [];
+totalSpikes.optoHit = [];
+for fileNum = 1:size(Spks_to_analyze,1)
     disp(['File number: ' num2str(fileNum)])
-    load(fullfile(files(fileNum).folder,files(fileNum).name))
-    M1eOPN(fileNum).filename = files(fileNum).name;
+    fileName = [char(Spks_to_analyze.FilePath(fileNum)) '\' char(Spks_to_analyze.IntanFileName(fileNum)) '\UCLA_chanmap_64F2\Spikes.mat'];
+    load(fileName)
 %     if ~isfield(Spikes,'GPFA')
 %         try
 %         Spikes = makeSpikeGPFA(Spikes);
@@ -40,7 +44,7 @@ for fileNum = 13:length(files)
 %     end
 %     
 %     [M1eOPN(fileNum).neuralDynamics,waveDynamics] = neuralTrajAnalysis2(Spikes,[],IntanBehaviour);
-    M1eOPN(fileNum).IntanBehaviour = IntanBehaviour;
+    M2eOPN(fileNum).IntanBehaviour = IntanBehaviour;
 
     try
         [IntanBehaviourBaseline,IntanBehaviourOpto, Waves, WavesOpto] = separateOptoTrials(IntanBehaviour,IntanBehaviour.parameters);
@@ -55,92 +59,24 @@ for fileNum = 13:length(files)
         Spikes.baselineSpikes = baselineSpikes;
         Spikes.eOPNSpikes = eOPNSpikes;
 
-        M1eOPN(fileNum).Spikes = Spikes;
+        M2eOPN(fileNum).Spikes = Spikes;
     catch
         disp('error on eopn ')
         continue
     end
 
     trials = baselineSpikes.PSTH.hit.spks;
-
-    output = make_nice_mean_raster(trials,20,0);
-    M1totalSpikes.nonOptoHit = [M1totalSpikes.nonOptoHit;output];
-
-
-    trials = eOPNSpikes.PSTH.hit.spks;
-    output = make_nice_mean_raster(trials,20,0);
-    M1totalSpikes.optoHit = [M1totalSpikes.optoHit;output];
-end
-%%
-
-files = dir(fullfile('Y:\Hammad\Ephys\LeverTask\Data_for_Figures\eOPN\ThalamusInactivation\','*.mat'));
-ThaltotalSpikes.nonOptoHit = [];
-ThaltotalSpikes.optoHit = [];
-
-for fileNum = 1:length(files)
-    disp(['File number: ' num2str(fileNum)])
-    load(fullfile(files(fileNum).folder,files(fileNum).name))
-    try
-    ThalamuseOPN(fileNum).filename = files(fileNum).name;
-%     [ThalamuseOPN(fileNum).neuralDynamics,waveDynamics] = neuralTrajAnalysis2(Spikes,[],IntanBehaviour);
-    ThalamuseOPN(fileNum).IntanBehaviour = IntanBehaviour;
-%     if ~isfield(Spikes,'GPFA')
-%         try
-%         Spikes = makeSpikeGPFA(Spikes);
-%         Spikes.GPFA.HitMiss.dat = [Spikes.GPFA.hit.dat,Spikes.GPFA.miss.dat];
-%         for n = 1:IntanBehaviour.nCueHit%+1:length(Spikes.GPFA.BaselineOpto.dat) %fix trials
-%             Spikes.GPFA.HitMiss.dat(n).trialId = n;
-%         end
-%         Spikes.GPFA.MIHitFA.dat = [Spikes.GPFA.MIHit.dat,Spikes.GPFA.MIFA.dat];
-%         for n = length(IntanBehaviour.MIHitTrace)+1:length(Spikes.GPFA.MIHitFA.dat) %fix trials
-%             Spikes.GPFA.MIHitFA.dat(n).trialId = n;
-%         end
-%         %%%
-%         addpath(genpath('C:\Users\khan332\Documents\GitHub\NeuralTraj'));
-%         addpath(genpath('mat_results'));
-%         if exist('mat_results','dir'),rmdir('mat_results','s'),end
-%         [Spikes.GPFA.resultHit,Spikes.GPFA.seqTrainHit] = gpfaAnalysis(Spikes.GPFA.hit.dat,1); %Run index
-%         [Spikes.GPFA.resultMiss,Spikes.GPFA.seqTrainMiss] = gpfaAnalysis(Spikes.GPFA.miss.dat,2); %Run index
-%         [Spikes.GPFA.resultMIHit,Spikes.GPFA.seqTrainMIHit] = gpfaAnalysis(Spikes.GPFA.MIHit.dat,3); %Run index
-%         [Spikes.GPFA.resultMIFA,Spikes.GPFA.seqTrainMIFA] = gpfaAnalysis(Spikes.GPFA.MIFA.dat,4); %Run index
-%         [Spikes.GPFA.resultHitMiss,Spikes.GPFA.seqTrainHitMiss] = gpfaAnalysis(Spikes.GPFA.HitMiss.dat,5); %Run index
-%         [Spikes.GPFA.resultMIHitFA,Spikes.GPFA.seqTrainMIHitFA] = gpfaAnalysis(Spikes.GPFA.MIHitFA.dat,6); %Run index
-%         close all
-%         catch ME
-%             disp('Error calculating GPFA...')
-%             continue
-%         end
-%     end
-%     
-    [IntanBehaviourBaseline,IntanBehaviourOpto, Waves, WavesOpto] = separateOptoTrials(IntanBehaviour,IntanBehaviour.parameters);
-    baselineId = 1:length(IntanBehaviourBaseline.cueHitTrace);
-    eOPNId = length(IntanBehaviourBaseline.cueHitTrace)+1:length(IntanBehaviour.cueHitTrace);
-    assert(length(eOPNId)==length(IntanBehaviourOpto.cueHitTrace))
-    % Since the sqEntropy is accessing each spike structure we need to seperate the trials 
-    baselineSpikes = Spikes; 
-    eOPNSpikes = Spikes; 
-    baselineSpikes.PSTH.hit.spks = cellfun(@(x) x(baselineId,:),baselineSpikes.PSTH.hit.spks,'UniformOutput',false);
-    eOPNSpikes.PSTH.hit.spks = cellfun(@(x) x(eOPNId,:),eOPNSpikes.PSTH.hit.spks,'UniformOutput',false);
-    Spikes.baselineSpikes = baselineSpikes;
-    Spikes.eOPNSpikes = eOPNSpikes;
-
-    ThalamuseOPN(fileNum).Spikes = Spikes;
-    catch
-        continue
-    end
-
-    trials = baselineSpikes.PSTH.hit.spks;
     
     output = make_nice_mean_raster(trials,20,0);
-    ThaltotalSpikes.nonOptoHit = [ThaltotalSpikes.nonOptoHit;output];
+    totalSpikes.nonOptoHit = [totalSpikes.nonOptoHit;output];
     
 
     trials = eOPNSpikes.PSTH.hit.spks;
     output = make_nice_mean_raster(trials,20,0);
-    ThaltotalSpikes.optoHit = [ThaltotalSpikes.optoHit;output];
+    totalSpikes.optoHit = [totalSpikes.optoHit;output];
+
 end
-%% total spikes
-totalSpikes = ThaltotalSpikes;
+%% Total spikes
 spikeRate = smoothdata(totalSpikes.nonOptoHit,2,'gaussian',50);
 [hitnormSpk,hittimIdx,hitspkIdx] = spknorm(spikeRate);
 f = figure,subplot(131)
@@ -148,8 +84,9 @@ plotSpkSeq(hitnormSpk(:,1000:end))
 title('Hit')
 colormap(flip(gray))
 set(gca,'fontsize',16)
+
 spikeRate = smoothdata(totalSpikes.optoHit,2,'gaussian',50);
-[hitnormSpk,hittimIdx,~] = spknorm(spikeRate,hitspkIdx);
+[hitnormSpk,hittimIdx,~] = spknorm(spikeRate);
 f = figure,subplot(131)
 
 plotSpkSeq(hitnormSpk(:,1000:end),hitspkIdx)
@@ -159,7 +96,7 @@ colormap(blues)
 set(gca,'fontsize',16)
 %% Analyze baseline and eopn spikes
 % Analyze baseline vs eopn spikes
-dynamics = M1eOPN;
+dynamics = M2eOPN;
 
 win1    = 1500;    % ms indices in original 1‑ms bins
 win2    = 1700;
@@ -199,7 +136,7 @@ for n = 1:numel(dynamics)
         rateB = cntB * (1000/binSize);
         rateE = cntE * (1000/binSize);
         fr_baseline(u) = mean(rateB(:));
-        fr_eopn(u)     = mean(rateE(:))/1.67;
+        fr_eopn(u)     = mean(rateE(:));
     end
 
     % append this session’s units to the global arrays [web:54][web:50]
@@ -231,15 +168,17 @@ title('M2 to M1 eOPN3');
 
 fprintf('Wilcoxon signed-rank test: p = %.3g, z = %.3f\n', p, stats.zval);
 txt = sprintf('Wilcoxon signed-rank: p = %.3g', p);
-fprintf('Baseline FR: %.3g, eOPN FR: %.3g\n ', mean(fr_baseline),mean(fr_eopn));
+ 
+txt2 = sprintf('Baseline FR: %.3g, eOPN FR: %.3g\n ', mean(fr_baseline),mean(fr_eopn));
 text(0.05*max(xlim), 0.9*max(ylim), txt, 'FontSize', 9);
+text(0.05*max(xlim), 0.8*max(ylim), txt2, 'FontSize', 9);
 
 %% Modulation index
 frB = abs(FR_baseline_all);
 frE = abs(FR_eopn_all);
 
 % Modulation index (light − control) / (light + control)
-modIdx = -(frE - frB) ./ (frE + frB);   % attention-style index [web:64][web:65]
+modIdx = (frE - frB) ./ (frE + frB);   % attention-style index [web:64][web:65]
 
 % Optional: handle 0/0 or tiny denominators
 modIdx(abs(frE + frB) < 1e-6) = NaN;
@@ -256,7 +195,7 @@ h = histogram(modIdx, 'NumBins', 20, ...
 
 xline(0,'--','Color',[0.6 0.6 0.6],'LineWidth',1.5);    % zero line [web:68]
 
-xlabel('Change in modulation index (light - control)');
+xlabel('Change in modulation index (control-light)');
 ylabel('Neurons');
 title('eOPN3');
 
@@ -266,119 +205,11 @@ xl = xlim;
 txt = sprintf('median = %.2f\np = %.3g (Wilcoxon)', mi_median, p);
 text(xl(1)+0.55*range(xl), yl(1)+0.9*range(yl), txt, ...
      'FontSize', 9, 'HorizontalAlignment','left');
-
-set(gca,'Box','off','TickDir','out','FontSize',9);
+xlim([-1 1])
+set(gca,'Box','off','TickDir','out','FontSize',9);axis square
 
 %%
-dynamics = ThalamuseOPN;
-%%
-win1    = 1400;    % ms indices in original 1‑ms bins
-win2    = 1650;
-binSize = 40;      % ms per analysis bin
 
-FR_baseline_all = [];   % aggregated across sessions
-FR_eopn_all     = [];
-
-for n = 1:numel(dynamics)
-
-    baselineSpks = dynamics(n).Spikes.baselineSpikes.PSTH.hit.spks;   % 1 x nUnits cell
-    eopnSpks     = dynamics(n).Spikes.eOPNSpikes.PSTH.hit.spks;      % 1 x nUnits cell
-
-    nUnits = numel(baselineSpks);
-    fr_baseline = nan(1,nUnits);
-    fr_eopn     = nan(1,nUnits);
-
-    for u = 1:nUnits
-        % each cell: [nTrials x nTime]
-        B = baselineSpks{u}(:,win1:win2);
-        E = eopnSpks{u}(:,win1:win2);
-
-        nTime = size(B,2);
-        edges = 1:binSize:nTime+1;
-        nBins = numel(edges)-1;
-
-        cntB = zeros(size(B,1),nBins);
-        cntE = zeros(size(E,1),nBins);
-
-        for b = 1:nBins
-            idx = edges(b):edges(b+1)-1;
-            cntB(:,b) = sum(B(:,idx),2);
-            cntE(:,b) = sum(E(:,idx),2);
-        end
-
-        % spikes per bin -> Hz [web:19]
-        rateB = cntB * (1000/binSize);
-        rateE = cntE * (1000/binSize);
-
-        fr_baseline(u) = mean(rateB(:));
-        fr_eopn(u)     = mean(rateE(:))/1.97;
-    end
-
-    % append this session’s units to the global arrays [web:54][web:50]
-    FR_baseline_all = [FR_baseline_all, fr_baseline];
-    FR_eopn_all     = [FR_eopn_all,     fr_eopn];
-end
-% plot it out
-figure; hold on
-scatter(FR_baseline_all, FR_eopn_all, 25, 'k', 'filled');
-
-lims = [0 max([FR_baseline_all FR_eopn_all])*1.05];
-plot(lims, lims, '--', 'Color', [0.3 0.8 0.6], 'LineWidth', 1.5);
-axis square; xlim(lims); ylim(lims);
-xlabel('spikes s^{-1} (control)');
-ylabel('spikes s^{-1} (light)');
-
-
-axis square                          % equal x/y scale [web:11]
-xlim(lims); ylim(lims);              % same limits on both axes [web:11][web:17]
-xlabel('spikes s^{-1} (control)','FontSize',10);  % [web:12]
-ylabel('spikes s^{-1} (light)','FontSize',10,...
-       'Color',[0.6 0 0.6]);                                             % magenta-ish y label [web:12]
-
-set(gca,'Box','off','TickDir','out','FontSize',9);
-title('M2 to Thalamus eOPN3');
-
-% Wilcoxon signed-rank test (paired, two-sided)
-[p,h,stats] = signrank(FR_baseline_all, FR_eopn_all);   % [web:44]
-
-fprintf('Wilcoxon signed-rank test: p = %.3g, z = %.3f\n', p, stats.zval);
-txt = sprintf('Wilcoxon signed-rank: p = %.3g', p);
-fprintf('Baseline FR: %.3g, eOPN FR: %.3g\n ', mean(fr_baseline),mean(fr_eopn));
-text(0.05*max(xlim), 0.9*max(ylim), txt, 'FontSize', 9);
-%%
-frB = FR_baseline_all;
-frE = FR_eopn_all;
-
-% Modulation index (light − control) / (light + control)
-modIdx = -(frE - frB) ./ (frE + frB);   % attention-style index [web:64][web:65]
-
-% Optional: handle 0/0 or tiny denominators
-modIdx(abs(frE + frB) < 1e-6) = NaN;
-[p,h,stats] = signrank(modIdx);    
-
-mi_mean = nanmean(modIdx);
-mi_median = nanmedian(modIdx);
-
-figure; hold on
-
-h = histogram(modIdx, 'BinWidth', 0.05, ...
-                       'FaceColor', [0.1 0.1 0.1], ...
-                       'EdgeColor', 'none');            % [web:88]
-
-xline(0,'--','Color',[0.6 0.6 0.6],'LineWidth',1.5);    % zero line [web:68]
-
-xlabel('Change in modulation index (light - control)');
-ylabel('Neurons');
-title('eOPN3');
-
-% Place stats text near top-right of axes [web:78][web:83]a
-yl = ylim;
-xl = xlim;
-txt = sprintf('median = %.2f\np = %.3g (Wilcoxon)', mi_median, p);
-text(xl(1)+0.55*range(xl), yl(1)+0.9*range(yl), txt, ...
-     'FontSize', 9, 'HorizontalAlignment','left');
-
-set(gca,'Box','off','TickDir','out','FontSize',9);
 %%
 % index of unit with largest absolute modulation
 [~,bestIdx] = max(abs(modIdx));   % same ordering as FR_*_all
@@ -454,6 +285,7 @@ set(gca,'Box','off','TickDir','out');
 % share x-axis between raster and PSTH
 linkaxes([ax1,ax2],'x');                                              % [web:98]
 
+
 function output = make_nice_mean_raster(spmat,smooth_window,showplot)
 %*********** spmat1 and spmat2 are spike matrices of two conditions you wish to compare
 %*********** smooth_window ... gaussian smoothing in millisecs
@@ -521,7 +353,7 @@ if toggle_dims == 1,
 end
 end
 
-function [normSpikeRate,idx,idxc] = spknorm(temp,idxc)
+function [normSpikeRate,idx,idxc] = spknorm(temp)
 [nanIdx,~,~] = find(~isnan(temp));
 nanIdx = unique(nanIdx);
 normSpikeRate = zscore(temp(nanIdx,:),0,2);
@@ -529,11 +361,8 @@ idx = zeros(size(normSpikeRate,1),1);
 for n = 1:length(idx)
     [~,idx(n)] = max(normSpikeRate(n,:));
 end
-if ~exist('idxc','var')
-    [~,idxc] = sort(idx);
+[~,idxc] = sort(idx);
 end
-end
-
 function spk_opto = adOpto(tempSpk,optoIdx)
 spk_mod = tempSpk;        % copy to modify
 

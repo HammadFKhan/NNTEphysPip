@@ -9,26 +9,27 @@ for fileNum = 1:length(files)
     CCAall(fileNum).CCA = CCA;
 end
 %%
+CCAall = CCAResultsLag;
 hitCCA = []; missCCA = []; MIhitCCA = []; MIFACCA = [];
 hitCCATrace = []; missCCATrace = []; MIhitCCATrace = []; MIFACCATrace = [];
-CCAdim = 3;
+CCAdim = 1;
 for n = 1:length(CCAall)
-    dat = arrayfun(@(x) x.rVec(CCAdim,:),CCAall(n).CCA.hit,'UniformOutput',false);
+    dat = arrayfun(@(x) x.timelag(6).rVec(CCAdim,:),CCAall(n).CCA.hit,'UniformOutput',false);
     dat = vertcat(dat{:});
     hitCCATrace = vertcat(hitCCATrace,dat);
     hitCCA = vertcat(hitCCA,abs(mean(dat(:,75:end),2)-mean(dat(:,1:74),2)));
     
-    dat = arrayfun(@(x) x.rVec(CCAdim,:),CCAall(n).CCA.miss,'UniformOutput',false);
+    dat = arrayfun(@(x) x.timelag(6).rVec(CCAdim,:),CCAall(n).CCA.miss,'UniformOutput',false);
     dat = vertcat(dat{:});
     missCCATrace = vertcat(missCCATrace,dat);
     missCCA = vertcat(missCCA,abs(mean(dat(:,75:end),2)-mean(dat(:,1:74),2)));
     
-    dat = arrayfun(@(x) x.rVec(CCAdim,:),CCAall(n).CCA.MIhit,'UniformOutput',false);
+    dat = arrayfun(@(x) x.timelag(6).rVec(CCAdim,:),CCAall(n).CCA.MIhit,'UniformOutput',false);
     dat = vertcat(dat{:});
     MIhitCCATrace = vertcat(MIhitCCATrace,dat);
     MIhitCCA = vertcat(MIhitCCA,abs(mean(dat(:,75:end),2)-mean(dat(:,1:74),2)));
     
-    dat = arrayfun(@(x) x.rVec(CCAdim,:),CCAall(n).CCA.MIFA,'UniformOutput',false);
+    dat = arrayfun(@(x) x.timelag(6).rVec(CCAdim,:),CCAall(n).CCA.MIFA,'UniformOutput',false);
     dat = vertcat(dat{:});
     MIFACCATrace = vertcat(MIFACCATrace,dat);
     MIFACCA = vertcat(MIFACCA,abs(nanmean(dat(:,75:end),2)-nanmean(dat(:,1:74),2)));

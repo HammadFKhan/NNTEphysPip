@@ -135,14 +135,13 @@ if cue == 1
 end
 
 %% get lever traces for hits and miss 
-st_hit1 = max(find(Behaviour.time < Behaviour.hit(1,2)-parameters.windowBeforePull));
-if isempty(st_hit1)
+while isempty(max(find(Behaviour.time < Behaviour.hit(1,2)-parameters.windowBeforePull)));
     disp('First hit rejected');
     Behaviour.nHit = Behaviour.nHit-1;
     Behaviour.hit(1,:) = [];
-%     Behaviour.hit(1,:) = [];
-%     Behaviour.nHit = Behaviour.nHit-1;
-end 
+    %     Behaviour.hit(1,:) = [];
+    %     Behaviour.nHit = Behaviour.nHit-1;
+end
 sp_hitend =  max(find(Behaviour.time < Behaviour.hit(end,2)+parameters.windowAfterPull));
 if isempty(sp_hitend) 
     disp('Last hit rejected')
