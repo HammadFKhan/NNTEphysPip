@@ -7,7 +7,7 @@ dirFiles = "Y:\Hammad\Ephys\LeverTask\LeverTaskRebuttal\eOPN3\eOPN_dual_thalamus
 T = readtable(dirFiles);
 
 colNames = T.Properties.VariableNames;  % column names as cell array of strings
-Spks_to_analyze = T(T.Spks == 1 & T.Region == "M1", :); % Change to M1 or Th depending on region
+Spks_to_analyze = T(T.Spks == 1 & T.Region == "Th", :); % Change to M1 or Th depending on region
 %% 
 for fileNum = 1:size(Spks_to_analyze,1)
     disp(['File number: ' num2str(fileNum)])
