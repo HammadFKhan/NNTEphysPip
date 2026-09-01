@@ -17,8 +17,7 @@ for n = 1:length(dynamics)
 %     baselineId = 1:length(IntanBehaviourBaseline.cueHitTrace);
 %     eOPNId = length(IntanBehaviourBaseline.cueHitTrace)+1:length(dynamics(n).IntanBehaviour.cueHitTrace);
 %     assert(length(eOPNId)==length(IntanBehaviourOpto.cueHitTrace))
-    rtbaseline{n} = 0.169;
-    rteopn{n} = 0.176;
+ 
     speedTotBaseline{n} = squeeze(dynamics{n}.hitbaseline.speed.speed(dimension,2:end,:));
     speedToteOPN{n} = squeeze(dynamics{n}.hitopto.speed.speed(dimension,2:end,:));
     disp(['Calculating session ' num2str(n) '...'])
